@@ -827,3 +827,46 @@ CREATE TABLE pso_data_validator.dvt_int_overflow
 EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test INT column SUM overflow in SQL Server', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_int_overflow';
 INSERT INTO pso_data_validator.dvt_int_overflow VALUES (1, 1500000000, 100.50);
 INSERT INTO pso_data_validator.dvt_int_overflow VALUES (2, 1500000000, 200.75);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1 INT NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3));
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test composite primary key.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_composite_pk';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk (
+  key1 INT NOT NULL
+, key2 INT NOT NULL
+, key3 INT NOT NULL
+, val  INT
+, PRIMARY KEY (key1, key2, key3));
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used for volume testing composite primary keys.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_vol_composite_pk';
+
+WITH Tally(x) AS (
+    SELECT 1
+    UNION ALL
+    SELECT x + 1 FROM Tally WHERE x < 10000
+)
+INSERT INTO pso_data_validator.dvt_vol_composite_pk (key1, key2, key3, val)
+SELECT
+    ((x - 1) % 10) + 1 AS key1,
+    (((x - 1) / 10) % 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM Tally
+OPTION (MAXRECURSION 10000);
+

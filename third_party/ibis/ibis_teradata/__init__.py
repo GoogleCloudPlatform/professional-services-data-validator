@@ -330,3 +330,7 @@ class Backend(BaseSQLBackend):
 
     def fetch_from_cursor(self, cursor, schema):
         pass
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False

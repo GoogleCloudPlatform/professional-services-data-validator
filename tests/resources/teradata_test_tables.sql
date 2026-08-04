@@ -821,3 +821,41 @@ INSERT INTO udf.dvt_intervals VALUES
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-02' YEAR TO MONTH);
 INSERT INTO udf.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+DROP TABLE udf.dvt_composite_pk;
+CREATE TABLE udf.dvt_composite_pk (
+  key1 INTEGER NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE udf.dvt_composite_pk IS 'Teradata table for testing composite primary key validations.';
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO udf.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO udf.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO udf.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO udf.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+
+DROP TABLE udf.dvt_vol_composite_pk;
+CREATE TABLE udf.dvt_vol_composite_pk
+(   key1       INTEGER NOT NULL
+,   key2       INTEGER NOT NULL
+,   key3       INTEGER NOT NULL
+,   val        INTEGER
+,   PRIMARY KEY (key1, key2, key3)
+);
+COMMENT ON TABLE udf.dvt_vol_composite_pk AS 'Teradata table for volume testing composite primary key validations.';
+
+INSERT INTO udf.dvt_vol_composite_pk
+SELECT
+    ((day_of_calendar - 1) MOD 10) + 1 AS key1,
+    (((day_of_calendar - 1) / 10) MOD 10) + 1 AS key2,
+    day_of_calendar AS key3,
+    day_of_calendar * 10 AS val
+FROM sys_calendar.calendar
+WHERE day_of_calendar <= 10000;

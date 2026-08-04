@@ -1040,3 +1040,39 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 (1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
 (2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
 (3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1  integer NOT NULL
+, key2  varchar(10) NOT NULL
+, key3  char(2) NOT NULL
+, val   varchar(50)
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Integration test table used to test composite primary keys.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk (
+  key1  bigint NOT NULL
+, key2  bigint NOT NULL
+, key3  bigint NOT NULL
+, val   bigint
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Integration test table used for volume testing composite primary keys.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    ((x - 1) % 10) + 1 AS key1,
+    (((x - 1) / 10) % 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM generate_series(1, 10000) AS x;

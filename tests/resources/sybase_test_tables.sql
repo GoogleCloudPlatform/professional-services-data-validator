@@ -688,3 +688,38 @@ INSERT INTO pso_data_validator.dvt_int_overflow VALUES (1, 1500000000, 100.50)
 GO
 INSERT INTO pso_data_validator.dvt_int_overflow VALUES (2, 1500000000, 200.75)
 GO
+
+DROP TABLE pso_data_validator.dvt_composite_pk
+GO
+
+CREATE TABLE pso_data_validator.dvt_composite_pk
+(   key1        INT NOT NULL
+,   key2        VARCHAR(10) NOT NULL
+,   key3        CHAR(2) NOT NULL
+,   val         VARCHAR(50)
+,   PRIMARY KEY (key1, key2, key3)
+)
+GO
+
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9')
+GO
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10')
+GO
+
+

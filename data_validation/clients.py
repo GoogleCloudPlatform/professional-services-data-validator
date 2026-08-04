@@ -61,6 +61,14 @@ IBIS_ALCHEMY_BACKENDS = [
 ]
 
 
+def dvt_tuple_in_supported(client) -> bool:
+    """Return True if backend client supports native SQL tuple/struct IN expressions."""
+    if hasattr(client, "dvt_tuple_in_supported"):
+        return client.dvt_tuple_in_supported()
+    else:
+        return False
+
+
 def _raise_missing_client_error(msg):
     def get_client_call(*args, **kwargs):
         raise Exception(msg)
@@ -475,6 +483,9 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         # This is a workaround for Oracle limitation:
         #   ORA-01795: maximum number of expressions in a list is 1000
         return 1000
+    elif client.name == "mssql":
+        # Workaround for SQL Server limitation: 2100 maximum parameters in a single query
+        return 2000
     else:
         return None
 
