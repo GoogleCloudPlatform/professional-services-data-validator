@@ -24,6 +24,7 @@ import pandas
 
 from data_validation import combiner, consts, metadata, util
 from data_validation.config_manager import ConfigManager
+from data_validation.query_builder.query_builder import FilterField
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
 from data_validation.schema_validation import SchemaValidation
 from data_validation.validation_builder import ValidationBuilder
@@ -132,16 +133,15 @@ class DataValidation(object):
         if not self.config_manager.primary_keys:
             raise ValueError("Primary Keys are required for Random Row Filters")
 
-        # Filter for only first primary key (multi-pk filter not supported)
-        source_pk_column = self.config_manager.primary_keys[0][
-            consts.CONFIG_SOURCE_COLUMN
+        source_pk_columns = [
+            pk[consts.CONFIG_SOURCE_COLUMN] for pk in self.config_manager.primary_keys
         ]
-        target_pk_column = self.config_manager.primary_keys[0][
-            consts.CONFIG_TARGET_COLUMN
+        target_pk_columns = [
+            pk[consts.CONFIG_TARGET_COLUMN] for pk in self.config_manager.primary_keys
         ]
 
         randomRowBuilder = RandomRowBuilder(
-            [source_pk_column],
+            source_pk_columns,
             self.config_manager.random_row_batch_size(),
         )
 
@@ -160,80 +160,153 @@ class DataValidation(object):
                 self.validation_builder.source_builder,
             )
 
-        # Check if source table's primary key is BINARY, if so then
+        # Check if source table's primary keys are BINARY, if so then
         # force cast the id columns to STRING (HEX).
-        binary_conversion_required = False
-        if query[source_pk_column].type().is_binary():
-            binary_conversion_required = True
-            query = query.mutate(
-                **{source_pk_column: query[source_pk_column].cast("string")}
-            )
+        binary_cols = []
+        for source_pk_column in source_pk_columns:
+            if query[source_pk_column].type().is_binary():
+                binary_cols.append(source_pk_column)
+                query = query.mutate(
+                    **{source_pk_column: query[source_pk_column].cast("string")}
+                )
 
-        # If the primary key is a padded string, then update the query to ensure the string
+        # If any primary key is a padded string, then update the query to ensure the string
         # is rstripped in the results.
-        if query[
-            source_pk_column
-        ].type().is_string() and ValidationBuilder.is_padded_char(
-            self.config_manager.source_client,
-            self.config_manager.get_source_raw_data_types(),
-            source_pk_column,
-        ):
-            query = query.mutate(**{source_pk_column: query[source_pk_column].rstrip()})
+        for source_pk_column in source_pk_columns:
+            if query[
+                source_pk_column
+            ].type().is_string() and ValidationBuilder.is_padded_char(
+                self.config_manager.source_client,
+                self.config_manager.get_source_raw_data_types(),
+                source_pk_column,
+            ):
+                query = query.mutate(
+                    **{source_pk_column: query[source_pk_column].rstrip()}
+                )
 
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
 
-        source_values = target_values = list(random_rows[source_pk_column])
-        if binary_conversion_required:
-            # For binary ids we have a list of hex strings for our IN list.
-            # Each of these needs to be cast back to binary.
-            target_values = source_values = [
-                ibis.literal(_).cast("binary") for _ in source_values
-            ]
-        elif query[source_pk_column].type().is_string():
-            # If the source or client is Oracle and the character type is padded, we need to
-            # ljust the string to the padded length because the adapter passes string literals as
-            # VARCHAR and oracle uses "Non padded semantics" for comparison
-            # see https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Data-Type-Comparison-Rules.html#GUID-A114F1F4-A08D-4107-B679-323DC7FEA31C
-            if (
-                self.config_manager.source_client.name == "oracle"
-                and ValidationBuilder.is_padded_char(
-                    self.config_manager.source_client,
-                    self.config_manager.get_source_raw_data_types(),
-                    source_pk_column,
-                )
-            ):
-                char_length = self.config_manager.get_source_raw_data_types()[
-                    source_pk_column
-                ][2]
-                source_values = [
-                    key_value.ljust(char_length) for key_value in source_values
+        if len(source_pk_columns) == 1:
+            source_pk_column = source_pk_columns[0]
+            target_pk_column = target_pk_columns[0]
+            source_values = target_values = list(random_rows[source_pk_column])
+            if source_pk_column in binary_cols:
+                # For binary ids we have a list of hex strings for our IN list.
+                # Each of these needs to be cast back to binary.
+                target_values = source_values = [
+                    ibis.literal(_).cast("binary") for _ in source_values
                 ]
-            if (
-                self.config_manager.target_client.name == "oracle"
-                and ValidationBuilder.is_padded_char(
-                    self.config_manager.target_client,
-                    self.config_manager.get_target_raw_data_types(),
-                    target_pk_column,
-                )
-            ):
-                char_length = self.config_manager.get_target_raw_data_types()[
-                    target_pk_column
-                ][2]
-                target_values = [
-                    key_value.ljust(char_length) for key_value in source_values
-                ]
+            elif query[source_pk_column].type().is_string():
+                if (
+                    self.config_manager.source_client.name == "oracle"
+                    and ValidationBuilder.is_padded_char(
+                        self.config_manager.source_client,
+                        self.config_manager.get_source_raw_data_types(),
+                        source_pk_column,
+                    )
+                ):
+                    char_length = self.config_manager.get_source_raw_data_types()[
+                        source_pk_column
+                    ][2]
+                    source_values = [
+                        key_value.ljust(char_length) for key_value in source_values
+                    ]
+                if (
+                    self.config_manager.target_client.name == "oracle"
+                    and ValidationBuilder.is_padded_char(
+                        self.config_manager.target_client,
+                        self.config_manager.get_target_raw_data_types(),
+                        target_pk_column,
+                    )
+                ):
+                    char_length = self.config_manager.get_target_raw_data_types()[
+                        target_pk_column
+                    ][2]
+                    target_values = [
+                        key_value.ljust(char_length) for key_value in source_values
+                    ]
 
-        filter_field = {
-            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
-            consts.CONFIG_FILTER_SOURCE_COLUMN: source_pk_column,
-            consts.CONFIG_FILTER_SOURCE_VALUE: source_values,
-            consts.CONFIG_FILTER_TARGET_COLUMN: target_pk_column,
-            consts.CONFIG_FILTER_TARGET_VALUE: target_values,
-        }
+            filter_field = {
+                consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+                consts.CONFIG_FILTER_SOURCE_COLUMN: source_pk_column,
+                consts.CONFIG_FILTER_SOURCE_VALUE: source_values,
+                consts.CONFIG_FILTER_TARGET_COLUMN: target_pk_column,
+                consts.CONFIG_FILTER_TARGET_VALUE: target_values,
+            }
 
-        self.validation_builder.add_filter(filter_field)
+            self.validation_builder.add_filter(filter_field)
+        else:
+            source_df = random_rows[source_pk_columns].copy()
+            col_map = dict(zip(source_pk_columns, target_pk_columns))
+            target_df = source_df.rename(columns=col_map)
+
+            for src_col, tgt_col in zip(source_pk_columns, target_pk_columns):
+                if src_col in binary_cols:
+                    source_df[src_col] = [
+                        ibis.literal(_).cast("binary") if not pandas.isna(_) else _
+                        for _ in source_df[src_col]
+                    ]
+                    target_df[tgt_col] = [
+                        ibis.literal(_).cast("binary") if not pandas.isna(_) else _
+                        for _ in target_df[tgt_col]
+                    ]
+                else:
+                    if (
+                        self.config_manager.source_client.name == "oracle"
+                        and ValidationBuilder.is_padded_char(
+                            self.config_manager.source_client,
+                            self.config_manager.get_source_raw_data_types(),
+                            src_col,
+                        )
+                    ):
+                        char_length = self.config_manager.get_source_raw_data_types()[
+                            src_col
+                        ][2]
+                        source_df[src_col] = [
+                            (
+                                key_val.ljust(char_length)
+                                if isinstance(key_val, str)
+                                else key_val
+                            )
+                            for key_val in source_df[src_col]
+                        ]
+                    if (
+                        self.config_manager.target_client.name == "oracle"
+                        and ValidationBuilder.is_padded_char(
+                            self.config_manager.target_client,
+                            self.config_manager.get_target_raw_data_types(),
+                            tgt_col,
+                        )
+                    ):
+                        char_length = self.config_manager.get_target_raw_data_types()[
+                            tgt_col
+                        ][2]
+                        target_df[tgt_col] = [
+                            (
+                                key_val.ljust(char_length)
+                                if isinstance(key_val, str)
+                                else key_val
+                            )
+                            for key_val in target_df[tgt_col]
+                        ]
+
+            source_filter = FilterField.composite_isin(
+                self.config_manager.source_client,
+                source_pk_columns,
+                source_df,
+            )
+            target_filter = FilterField.composite_isin(
+                self.config_manager.target_client,
+                target_pk_columns,
+                target_df,
+            )
+
+            if source_filter:
+                self.validation_builder.source_builder.add_filter_field(source_filter)
+            if target_filter:
+                self.validation_builder.target_builder.add_filter_field(target_filter)
 
     def query_too_large(self, rows_df, grouped_fields):
         """Return bool to dictate if another level of recursion

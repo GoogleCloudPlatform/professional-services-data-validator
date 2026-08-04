@@ -185,3 +185,7 @@ class Backend(BaseAlchemyBackend):
     def dvt_list_tables(self, like=None, database=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
         return self.list_tables(table=like, schema=database, type_like="TABLE")
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False

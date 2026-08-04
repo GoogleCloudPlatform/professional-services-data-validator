@@ -184,6 +184,10 @@ class Backend(BaseAlchemyBackend):
         # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
         return None
 
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False
+
 
 def _get_type(typestr: str) -> dt.DataType:
     return PostgresType.from_string(typestr)
