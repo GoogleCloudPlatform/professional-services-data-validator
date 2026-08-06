@@ -116,6 +116,30 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_null_not_null
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, DB2 is assumed to be a DVT source (not target).';
 
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_decimals
+(   id                INTEGER NOT NULL PRIMARY KEY
+,   col_dec_16_8      DECIMAL(16,8)
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(13,123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(18,-99999999.99999999);
+
 -- In Db2 the maximum precision for a DECIMAL data type is 31 digits.
 -- The renders some columns in this table incompatible with the table in other systems.
 CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_large_decimals

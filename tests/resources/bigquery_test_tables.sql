@@ -78,6 +78,16 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
 ,   col_src_n_trg_nn   DATETIME NOT NULL
 ) OPTIONS (description='Nullable integration test table, BigQuery is assumed to be a DVT target (not source)');
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals`
+(   id                INT64 NOT NULL
+,   col_dec_16_8      NUMERIC(16,8)
+) OPTIONS (description='Decimals integration test table');
+INSERT INTO `pso_data_validator`.`dvt_decimals` VALUES
+ (1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),
+ (9,0.00000001),(10,-0.00000001),(11,0.00010001),(12,-0.00010001),
+ (13,123.01),(14,-123.01),(15,12345678.12345678),(16,-12345678.12345678)
+ ,(17,99999999.99999999),(18,-99999999.99999999);
+
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_large_decimals`
 (   id                BIGNUMERIC(38) NOT NULL
 ,   col_data          STRING(10)

@@ -144,8 +144,7 @@ def sa_cast_mssql(t, op):
         # Considering any number of fractional digits
         format_string = f'0.{("#" * scale)}'
         formatted_value = sa.func.format(sa_arg, format_string)
-        # Replace trailing '.0' with ''
-        return sa.func.replace(formatted_value, ".0", "")
+        return formatted_value
     elif arg_dtype.is_boolean() and typ.is_string():
         return sa.case(
             (sa_arg == 0, sa.literal_column("'false'")),
