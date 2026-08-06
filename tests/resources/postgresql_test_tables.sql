@@ -348,22 +348,10 @@ CREATE TABLE pso_data_validator.dvt_decimals
 ,   col_dec_16_8      decimal(16,8)
 );
 COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
-INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(13,12345678.12345678);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-12345678.12345678);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(15,99999999.99999999);
-INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-99999999.99999999);
+INSERT INTO pso_data_validator.dvt_decimals VALUES
+(1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),(9,0.00000001),
+(10,-0.00000001),(11,0.00010001),(12,-0.00010001),(13,123.01),(14,-123.01),
+(15,12345678.12345678),(16,-12345678.12345678),(17,99999999.99999999),(18,-99999999.99999999);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals

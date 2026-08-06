@@ -689,6 +689,52 @@ GO
 INSERT INTO pso_data_validator.dvt_int_overflow VALUES (2, 1500000000, 200.75)
 GO
 
+DROP TABLE pso_data_validator.dvt_decimals
+GO
+
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                INT NOT NULL PRIMARY KEY
+,   col_dec_16_8      DECIMAL(16,8) NULL
+)
+GO
+
+INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(13,123.01)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-123.01)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(15,12345678.12345678)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-12345678.12345678)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(17,99999999.99999999)
+GO
+INSERT INTO pso_data_validator.dvt_decimals VALUES(18,-99999999.99999999)
+GO
+
 DROP TABLE pso_data_validator.dvt_composite_pk
 GO
 

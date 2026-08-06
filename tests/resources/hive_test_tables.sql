@@ -572,3 +572,15 @@ INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
 -- NULL in all columns.
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_decimals;
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                integer NOT NULL
+,   col_dec_16_8      decimal(16,8)
+)
+STORED AS ORC
+TBLPROPERTIES ('comment'='Decimals integration test table');
+INSERT INTO pso_data_validator.dvt_decimals VALUES
+(1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),(9,0.00000001),
+(10,-0.00000001),(11,0.00010001),(12,-0.00010001),(13,123.01),(14,-123.01),
+(15,12345678.12345678),(16,-12345678.12345678),(17,99999999.99999999),(18,-99999999.99999999);
