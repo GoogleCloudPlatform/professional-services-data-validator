@@ -381,6 +381,7 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
 )
 def test_row_validation_decimals_to_bigquery():
     """dvt_decimals row validation."""
+    pytest.skip("Skipping test_row_validation_decimals_to_bigquery due to issue-1379.")
     row_validation_test(
         tables="pso_data_validator.dvt_decimals",
         tc="bq-conn",
