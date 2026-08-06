@@ -384,7 +384,7 @@ def test_row_validation_decimals_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_decimals",
         tc="bq-conn",
-        hash="id,col_dec_16_8",
+        concat="id,col_dec_16_8",
         # No random row tests, we need to validate all values.
     )
 
