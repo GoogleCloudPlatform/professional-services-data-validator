@@ -2,6 +2,14 @@
 
 ## Untagged
 
+## [8.9.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.0...v8.9.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* Add support for random row sampling on composite primary keys ([#1803](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1803)) ([d6d16da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d6d16dab92a798db8aaedd067bd95dbd5d9078ee))
+* Fix SQL Server decimal format bug ([#1806](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1806)) ([62eacd1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62eacd19f65fa9658e5111bae37e060fd83a4970))
+
 ## [8.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.2...v8.9.0) (2026-07-31)
 
 
