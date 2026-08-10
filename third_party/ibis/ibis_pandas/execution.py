@@ -15,7 +15,6 @@
 from collections.abc import Sized
 from datetime import date
 import dateutil.parser
-import numpy as np
 import pandas as pd
 
 from ibis.backends.pandas.dispatch import execute_node
@@ -122,5 +121,5 @@ def execute_cast_series_string(op, data, type, **kwargs):
     that are not valid UTF-8.
     """
     if op.arg.dtype.is_binary():
-        return data.map(lambda x: x.hex() if isinstance(x, bytes) else x)
+        return data.map(lambda x: x.hex() if isinstance(x, (bytes, bytearray)) else x)
     return data.astype(pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE[type])
