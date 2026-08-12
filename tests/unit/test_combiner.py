@@ -1264,3 +1264,51 @@ def test_convert_large_ints_to_decimals(module_under_test):
 
     assert isinstance(res["normal_int"][0], (int, numpy.integer))
     assert isinstance(res["string_col"][0], str)
+
+
+def test_generate_report_with_binary_data(module_under_test):
+    """Test report generation with binary data containing non-UTF-8 characters.
+
+    This ensures that DVT does not crash with a UnicodeDecodeError when
+    casting binary columns to string in the Pandas combiner phase. Instead,
+    the binary data should be formatted as a hex string in the report.
+    """
+    # Binary data with non-UTF-8 bytes (e.g. 0xac)
+    binary_data = b"\xac\xed\x00\x05"
+    source_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
+    target_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
+
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "bin_col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="bq-public.source_dataset",
+                source_column_name="bin_col",
+                target_table_name="test_target",
+                target_table_schema="bq-public.target_dataset",
+                target_column_name="bin_col",
+                validation_type="Row",
+                aggregation_type="hash",
+                primary_keys=["id"],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+        labels=[],
+        run_id="test-run",
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source_df,
+        target_df,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+
+    assert consts.SOURCE_AGG_VALUE in report.columns
+    assert consts.TARGET_AGG_VALUE in report.columns
+    assert report[consts.SOURCE_AGG_VALUE].iloc[0] == "aced0005"
+    assert report[consts.TARGET_AGG_VALUE].iloc[0] == "aced0005"
