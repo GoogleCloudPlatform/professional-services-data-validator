@@ -37,6 +37,56 @@ EXTRA_RESERVED_WORDS = set(
 )
 
 
+# We use a hardcoded list instead of checking the `oracle_maintained` column
+# in `all_users` because we want more granular control over which schemas to ignore.
+# For example, some customers use SYSTEM and DBSNMP for their own monitoring tables.
+ORACLE_SYSTEM_SCHEMAS = {
+    "ANONYMOUS",
+    "APPQOSSYS",
+    "AUDSYS",
+    "C##DS",
+    "CTXSYS",
+    "DBSFWUSER",
+    "DGPDB_INT",
+    "DIP",
+    "DVF",
+    "DVSYS",
+    "EXFSYS",
+    "FLOWS_FILES",
+    "GGSYS",
+    "GSMADMIN_INTERNAL",
+    "GSMCATUSER",
+    "GSMUSER",
+    "LBACSYS",
+    "MDDATA",
+    "MDSYS",
+    "MGMT_VIEW",
+    "OJVMSYS",
+    "OLAPSYS",
+    "ORACLE_OCM",
+    "ORDDATA",
+    "ORDPLUGINS",
+    "ORDSYS",
+    "OUTLN",
+    "PDBADMIN",
+    "REMOTE_SCHEDULER_AGENT",
+    "SI_INFORMTN_SCHEMA",
+    "SPATIAL_CSW_ADMIN_USR",
+    "SPATIAL_WFS_ADMIN_USR",
+    "SYS",
+    "SYS$UMF",
+    "SYSBACKUP",
+    "SYSDG",
+    "SYSKM",
+    "SYSMAN",
+    "SYSRAC",
+    "TSMSYS",
+    "WMSYS",
+    "XDB",
+    "XS$NULL",
+}
+
+
 def _ora_denormalize_name(self, name):
     """Oracle specific version of sqlalchemy/engine/default.py.denormalize_name()
 
@@ -253,7 +303,12 @@ class Backend(BaseAlchemyBackend):
         return char_type[0] in ["CHAR", "NCHAR"]
 
     def list_databases(self) -> list:
-        return sa.inspect(self.con).get_schema_names()
+        all_schemas = sa.inspect(self.con).get_schema_names()
+        return [
+            schema
+            for schema in all_schemas
+            if schema.upper() not in ORACLE_SYSTEM_SCHEMAS
+        ]
 
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""
