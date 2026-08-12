@@ -84,6 +84,8 @@ CONFIG_EXCLUSION_COLUMNS = "exclusion_columns"
 CONFIG_ALLOW_LIST = "allow_list"
 CONFIG_FILTER_STATUS = "filter_status"
 
+CONFIG_PRE_BUILD_TABLE_OBJ = "table_obj"
+
 CONFIG_RESULT_HANDLER = "result_handler"
 
 CONFIG_TYPE_AVG = "avg"
