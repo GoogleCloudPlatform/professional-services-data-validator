@@ -144,6 +144,16 @@ CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
 ,   col_src_n_trg_nn   datetime(0)
 ) COMMENT 'Nullable integration test table, MySQL is assumed to be a DVT source (not target).';
 
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_decimals`;
+CREATE TABLE `pso_data_validator`.`dvt_decimals`
+(   id                int NOT NULL PRIMARY KEY
+,   col_dec_16_8      decimal(16,8)
+) COMMENT 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES
+(1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),(9,0.00000001),
+(10,-0.00000001),(11,0.00010001),(12,-0.00010001),(13,123.01),(14,-123.01),
+(15,12345678.12345678),(16,-12345678.12345678),(17,99999999.99999999),(18,-99999999.99999999);
+
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_binary`;
 CREATE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       varbinary(16) NOT NULL PRIMARY KEY

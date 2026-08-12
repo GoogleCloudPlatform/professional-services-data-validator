@@ -165,6 +165,31 @@ CREATE TABLE pso_data_validator.dvt_null_not_null
 );
 EXECUTE sp_addextendedproperty 'Comment', 'Nullable integration test table, SQL Server is assumed to be a DVT source (not target)', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_null_not_null';
 
+DROP TABLE pso_data_validator.dvt_decimals;
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                int NOT NULL PRIMARY KEY
+,   col_dec_16_8      decimal(16,8)
+);
+EXECUTE sp_addextendedproperty 'Comment', 'Decimals integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_decimals';
+INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(13,123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(18,-99999999.99999999);
+
 DROP TABLE pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
 (   id                decimal(38) NOT NULL PRIMARY KEY

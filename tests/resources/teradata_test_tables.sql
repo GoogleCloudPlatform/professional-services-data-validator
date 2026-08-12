@@ -65,6 +65,31 @@ CREATE TABLE udf.dvt_null_not_null
 );
 COMMENT ON TABLE udf.dvt_null_not_null AS 'Nullable integration test table, Teradata is assumed to be a DVT source (not target).';
 
+DROP TABLE udf.dvt_decimals;
+CREATE TABLE udf.dvt_decimals
+(   id                INTEGER NOT NULL PRIMARY KEY
+,   col_dec_16_8      NUMBER(16,8)
+);
+COMMENT ON TABLE udf.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO udf.dvt_decimals VALUES(1,NULL);
+INSERT INTO udf.dvt_decimals VALUES(2,0);
+INSERT INTO udf.dvt_decimals VALUES(3,1);
+INSERT INTO udf.dvt_decimals VALUES(4,-1);
+INSERT INTO udf.dvt_decimals VALUES(5,0.1);
+INSERT INTO udf.dvt_decimals VALUES(6,-0.1);
+INSERT INTO udf.dvt_decimals VALUES(7,0.01);
+INSERT INTO udf.dvt_decimals VALUES(8,-0.01);
+INSERT INTO udf.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO udf.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO udf.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO udf.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO udf.dvt_decimals VALUES(13,123.01);
+INSERT INTO udf.dvt_decimals VALUES(14,-123.01);
+INSERT INTO udf.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO udf.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO udf.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO udf.dvt_decimals VALUES(18,-99999999.99999999);
+
 DROP TABLE udf.dvt_large_decimals;
 CREATE TABLE udf.dvt_large_decimals
 (   id                NUMBER(38) NOT NULL PRIMARY KEY
