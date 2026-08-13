@@ -1064,3 +1064,30 @@ SELECT
     x AS key3,
     x * 10 AS val
 FROM generate_series(1, 10000) AS x;
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_lobs;
+CREATE TABLE pso_data_validator.dvt_lobs
+(   id         int NOT NULL PRIMARY KEY
+,   col_blob   bytea
+,   col_clob   text
+,   col_nclob  text
+);
+COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table';
+
+INSERT INTO pso_data_validator.dvt_lobs (id, col_blob, col_clob, col_nclob)
+VALUES
+( 1
+, repeat('A', 500000)::bytea
+, repeat('A', 500000)
+, repeat('A', 500000)
+),
+( 2
+, repeat('B', 500000)::bytea
+, repeat('B', 500000)
+, repeat('B', 500000)
+),
+( 3
+, NULL
+, NULL
+, NULL
+);
