@@ -220,3 +220,7 @@ class Backend(BaseAlchemyBackend):
             result = con.exec_driver_sql(sql, parameters=(database, table))
             row = result.cursor.fetchone()
             return int(row[0]) if row and row[0] is not None else None
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False

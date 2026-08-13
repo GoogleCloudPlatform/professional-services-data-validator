@@ -163,3 +163,7 @@ class Backend(BigQueryBackend):
         table_ref = f"{project}.{dataset}.{table}"
         bq_table = self.client.get_table(table_ref)
         return bq_table.num_rows if bq_table.num_rows is not None else None
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return True

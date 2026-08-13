@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from data_validation import consts, metadata
 from data_validation.clients import get_max_in_list_size
+from data_validation.util import list_to_sublists
 from data_validation.query_builder.query_builder import (
     AggregateField,
     CalculatedField,
@@ -28,11 +29,6 @@ from data_validation.query_builder.query_builder import (
 
 if TYPE_CHECKING:
     import ibis
-
-
-def list_to_sublists(id_list: list, max_size: int) -> list:
-    """Return a list of items as a list of lists based on a max list length of max_size."""
-    return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]
 
 
 class ValidationBuilder(object):

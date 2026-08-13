@@ -342,6 +342,17 @@ VALUES
 ,'<?xml version="1.0"?><Test><Name>Test 2</Name><Command>test2.sh</Command></Test>'
 );
 
+DROP TABLE IF EXISTS pso_data_validator.dvt_decimals;
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                integer NOT NULL PRIMARY KEY
+,   col_dec_16_8      decimal(16,8)
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES
+(1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),(9,0.00000001),
+(10,-0.00000001),(11,0.00010001),(12,-0.00010001),(13,123.01),(14,-123.01),
+(15,12345678.12345678),(16,-12345678.12345678),(17,99999999.99999999),(18,-99999999.99999999);
+
 DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
 (   id                DECIMAL(38) NOT NULL PRIMARY KEY
@@ -1017,3 +1028,39 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 (1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
 (2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
 (3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1  integer NOT NULL
+, key2  varchar(10) NOT NULL
+, key3  char(2) NOT NULL
+, val   varchar(50)
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Integration test table used to test composite primary keys.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk (
+  key1  bigint NOT NULL
+, key2  bigint NOT NULL
+, key3  bigint NOT NULL
+, val   bigint
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Integration test table used for volume testing composite primary keys.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    ((x - 1) % 10) + 1 AS key1,
+    (((x - 1) / 10) % 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM generate_series(1, 10000) AS x;

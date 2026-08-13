@@ -358,11 +358,20 @@ def build_config_managers_from_args(
 
         # Build a list of ConfigManager objects
         for pre_build_configs in pre_build_configs_list:
-            config_manager = ConfigManager.build_config_manager(**pre_build_configs)
+            try:
+                config_manager = ConfigManager.build_config_manager(**pre_build_configs)
 
-            # Append post build configs to ConfigManager object
-            config_manager = build_config_from_args(args, config_manager)
-
+                # Append post build configs to ConfigManager object
+                config_manager = build_config_from_args(args, config_manager)
+            except Exception as e:
+                table_obj = pre_build_configs.get(consts.CONFIG_PRE_BUILD_TABLE_OBJ)
+                if table_obj and consts.CONFIG_TABLE_NAME in table_obj:
+                    raise exceptions.BuildConfigException(
+                        f"Validation failed for table '{table_obj[consts.CONFIG_TABLE_NAME]}': {e}"
+                    ) from e
+                raise exceptions.BuildConfigException(
+                    f"Validation build failed: {e}"
+                ) from e
             # Append ConfigManager object to configs list
             configs.append(config_manager)
         return configs

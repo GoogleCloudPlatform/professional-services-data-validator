@@ -35,6 +35,7 @@ import ibis.expr.rules as rlz
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
+from ibis.backends.base import BaseBackend
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
@@ -61,7 +62,7 @@ from ibis.expr.types import (
 
 # Do not remove these lines, they trigger patching of Ibis code.
 # We patch Ibis native compilers/backends directly.
-import third_party.ibis.ibis_mysql.compiler  # noqa
+import third_party.ibis.ibis_mysql  # noqa
 import third_party.ibis.ibis_postgres  # noqa
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
@@ -208,7 +209,7 @@ def format_raw_sql(translator, op):
 
 def sa_format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
-    return sa.text(raw_sql.args[0])
+    return sa.literal_column(f"({raw_sql.args[0]})")
 
 
 def sa_format_hashbytes_mysql(translator, op):
@@ -333,6 +334,11 @@ TimestampValue.to_char = compile_to_char
 # This is an additional DVT only method. We tag this onto BaseAlchemyBackend
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
+
+# Default to False for native SQL tuple/struct IN expression support.
+# Backends supporting native tuple IN (e.g., PostgreSQL, MySQL, Snowflake, Oracle, Db2)
+# override this method to return True in their respective packages.
+BaseBackend.dvt_tuple_in_supported = lambda self: False
 
 BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql

@@ -398,7 +398,7 @@ def column_validation_test(
     expected_rows=0,
     result_handler: Optional[str] = None,
     cast_to_bigint: Optional[bool] = False,
-):
+) -> "DataFrame":
     """Generic column validation test.
 
     Standard test expects an empty dataframe as the assertion but has override.
@@ -469,7 +469,7 @@ def row_validation_test(
     use_random_row=False,
     random_row_batch_size=None,
     result_handler: Optional[str] = None,
-):
+) -> "DataFrame":
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
     if comp_fields:
