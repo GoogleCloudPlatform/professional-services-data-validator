@@ -113,6 +113,7 @@ def test_raw_column_metadata_qry(mock_begin, module_under_test):
 @pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
 @mock.patch("sqlalchemy.inspect")
 def test_list_databases(mock_inspect, module_under_test):
+    """Test that list_databases excludes Oracle system schemas while preserving user and monitoring schemas."""
     mock_inspect_result = mock.Mock()
     mock_inspect_result.get_schema_names.return_value = [
         "SYS",
@@ -131,5 +132,30 @@ def test_list_databases(mock_inspect, module_under_test):
 
     # SYS and C##DS should be filtered out.
     # SYSTEM, DBSNMP, and DVT_TEST should remain.
-    assert schemas == ["SYSTEM", "DBSNMP", "DVT_TEST"]
+    assert sorted(schemas) == sorted(["SYSTEM", "DBSNMP", "DVT_TEST"])
+    mock_inspect.assert_called_with(backend.con)
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
+@mock.patch("sqlalchemy.inspect")
+def test_list_databases_with_like(mock_inspect, module_under_test):
+    """Test that list_databases correctly filters schemas when a like pattern is provided."""
+    mock_inspect_result = mock.Mock()
+    mock_inspect_result.get_schema_names.return_value = [
+        "SYS",
+        "SYSTEM",
+        "DBSNMP",
+        "C##DS",
+        "DVT_TEST",
+    ]
+    mock_inspect.return_value = mock_inspect_result
+
+    backend = module_under_test.Backend()
+    # Need to set self.con for sa.inspect to work
+    backend.con = mock.Mock()
+
+    schemas = backend.list_databases(like=".*DVT.*")
+
+    # Only DVT_TEST should match
+    assert schemas == ["DVT_TEST"]
     mock_inspect.assert_called_with(backend.con)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from typing import Iterable, Literal, Optional, Tuple, Dict, Any
 
 import sqlalchemy as sa
@@ -20,7 +21,6 @@ from sqlalchemy.dialects.oracle.base import (
     RESERVED_WORDS as ORACLE_RESERVED_WORDS,
 )
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
-import re
 
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
@@ -44,7 +44,6 @@ ORACLE_SYSTEM_SCHEMAS = {
     "ANONYMOUS",
     "APPQOSSYS",
     "AUDSYS",
-    "C##DS",
     "CTXSYS",
     "DBSFWUSER",
     "DGPDB_INT",
@@ -302,13 +301,25 @@ class Backend(BaseAlchemyBackend):
         padded values, which DVT may want to trim"""
         return char_type[0] in ["CHAR", "NCHAR"]
 
-    def list_databases(self) -> list:
+    def list_databases(self, like: Optional[str] = None) -> list[str]:
+        """Return a list of user schemas in the Oracle database.
+
+        Excludes Oracle-maintained system schemas to avoid performance bottlenecks
+        and permission errors during table discovery.
+
+        Args:
+            like: Optional pattern string to filter returned schema names.
+
+        Returns:
+            list[str]: Filtered list of schema names.
+        """
         all_schemas = sa.inspect(self.con).get_schema_names()
-        return [
+        schemas = [
             schema
             for schema in all_schemas
             if schema.upper() not in ORACLE_SYSTEM_SCHEMAS
         ]
+        return self._filter_with_like(schemas, like)
 
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""
