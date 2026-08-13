@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [8.9.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.1...v8.9.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* Cast binary values to hex in combiner before reporting them to screen ([#1811](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1811)) ([03e031e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/03e031e228b29f0e6a3bd2bd25b074144b81eeea))
+
 ## [8.9.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.0...v8.9.1) (2026-08-06)
 
 
