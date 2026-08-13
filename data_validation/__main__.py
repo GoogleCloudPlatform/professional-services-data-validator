@@ -404,30 +404,41 @@ def config_runner(args):
             )
 
             # Check if total task count is available for dynamic chunking
-            job_count_str = (
-                os.environ.get("JOB_COMPLETION_COUNT") or
-                os.environ.get("CLOUD_RUN_TASK_COUNT")
+            job_count_str = os.environ.get("JOB_COMPLETION_COUNT") or os.environ.get(
+                "CLOUD_RUN_TASK_COUNT"
             )
 
             if job_count_str:
                 # --- Dynamic Round-Robin Chunking ---
                 job_count = int(job_count_str)
-                all_files = sorted(cli_tools.list_validations(config_dir=args.config_dir))
+                all_files = sorted(
+                    cli_tools.list_validations(config_dir=args.config_dir)
+                )
 
                 # Select the round-robin slice for this task index
-                my_files = [f for idx, f in enumerate(all_files) if idx % job_count == job_index]
+                my_files = [
+                    f for idx, f in enumerate(all_files) if idx % job_count == job_index
+                ]
 
                 errors = False
                 for file in my_files:
                     config_managers = build_config_managers_from_yaml(args, file)
                     try:
-                        logging.info("Currently running the validation for YAML file: %s", file)
+                        logging.info(
+                            "Currently running the validation for YAML file: %s", file
+                        )
                         run_validations(args, config_managers)
                     except Exception as e:
                         errors = True
-                        logging.error("Error '%s' occurred while running config file %s.", str(e), file)
+                        logging.error(
+                            "Error '%s' occurred while running config file %s.",
+                            str(e),
+                            file,
+                        )
                 if errors:
-                    raise exceptions.ValidationException("Some of the validations raised an exception")
+                    raise exceptions.ValidationException(
+                        "Some of the validations raised an exception"
+                    )
             else:
                 # --- Legacy 1-to-1 Fallback ---
                 config_file_path = (
@@ -437,7 +448,9 @@ def config_runner(args):
                 )
                 setattr(args, "config_dir", None)
                 setattr(args, "config_file", config_file_path)
-                config_managers = build_config_managers_from_yaml(args, config_file_path)
+                config_managers = build_config_managers_from_yaml(
+                    args, config_file_path
+                )
                 run_validations(args, config_managers)
         else:
             if args.kube_completions:

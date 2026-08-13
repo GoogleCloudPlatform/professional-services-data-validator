@@ -383,7 +383,9 @@ def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_dynamic_chunking(mock_args, mock_list, mock_build, mock_run, caplog):
+def test_config_runner_dynamic_chunking(
+    mock_args, mock_list, mock_build, mock_run, caplog
+):
     """Test dynamic round-robin chunking in Kubernetes Completion Environment.
     With job_count=3 and job_index=1, and 5 files:
     Sorted files: a.yaml, b.yaml, c.yaml, d.yaml, e.yaml
@@ -398,7 +400,9 @@ def test_config_runner_dynamic_chunking(mock_args, mock_list, mock_build, mock_r
         main.config_runner(args)
 
         # Assert no warnings, check info logs
-        assert "Running in parallel completions mode with dynamic chunking." in caplog.text
+        assert (
+            "Running in parallel completions mode with dynamic chunking." in caplog.text
+        )
         assert "Task 1 of 3. Assigned 2 of 5 files." in caplog.text
 
         # Assert validations called twice for the correct files in round-robin order
@@ -425,7 +429,9 @@ def test_config_runner_dynamic_chunking(mock_args, mock_list, mock_build, mock_r
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_dynamic_chunking_failures(mock_args, mock_list, mock_build, mock_run, caplog):
+def test_config_runner_dynamic_chunking_failures(
+    mock_args, mock_list, mock_build, mock_run, caplog
+):
     """Test dynamic round-robin chunking with failures in one of the validations."""
     mock_run.side_effect = [ValueError("Boom!"), 10]
     caplog.set_level(logging.ERROR)
