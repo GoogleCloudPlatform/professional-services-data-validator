@@ -1067,26 +1067,39 @@ FROM generate_series(1, 10000) AS x;
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_lobs;
 CREATE TABLE pso_data_validator.dvt_lobs
-(   id         int NOT NULL PRIMARY KEY
-,   col_blob   bytea
-,   col_clob   text
-,   col_nclob  text
+(   id              int NOT NULL PRIMARY KEY
+,   col_blob        bytea
+,   col_clob        text
+,   col_nclob       text
+,   col_blob_fail   bytea
+,   col_clob_fail   text
+,   col_nclob_fail  text
 );
 COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table';
 
-INSERT INTO pso_data_validator.dvt_lobs (id, col_blob, col_clob, col_nclob)
+INSERT INTO pso_data_validator.dvt_lobs
+(id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
 VALUES
 ( 1
 , repeat('A', 500000)::bytea
 , repeat('A', 500000)
 , repeat('A', 500000)
+, (repeat('A', 499999) || 'Z')::bytea
+, repeat('A', 499999) || 'Z'
+, repeat('A', 499999) || 'Z'
 ),
 ( 2
 , repeat('B', 500000)::bytea
 , repeat('B', 500000)
 , repeat('B', 500000)
+, (repeat('B', 499999) || 'Z')::bytea
+, repeat('B', 499999) || 'Z'
+, repeat('B', 499999) || 'Z'
 ),
 ( 3
+, NULL
+, NULL
+, NULL
 , NULL
 , NULL
 , NULL

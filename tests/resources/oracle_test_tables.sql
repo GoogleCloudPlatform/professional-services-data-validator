@@ -1028,10 +1028,13 @@ COMMIT;
 
 DROP TABLE pso_data_validator.dvt_lobs;
 CREATE TABLE pso_data_validator.dvt_lobs
-(   id         NUMBER(5) NOT NULL PRIMARY KEY
-,   col_blob   BLOB
-,   col_clob   CLOB
-,   col_nclob  NCLOB
+(   id              NUMBER(5) NOT NULL PRIMARY KEY
+,   col_blob        BLOB
+,   col_clob        CLOB
+,   col_nclob       NCLOB
+,   col_blob_fail   BLOB
+,   col_clob_fail   CLOB
+,   col_nclob_fail  NCLOB
 );
 COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table, tests documented sample';
 
@@ -1042,8 +1045,8 @@ DECLARE
   v_chunk2 VARCHAR2(4000) := RPAD('B', 4000, 'B');
   v_blob1 BLOB;
   v_blob2 BLOB;
-  v_raw1 RAW(2000) := HEXTORAW(RPAD('41', 2000, '41'));
-  v_raw2 RAW(2000) := HEXTORAW(RPAD('42', 2000, '42'));
+  v_raw1 RAW(2000) := HEXTORAW(RPAD('41', 4000, '41'));
+  v_raw2 RAW(2000) := HEXTORAW(RPAD('42', 4000, '42'));
 BEGIN
   DBMS_LOB.CREATETEMPORARY(v_blob1, TRUE);
   DBMS_LOB.CREATETEMPORARY(v_blob2, TRUE);
@@ -1060,14 +1063,17 @@ BEGIN
     DBMS_LOB.APPEND(v_blob2, v_raw2);
   END LOOP;
 
-  INSERT INTO pso_data_validator.dvt_lobs (id, col_blob, col_clob, col_nclob)
-  VALUES (1, v_blob1, v_clob1, TO_NCLOB(v_clob1));
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (1, v_blob1, v_clob1, TO_NCLOB(v_clob1), v_blob1, v_clob1, TO_NCLOB(v_clob1));
 
-  INSERT INTO pso_data_validator.dvt_lobs (id, col_blob, col_clob, col_nclob)
-  VALUES (2, v_blob2, v_clob2, TO_NCLOB(v_clob2));
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (2, v_blob2, v_clob2, TO_NCLOB(v_clob2), v_blob2, v_clob2, TO_NCLOB(v_clob2));
 
-  INSERT INTO pso_data_validator.dvt_lobs (id, col_blob, col_clob, col_nclob)
-  VALUES (3, NULL, NULL, NULL);
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (3, NULL, NULL, NULL, NULL, NULL, NULL);
 
   COMMIT;
 END;

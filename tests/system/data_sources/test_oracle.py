@@ -1373,7 +1373,7 @@ def test_custom_query_row_validation_clob_to_postgres():
         "CASE WHEN DBMS_LOB.GETLENGTH(col_clob) = 0 OR col_clob IS NULL "
         "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_clob, 4)) END AS col_clob, "
         "CASE WHEN DBMS_LOB.GETLENGTH(col_nclob) = 0 OR col_nclob IS NULL "
-        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_nclob, 4)) END AS col_nclob "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(TO_CLOB(col_nclob), 4)) END AS col_nclob "
         "FROM pso_data_validator.dvt_lobs"
     )
     target_query = (
@@ -1389,6 +1389,67 @@ def test_custom_query_row_validation_clob_to_postgres():
         target_query=target_query,
         comp_fields="col_clob,col_nclob",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_blob_fail_to_postgres():
+    """Oracle to PostgreSQL BLOB row validation mismatch failure test."""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, CASE WHEN DBMS_LOB.GETLENGTH(col_blob_fail) = 0 OR col_blob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_blob_fail, 4)) END AS col_blob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, encode(sha256(col_blob_fail), 'hex') AS col_blob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    df = custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_blob_fail",
+        assert_df_not_empty=True,
+    )
+    assert len(df) == 2
+    assert (df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_clob_fail_to_postgres():
+    """Oracle to PostgreSQL CLOB/NCLOB row validation mismatch failure test."""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_clob_fail) = 0 OR col_clob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_clob_fail, 4)) END AS col_clob_fail, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_nclob_fail) = 0 OR col_nclob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(TO_CLOB(col_nclob_fail), 4)) END AS col_nclob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, "
+        "encode(sha256(convert_to(col_clob_fail, 'UTF8')), 'hex') AS col_clob_fail, "
+        "encode(sha256(convert_to(col_nclob_fail, 'UTF8')), 'hex') AS col_nclob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    df = custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_clob_fail,col_nclob_fail",
+        assert_df_not_empty=True,
+    )
+    assert len(df) == 4
+    assert (df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL).all()
 
 
 @mock.patch(
