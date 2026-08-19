@@ -27,7 +27,9 @@ ARG _APP_VERSION=""
 WORKDIR /app
 
 # Oracle client
-RUN apt-get update && apt-get -y install libaio1 libaio-dev unzip wget
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends libaio1 libaio-dev unzip wget && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV OTN_URL=https://download.oracle.com/otn_software/linux/instantclient
 RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
@@ -36,9 +38,9 @@ RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
     mkdir -p /opt/oracle && \
     unzip -o instantclient-sdk-linuxx64.zip -d /opt/oracle/ && \
     unzip -o instantclient-basic-linuxx64.zip -d /opt/oracle/ && \
-    unzip -o instantclient-tools-linuxx64.zip -d /opt/oracle/
-# Copy the version specific client path to a known name.
-RUN cp -r /opt/oracle/instantclient_* /opt/oracle/instantclient
+    unzip -o instantclient-tools-linuxx64.zip -d /opt/oracle/ && \
+    rm -f instantclient-*.zip && \
+    mv /opt/oracle/instantclient_* /opt/oracle/instantclient
 
 ENV ORACLE_HOME=/opt/oracle/instantclient
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient

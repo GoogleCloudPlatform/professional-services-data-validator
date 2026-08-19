@@ -157,18 +157,20 @@ FROM python:3.12-slim-bookworm
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
 
-RUN apt-get update
-
 # Oracle client
-RUN apt-get -y install libaio1 libaio-dev unzip wget
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends libaio1 libaio-dev unzip wget && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV OTN_URL=https://download.oracle.com/otn_software/linux/instantclient
 RUN wget -q ${OTN_URL}/218000/instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip && \
     wget -q ${OTN_URL}/218000/instantclient-basic-linux.x64-21.8.0.0.0dbru.zip && \
     wget -q ${OTN_URL}/218000/instantclient-tools-linux.x64-21.8.0.0.0dbru.zip && \
-    mkdir /opt/oracle && \
-    unzip instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
-    unzip instantclient-basic-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
-    unzip instantclient-tools-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/
+    mkdir -p /opt/oracle && \
+    unzip -o instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
+    unzip -o instantclient-basic-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
+    unzip -o instantclient-tools-linux.x64-21.8.0.0.0dbru.zip -d /opt/oracle/ && \
+    rm -f instantclient-*.zip
 ENV ORACLE_HOME=/opt/oracle/instantclient_21_8
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_8
 
@@ -179,9 +181,9 @@ ENV PIPOPTS="--root-user-action=ignore"
 RUN mkdir ${DVT_HOME}
 RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} --upgrade pip
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} google_pso_data_validator
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} oracledb
+RUN pip install ${PIPOPTS} --upgrade pip
+RUN pip install ${PIPOPTS} google_pso_data_validator
+RUN pip install ${PIPOPTS} oracledb
 
 # Entrypoint
 ENTRYPOINT ["python","-m","data_validation"]
