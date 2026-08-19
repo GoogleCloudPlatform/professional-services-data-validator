@@ -16,7 +16,8 @@
 # for example when using an Oracle wallet for authentication.
 # Otherwise, use the generic Dockerfile.
 
-FROM python:3.12.1-slim
+# Using "-bookworm" because libaio1 is still present under its original name in that release.
+FROM python:3.12-slim-bookworm
 
 # App version is passed as a build argument.
 # If not provided, the latest version will be installed.
@@ -26,8 +27,8 @@ ARG _APP_VERSION=""
 WORKDIR /app
 
 # Oracle client
-RUN apt-get update
-RUN apt-get -y install libaio1 libaio-dev unzip wget
+RUN apt-get update && apt-get -y install libaio1 libaio-dev unzip wget
+
 ENV OTN_URL=https://download.oracle.com/otn_software/linux/instantclient
 RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
     wget -q ${OTN_URL}/instantclient-basic-linuxx64.zip && \

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12.1-alpine
+FROM python:3.12-alpine
 
 # App version is passed as a build argument.
 # If not provided, the latest version will be installed.
@@ -38,15 +38,16 @@ RUN curl -o ${PKGDIR}/mssql-tools.apk https://download.microsoft.com/download/b6
 RUN apk add --allow-untrusted /tmp/msodbcsql.apk /tmp/mssql-tools.apk
 
 # Install the Data Validator from PyPI
+# Requires force of newer pyarrow on Alpine for build to succeed.
 ENV PIPOPTS="--root-user-action=ignore"
 RUN pip install ${PIPOPTS} --upgrade pip
 RUN \
   if [ -z "$_APP_VERSION" ]; then \
     echo "Installing latest version of google-pso-data-validator"; \
-    pip install ${PIPOPTS} google-pso-data-validator; \
+    pip install ${PIPOPTS} pyarrow==21.0.0 google-pso-data-validator; \
   else \
     echo "Installing google-pso-data-validator version ${_APP_VERSION}"; \
-    pip install ${PIPOPTS} google-pso-data-validator==${_APP_VERSION}; \
+    pip install ${PIPOPTS} pyarrow==21.0.0 google-pso-data-validator==${_APP_VERSION}; \
   fi
 RUN pip install ${PIPOPTS} pyodbc
 

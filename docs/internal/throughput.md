@@ -152,7 +152,7 @@ First we need to define a container with DVT installed into a Python virtual env
 Example `Dockerfile`:
 
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.12-slim-bookworm
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True

@@ -16,7 +16,7 @@
 # It can optionally build a specific version of the tool if the `_APP_VERSION`
 # argument is provided.
 
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
