@@ -44,7 +44,7 @@ ENV ORACLE_HOME=/opt/oracle/instantclient
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient
 
 # Copy and set up the entrypoint script
-COPY entrypoint.sh .
+COPY samples/docker/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Install the Data Validator from PyPI
