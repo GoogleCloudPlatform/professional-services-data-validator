@@ -33,9 +33,12 @@ RUN apk add curl build-base gcc cmake unixodbc-dev
 # If the commands below fail please refer to the Microsoft instructions linked above for guidance.
 ENV PKGDIR=/tmp
 ENV architecture=amd64
-RUN curl -o ${PKGDIR}/msodbcsql.apk https://download.microsoft.com/download/9dcab408-e0d4-4571-a81a-5a0951e3445f/msodbcsql18_18.6.1.1-1_$architecture.apk
-RUN curl -o ${PKGDIR}/mssql-tools.apk https://download.microsoft.com/download/b60bb8b6-d398-4819-9950-2e30cf725fb0/mssql-tools18_18.6.1.1-1_$architecture.apk
-RUN apk add --allow-untrusted /tmp/msodbcsql.apk /tmp/mssql-tools.apk
+RUN curl -o ${PKGDIR}/msodbcsql.apk https://download.microsoft.com/download/9dcab408-e0d4-4571-a81a-5a0951e3445f/msodbcsql18_18.6.1.1-1_$architecture.apk && \
+    echo "2c7ef3db6afe2be6fe45e744b116a41d2619187398b2b199bd0ee62c1e0b2924  ${PKGDIR}/msodbcsql.apk" | sha256sum -c - && \
+    curl -o ${PKGDIR}/mssql-tools.apk https://download.microsoft.com/download/b60bb8b6-d398-4819-9950-2e30cf725fb0/mssql-tools18_18.6.1.1-1_$architecture.apk && \
+    echo "d4589924db75e1117a6d6d90e409b028573775ddb140784f4ecb691f7755ba59  ${PKGDIR}/mssql-tools.apk" | sha256sum -c - && \
+    apk add --allow-untrusted ${PKGDIR}/msodbcsql.apk ${PKGDIR}/mssql-tools.apk && \
+    rm -f ${PKGDIR}/msodbcsql.apk ${PKGDIR}/mssql-tools.apk
 
 # Install the Data Validator from PyPI
 # Requires force of newer pyarrow on Alpine for build to succeed.
