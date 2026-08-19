@@ -1,0 +1,22 @@
+instructions: |
+  This repository contains the Google Cloud Data Validation Tool (DVT), a Python CLI for comparing source and target data across heterogeneous databases and warehouses.
+
+  Key repo guidance:
+  - Prefer small, targeted changes that preserve the existing CLI conventions and validation abstractions.
+  - Use pytest and nox for validation; the canonical unit test entry point is `python -m pytest tests/unit --quiet` and the project also defines `nox -s unit_default_python` and `nox -s lint`.
+  - Keep changes compatible with the existing Ibis-based architecture and Data Validation Tool connection patterns.
+  - Follow the repository's formatting and lint standards (Black and Flake8) and avoid adding broad dependencies unless needed.
+
+scripts:
+  - name: Setup dev environment
+    command: python -m pip install --upgrade pip && python -m pip install -e .
+    triggers:
+      - session.create
+  - name: Run unit tests
+    command: python -m pytest tests/unit --quiet
+  - name: Run lint checks
+    command: nox -s lint
+
+automation:
+  auto_issue_session: true
+  remote_control: false
