@@ -1025,3 +1025,57 @@ SELECT
 FROM DUAL
 CONNECT BY ROWNUM <= 10000;
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_lobs;
+CREATE TABLE pso_data_validator.dvt_lobs
+(   id              NUMBER(5) NOT NULL PRIMARY KEY
+,   col_blob        BLOB
+,   col_clob        CLOB
+,   col_nclob       NCLOB
+,   col_blob_fail   BLOB
+,   col_clob_fail   CLOB
+,   col_nclob_fail  NCLOB
+);
+COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table, tests documented sample';
+
+DECLARE
+  v_clob1 CLOB := '';
+  v_clob2 CLOB := '';
+  v_chunk1 VARCHAR2(4000) := RPAD('A', 4000, 'A');
+  v_chunk2 VARCHAR2(4000) := RPAD('B', 4000, 'B');
+  v_blob1 BLOB;
+  v_blob2 BLOB;
+  v_raw1 RAW(2000) := HEXTORAW(RPAD('41', 4000, '41'));
+  v_raw2 RAW(2000) := HEXTORAW(RPAD('42', 4000, '42'));
+BEGIN
+  DBMS_LOB.CREATETEMPORARY(v_blob1, TRUE);
+  DBMS_LOB.CREATETEMPORARY(v_blob2, TRUE);
+
+  -- 125 chunks * 4000 chars = 500,000 characters (~500KB)
+  FOR i IN 1..125 LOOP
+    v_clob1 := v_clob1 || v_chunk1;
+    v_clob2 := v_clob2 || v_chunk2;
+  END LOOP;
+
+  -- 250 chunks * 2000 bytes = 500,000 bytes (~500KB)
+  FOR i IN 1..250 LOOP
+    DBMS_LOB.APPEND(v_blob1, v_raw1);
+    DBMS_LOB.APPEND(v_blob2, v_raw2);
+  END LOOP;
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (1, v_blob1, v_clob1, TO_NCLOB(v_clob1), v_blob1, v_clob1, TO_NCLOB(v_clob1));
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (2, v_blob2, v_clob2, TO_NCLOB(v_clob2), v_blob2, v_clob2, TO_NCLOB(v_clob2));
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (3, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  COMMIT;
+END;
+/
+
