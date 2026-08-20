@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from typing import Iterable, Literal, Optional, Tuple, Dict, Any
 
 import sqlalchemy as sa
@@ -20,7 +21,6 @@ from sqlalchemy.dialects.oracle.base import (
     RESERVED_WORDS as ORACLE_RESERVED_WORDS,
 )
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
-import re
 
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
@@ -35,6 +35,55 @@ EXTRA_RESERVED_WORDS = set(
         "ROWID",
     ]
 )
+
+
+# We use a hardcoded list instead of checking the `oracle_maintained` column
+# in `all_users` because we want more granular control over which schemas to ignore.
+# For example, some customers use SYSTEM and DBSNMP for their own monitoring tables.
+ORACLE_SYSTEM_SCHEMAS = {
+    "ANONYMOUS",
+    "APPQOSSYS",
+    "AUDSYS",
+    "CTXSYS",
+    "DBSFWUSER",
+    "DGPDB_INT",
+    "DIP",
+    "DVF",
+    "DVSYS",
+    "EXFSYS",
+    "FLOWS_FILES",
+    "GGSYS",
+    "GSMADMIN_INTERNAL",
+    "GSMCATUSER",
+    "GSMUSER",
+    "LBACSYS",
+    "MDDATA",
+    "MDSYS",
+    "MGMT_VIEW",
+    "OJVMSYS",
+    "OLAPSYS",
+    "ORACLE_OCM",
+    "ORDDATA",
+    "ORDPLUGINS",
+    "ORDSYS",
+    "OUTLN",
+    "PDBADMIN",
+    "REMOTE_SCHEDULER_AGENT",
+    "SI_INFORMTN_SCHEMA",
+    "SPATIAL_CSW_ADMIN_USR",
+    "SPATIAL_WFS_ADMIN_USR",
+    "SYS",
+    "SYS$UMF",
+    "SYSBACKUP",
+    "SYSDG",
+    "SYSKM",
+    "SYSMAN",
+    "SYSRAC",
+    "TSMSYS",
+    "WMSYS",
+    "XDB",
+    "XS$NULL",
+}
 
 
 def _ora_denormalize_name(self, name):
@@ -252,8 +301,25 @@ class Backend(BaseAlchemyBackend):
         padded values, which DVT may want to trim"""
         return char_type[0] in ["CHAR", "NCHAR"]
 
-    def list_databases(self) -> list:
-        return sa.inspect(self.con).get_schema_names()
+    def list_databases(self, like: Optional[str] = None) -> list[str]:
+        """Return a list of user schemas in the Oracle database.
+
+        Excludes Oracle-maintained system schemas to avoid performance bottlenecks
+        and permission errors during table discovery.
+
+        Args:
+            like: Optional pattern string to filter returned schema names.
+
+        Returns:
+            list[str]: Filtered list of schema names.
+        """
+        all_schemas = sa.inspect(self.con).get_schema_names()
+        schemas = [
+            schema
+            for schema in all_schemas
+            if schema.upper() not in ORACLE_SYSTEM_SCHEMAS
+        ]
+        return self._filter_with_like(schemas, like)
 
     def estimated_row_count(self, database: str, table: str) -> Optional[int]:
         """Return estimated row count using system metadata."""
