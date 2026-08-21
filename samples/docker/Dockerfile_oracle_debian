@@ -16,7 +16,8 @@
 # for example when using an Oracle wallet for authentication.
 # Otherwise, use the generic Dockerfile.
 
-FROM python:3.12.1-slim
+# Using "-bookworm" because libaio1 is still present under its original name in that release.
+FROM python:3.12-slim-bookworm
 
 # App version is passed as a build argument.
 # If not provided, the latest version will be installed.
@@ -26,8 +27,10 @@ ARG _APP_VERSION=""
 WORKDIR /app
 
 # Oracle client
-RUN apt-get update
-RUN apt-get -y install libaio1 libaio-dev unzip wget
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends libaio1 libaio-dev unzip wget && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV OTN_URL=https://download.oracle.com/otn_software/linux/instantclient
 RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
     wget -q ${OTN_URL}/instantclient-basic-linuxx64.zip && \
@@ -35,15 +38,15 @@ RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
     mkdir -p /opt/oracle && \
     unzip -o instantclient-sdk-linuxx64.zip -d /opt/oracle/ && \
     unzip -o instantclient-basic-linuxx64.zip -d /opt/oracle/ && \
-    unzip -o instantclient-tools-linuxx64.zip -d /opt/oracle/
-# Copy the version specific client path to a known name.
-RUN cp -r /opt/oracle/instantclient_* /opt/oracle/instantclient
+    unzip -o instantclient-tools-linuxx64.zip -d /opt/oracle/ && \
+    rm -f instantclient-*.zip && \
+    mv /opt/oracle/instantclient_* /opt/oracle/instantclient
 
 ENV ORACLE_HOME=/opt/oracle/instantclient
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient
 
 # Copy and set up the entrypoint script
-COPY entrypoint.sh .
+COPY samples/docker/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Install the Data Validator from PyPI

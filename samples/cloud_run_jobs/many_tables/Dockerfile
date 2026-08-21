@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script builds the Docker image for the Data Validator.
-# It can optionally build a specific version of the tool if the `_APP_VERSION`
-# argument is provided.
-
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
-
-RUN apt-get update
 
 # Install DVT
 ENV DVT_HOME=/opt/dvt
@@ -30,15 +24,15 @@ ENV PIPOPTS="--root-user-action=ignore"
 RUN mkdir ${DVT_HOME}
 RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} --upgrade pip
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} google_pso_data_validator
+RUN pip install ${PIPOPTS} --upgrade pip
+RUN pip install ${PIPOPTS} google_pso_data_validator
 
 # Optional: Uncomment the following lines to install additional drivers.
-# RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} 'ibis-framework[impala]'
-# RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} oracledb
-# RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} pyodbc
-# RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
-# RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} teradatasql
+# RUN pip install ${PIPOPTS} 'ibis-framework[impala]'
+# RUN pip install ${PIPOPTS} oracledb
+# RUN pip install ${PIPOPTS} pyodbc
+# RUN pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
+# RUN pip install ${PIPOPTS} teradatasql
 
 # Entrypoint
 ENTRYPOINT ["python","-m","data_validation"]
