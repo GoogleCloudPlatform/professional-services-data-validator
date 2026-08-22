@@ -79,6 +79,50 @@ def test_import(module_under_test):
 
 
 @pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
+@mock.patch("third_party.ibis.ibis_teradata.teradatasql.connect")
+def test_connect_uses_driver_defaults(mock_connect, module_under_test):
+    backend = module_under_test.Backend()
+
+    backend.do_connect(host="teradata.example", user_name="dvt_user")
+
+    mock_connect.assert_called_once_with(
+        host="teradata.example",
+        user="dvt_user",
+    )
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
+@mock.patch("third_party.ibis.ibis_teradata.teradatasql.connect")
+def test_connect_explicit_params_override_json_params(mock_connect, module_under_test):
+    backend = module_under_test.Backend()
+
+    backend.do_connect(
+        host="teradata-staging",
+        user_name="cli_user",
+        password="cli_password",
+        port=2345,
+        logmech="LDAP",
+        json_params={
+            "host": "teradata-dev",
+            "user": "json_user",
+            "password": "json_password",
+            "dbs_port": 1234,
+            "logmech": "TD2",
+            "connect_timeout": 30,
+        },
+    )
+
+    mock_connect.assert_called_once_with(
+        host="teradata-staging",
+        user="cli_user",
+        password="cli_password",
+        dbs_port=2345,
+        logmech="LDAP",
+        connect_timeout=30,
+    )
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
 def test_raw_column_metadata_no_args(module_under_test):
     backend = module_under_test.Backend()
     with pytest.raises(AssertionError):
