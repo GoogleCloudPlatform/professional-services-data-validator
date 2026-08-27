@@ -162,6 +162,21 @@ def generate_report(
     return result_df
 
 
+def _sanitize_df_for_duckdb(df: pandas.DataFrame) -> pandas.DataFrame:
+    if df.empty:
+        df = df.copy()
+        for col in df.columns:
+            df[col] = df[col].astype("string")
+        return df
+    schema = ibis.memtable(df).schema()
+    null_cols = [col for col, dtype in schema.items() if dtype.is_null()]
+    if null_cols:
+        df = df.copy()
+        for col in null_cols:
+            df[col] = df[col].astype("string")
+    return df
+
+
 def _generate_report_slice(
     run_metadata: "RunMetadata",
     source_df: "DataFrame",
@@ -189,39 +204,42 @@ def _generate_report_slice(
             A pandas DataFrame with the results of the validation in the same
             schema as the report table.
     """
-    client = ibis.pandas.connect(
-        {
-            consts.RESULT_TYPE_SOURCE: source_df,
-            consts.RESULT_TYPE_TARGET: target_df,
-        }
-    )
-    source = client.table(consts.RESULT_TYPE_SOURCE)
-    target = client.table(consts.RESULT_TYPE_TARGET)
+    con = ibis.duckdb.connect()
+    con.create_table(consts.RESULT_TYPE_SOURCE, _sanitize_df_for_duckdb(source_df))
+    con.create_table(consts.RESULT_TYPE_TARGET, _sanitize_df_for_duckdb(target_df))
+    source = con.table(consts.RESULT_TYPE_SOURCE)
+    target = con.table(consts.RESULT_TYPE_TARGET)
 
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
-    differences_df = client.execute(differences_pivot)
+    differences_df = con.execute(differences_pivot)
 
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
-    source_pivot_df = client.execute(source_pivot)
+    source_pivot_df = con.execute(source_pivot)
 
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
-    target_pivot_df = client.execute(target_pivot)
+    target_pivot_df = con.execute(target_pivot)
 
-    con = ibis.pandas.connect(
-        {
-            consts.RESULT_TYPE_SOURCE: source_pivot_df,
-            consts.RESULT_TYPE_DIFFERENCES: differences_df,
-            consts.RESULT_TYPE_TARGET: target_pivot_df,
-        }
+    con.create_table(
+        consts.RESULT_TYPE_SOURCE + "_pivot", _sanitize_df_for_duckdb(source_pivot_df)
     )
+    con.create_table(
+        consts.RESULT_TYPE_DIFFERENCES, _sanitize_df_for_duckdb(differences_df)
+    )
+    con.create_table(
+        consts.RESULT_TYPE_TARGET + "_pivot", _sanitize_df_for_duckdb(target_pivot_df)
+    )
+    source_pivot_tbl = con.table(consts.RESULT_TYPE_SOURCE + "_pivot")
+    target_pivot_tbl = con.table(consts.RESULT_TYPE_TARGET + "_pivot")
+    differences_pivot_tbl = con.table(consts.RESULT_TYPE_DIFFERENCES)
+
     joined = _join_pivots(
-        con.tables.source, con.tables.target, con.tables.differences, join_on_fields
+        source_pivot_tbl, target_pivot_tbl, differences_pivot_tbl, join_on_fields
     )
 
     documented, run_metadata = _add_metadata(joined, run_metadata)
@@ -230,7 +248,7 @@ def _generate_report_slice(
         logging.debug("-- ** Combiner Query ** --")
         logging.debug(documented.compile())
 
-    result_df = client.execute(documented)
+    result_df = con.execute(documented)
     result_df["validation_status"] = result_df["validation_status"].fillna(
         consts.VALIDATION_STATUS_FAIL
     )
