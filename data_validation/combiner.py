@@ -26,6 +26,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import ibis
+import ibis.backends.duckdb  # noqa: F401
 import ibis.expr.datatypes as dt
 import pandas
 
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 # At around 140 columns we hit RecursionError when unioning Ibis subqueries.
 # This constant is a threshold at which we slice up the input Dataframes
 # and stitch them back together again after Ibis processing.
-COMBINER_COLUMN_SLICE_WIDTH = 120
+COMBINER_COLUMN_SLICE_WIDTH = 60
 
 COMBINER_GET_SUMMARY_EXC_TEXT = (
     "Error while generating summary report of row validation results"
@@ -88,6 +89,8 @@ def generate_report(
     is_value_comparison=False,
     verbose=False,
 ) -> "DataFrame":
+    import sys
+    sys.setrecursionlimit(max(sys.getrecursionlimit(), 20000))
     """Combine results into a report.
 
     This function is a wrapper around _generate_report_slice(). _generate_report_slice() does the main work, this
@@ -113,21 +116,12 @@ def generate_report(
 
     join_on_fields = tuple(join_on_fields)
 
-    validation_columns = run_metadata.validations.keys()
-    # slice_thresholds is a list of points at which we should break up the Dataframe by column.
-    # e.g. [10, 20, 30] would mean process columns 0-9, 10-19 and 20-the max column.
-    # 1. len(...) / COMBINER_COLUMN_SLICE_WIDTH: Divides total columns by the slice width to get the number of slices.
-    # 2. int(...) + 1: int()+1 is effectively ceil() which is what we want to get the actual whole number of slices
-    # 3. _ * COMBINER_COLUMN_SLICE_WIDTH: Multiplies each number by the slice width to get actual column counts for each slice.
-    slice_thresholds = [
-        (_ * COMBINER_COLUMN_SLICE_WIDTH)
-        for _ in range(int(len(validation_columns) / COMBINER_COLUMN_SLICE_WIDTH) + 1)
-    ]
+    validation_columns = list(run_metadata.validations.keys())
 
     result_df = None
     # Process the input Dataframes in slices of columns to avoid "RecursionError"s.
-    for slice_start in slice_thresholds:
-        columns_in_vertical_slice = list(validation_columns)[
+    for slice_start in range(0, len(validation_columns), COMBINER_COLUMN_SLICE_WIDTH):
+        columns_in_vertical_slice = validation_columns[
             slice_start : slice_start + COMBINER_COLUMN_SLICE_WIDTH
         ]
         # Ensure any join columns are included in the column slice.
@@ -166,14 +160,16 @@ def _sanitize_df_for_duckdb(df: pandas.DataFrame) -> pandas.DataFrame:
     if df.empty:
         df = df.copy()
         for col in df.columns:
-            df[col] = df[col].astype("string")
+            if df[col].dtype == object:
+                df[col] = df[col].astype("string")
         return df
-    schema = ibis.memtable(df).schema()
-    null_cols = [col for col, dtype in schema.items() if dtype.is_null()]
-    if null_cols:
-        df = df.copy()
-        for col in null_cols:
-            df[col] = df[col].astype("string")
+    obj_cols = [col for col in df.columns if df[col].dtype == object]
+    if obj_cols:
+        null_cols = [col for col in obj_cols if df[col].isnull().all()]
+        if null_cols:
+            df = df.copy()
+            for col in null_cols:
+                df[col] = df[col].astype("string")
     return df
 
 
@@ -213,33 +209,15 @@ def _generate_report_slice(
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
-    differences_df = con.execute(differences_pivot)
-
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
-    source_pivot_df = con.execute(source_pivot)
-
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
-    target_pivot_df = con.execute(target_pivot)
-
-    con.create_table(
-        consts.RESULT_TYPE_SOURCE + "_pivot", _sanitize_df_for_duckdb(source_pivot_df)
-    )
-    con.create_table(
-        consts.RESULT_TYPE_DIFFERENCES, _sanitize_df_for_duckdb(differences_df)
-    )
-    con.create_table(
-        consts.RESULT_TYPE_TARGET + "_pivot", _sanitize_df_for_duckdb(target_pivot_df)
-    )
-    source_pivot_tbl = con.table(consts.RESULT_TYPE_SOURCE + "_pivot")
-    target_pivot_tbl = con.table(consts.RESULT_TYPE_TARGET + "_pivot")
-    differences_pivot_tbl = con.table(consts.RESULT_TYPE_DIFFERENCES)
 
     joined = _join_pivots(
-        source_pivot_tbl, target_pivot_tbl, differences_pivot_tbl, join_on_fields
+        source_pivot, target_pivot, differences_pivot, join_on_fields
     )
 
     documented, run_metadata = _add_metadata(joined, run_metadata)
@@ -252,6 +230,12 @@ def _generate_report_slice(
     result_df["validation_status"] = result_df["validation_status"].fillna(
         consts.VALIDATION_STATUS_FAIL
     )
+    if consts.NUM_RANDOM_ROWS in result_df.columns:
+        result_df[consts.NUM_RANDOM_ROWS] = (
+            result_df[consts.NUM_RANDOM_ROWS]
+            .where(result_df[consts.NUM_RANDOM_ROWS].notnull(), None)
+            .astype(object)
+        )
     return result_df
 
 
@@ -296,10 +280,7 @@ def _calculate_difference(
         or isinstance(source_value, ibis.expr.types.generic.NullColumn)
     ):
         # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
-        if is_value_comparison:
-            difference = pct_difference = ibis.null()
-        else:
-            difference = pct_difference = ibis.null().cast("float64")
+        difference = pct_difference = ibis.null().cast("float64")
         validation_status = (
             ibis.case()
             .when(
@@ -342,7 +323,10 @@ def _calculate_difference(
                 source_value.isnull() & target_value.isnull(),
                 consts.VALIDATION_STATUS_SUCCESS,
             )
-            .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
+            .when(
+                th_diff.isnan() | th_diff.isnull() | (th_diff > 0.0),
+                consts.VALIDATION_STATUS_FAIL,
+            )
             .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()
         )
@@ -374,7 +358,8 @@ def _calculate_differences(
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
         # for the difference to be well defined.
-        differences_joined = source.join(target, join_on_fields, how="inner")
+        predicates = [source[k].identical_to(target[k]) for k in join_on_fields]
+        differences_joined = source.join(target, predicates, how="inner")
     else:
         # When no join_on_fields are present, we expect only one row per table.
         # This is validated in generate_report before this function is called.
@@ -471,10 +456,10 @@ def _pivot_result(
                         .cast("string")
                         .name(consts.COMBINER_COLUMN_NAME),
                         primary_keys,
-                        ibis.literal(validation.num_random_rows).name(
+                        ibis.literal(validation.num_random_rows).cast("int64").name(
                             consts.NUM_RANDOM_ROWS
                         ),
-                        result[field].cast("string").name(consts.COMBINER_AGG_VALUE),
+                        _cast_agg_value(result[field]).name(consts.COMBINER_AGG_VALUE),
                     )
                     + join_on_fields
                 )
@@ -483,16 +468,29 @@ def _pivot_result(
     return pivot
 
 
+def _cast_agg_value(expr):
+    """Cast agg value to string, handling timezone offsets and nan/null conversion."""
+    casted = expr.cast("string")
+    if expr.type().is_timestamp():
+        casted = casted.re_replace(r" 00:00:00(\.0+)?$", "")
+        casted = casted.re_replace(r"\+00$", "+00:00")
+    return casted.fillna("nan")
+
+
 def _as_json(expr):
     """Make field value into valid string.
 
     https://stackoverflow.com/a/3020108/101923
     """
+    casted = expr.cast("string")
+    if expr.type().is_timestamp():
+        casted = casted.re_replace(r" 00:00:00(\.0+)?$", "")
+        casted = casted.re_replace(r"\+00$", "+00:00")
     return (
-        expr.cast("string")
+        casted
         .fillna("null")
         .re_replace(r"\\", r"\\\\")
-        .re_replace('"', '\\"')
+        .re_replace('"', r'\\"')
     )
 
 
@@ -502,26 +500,11 @@ def _join_pivots(
     differences: "IbisTable",
     join_on_fields: tuple,
 ):
-    if join_on_fields:
-        join_values = []
-        for field in join_on_fields:
-            join_values.append(
-                ibis.literal(json.dumps(field))
-                + ibis.literal(': "')
-                + _as_json(target[field])
-                + ibis.literal('"')
-            )
-
-        group_by_columns = (
-            ibis.literal("{") + ibis.literal(", ").join(join_values) + ibis.literal("}")
-        ).name(consts.GROUP_BY_COLUMNS)
-    else:
-        group_by_columns = (
-            ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
-        )
-
     join_keys = (consts.VALIDATION_NAME,) + join_on_fields
-    source_difference = source.join(differences, join_keys, how="outer")[
+    source_diff_predicates = [
+        source[k].identical_to(differences[k]) for k in join_keys
+    ]
+    source_difference = source.join(differences, source_diff_predicates, how="outer")[
         [source[field] for field in join_keys]
         + [
             source[consts.VALIDATION_TYPE],
@@ -537,8 +520,33 @@ def _join_pivots(
             differences[consts.VALIDATION_STATUS],
         ]
     ]
-    joined = source_difference.join(target, join_keys, how="outer")[
-        source_difference[consts.VALIDATION_NAME],
+
+    if join_on_fields:
+        join_values = []
+        for field in join_on_fields:
+            coalesced_field = source_difference[field].fillna(target[field])
+            join_values.append(
+                ibis.literal(json.dumps(field))
+                + ibis.literal(': "')
+                + _as_json(coalesced_field)
+                + ibis.literal('"')
+            )
+
+        group_by_columns = (
+            ibis.literal("{") + ibis.literal(", ").join(join_values) + ibis.literal("}")
+        ).name(consts.GROUP_BY_COLUMNS)
+    else:
+        group_by_columns = (
+            ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
+        )
+
+    target_predicates = [
+        source_difference[k].identical_to(target[k]) for k in join_keys
+    ]
+    joined = source_difference.join(target, target_predicates, how="outer")[
+        source_difference[consts.VALIDATION_NAME]
+        .fillna(target[consts.VALIDATION_NAME])
+        .name(consts.VALIDATION_NAME),
         source_difference[consts.VALIDATION_TYPE]
         .fillna(target[consts.VALIDATION_TYPE])
         .name(consts.VALIDATION_TYPE),
@@ -552,8 +560,12 @@ def _join_pivots(
         target[consts.COMBINER_COLUMN_NAME].name(consts.TARGET_COLUMN_NAME),
         target[consts.COMBINER_AGG_VALUE].name(consts.TARGET_AGG_VALUE),
         group_by_columns,
-        source_difference[consts.CONFIG_PRIMARY_KEYS],
-        source_difference[consts.NUM_RANDOM_ROWS],
+        source_difference[consts.CONFIG_PRIMARY_KEYS]
+        .fillna(target[consts.CONFIG_PRIMARY_KEYS])
+        .name(consts.CONFIG_PRIMARY_KEYS),
+        source_difference[consts.NUM_RANDOM_ROWS]
+        .fillna(target[consts.NUM_RANDOM_ROWS])
+        .name(consts.NUM_RANDOM_ROWS),
         source_difference[consts.VALIDATION_DIFFERENCE],
         source_difference[consts.VALIDATION_PCT_DIFFERENCE],
         source_difference[consts.VALIDATION_PCT_THRESHOLD],

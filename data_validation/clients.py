@@ -23,6 +23,9 @@ import google.oauth2.service_account
 from google.cloud import bigquery
 from google.api_core import client_options
 import ibis
+import ibis.backends.duckdb  # noqa: F401
+import ibis.backends.pandas  # noqa: F401
+_ = (ibis.pandas, ibis.duckdb)
 
 import pandas
 
