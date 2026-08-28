@@ -26,7 +26,6 @@ import logging
 from typing import TYPE_CHECKING
 
 import ibis
-import ibis.backends.duckdb  # noqa: F401
 import ibis.expr.datatypes as dt
 import pandas
 
@@ -90,6 +89,7 @@ def generate_report(
     verbose=False,
 ) -> "DataFrame":
     import sys
+
     sys.setrecursionlimit(max(sys.getrecursionlimit(), 20000))
     """Combine results into a report.
 
@@ -216,9 +216,7 @@ def _generate_report_slice(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
 
-    joined = _join_pivots(
-        source_pivot, target_pivot, differences_pivot, join_on_fields
-    )
+    joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
 
     documented, run_metadata = _add_metadata(joined, run_metadata)
 
@@ -456,9 +454,9 @@ def _pivot_result(
                         .cast("string")
                         .name(consts.COMBINER_COLUMN_NAME),
                         primary_keys,
-                        ibis.literal(validation.num_random_rows).cast("int64").name(
-                            consts.NUM_RANDOM_ROWS
-                        ),
+                        ibis.literal(validation.num_random_rows)
+                        .cast("int64")
+                        .name(consts.NUM_RANDOM_ROWS),
                         _cast_agg_value(result[field]).name(consts.COMBINER_AGG_VALUE),
                     )
                     + join_on_fields
@@ -486,12 +484,7 @@ def _as_json(expr):
     if expr.type().is_timestamp():
         casted = casted.re_replace(r" 00:00:00(\.0+)?$", "")
         casted = casted.re_replace(r"\+00$", "+00:00")
-    return (
-        casted
-        .fillna("null")
-        .re_replace(r"\\", r"\\\\")
-        .re_replace('"', r'\\"')
-    )
+    return casted.fillna("null").re_replace(r"\\", r"\\\\").re_replace('"', r'\\"')
 
 
 def _join_pivots(
@@ -501,9 +494,7 @@ def _join_pivots(
     join_on_fields: tuple,
 ):
     join_keys = (consts.VALIDATION_NAME,) + join_on_fields
-    source_diff_predicates = [
-        source[k].identical_to(differences[k]) for k in join_keys
-    ]
+    source_diff_predicates = [source[k].identical_to(differences[k]) for k in join_keys]
     source_difference = source.join(differences, source_diff_predicates, how="outer")[
         [source[field] for field in join_keys]
         + [

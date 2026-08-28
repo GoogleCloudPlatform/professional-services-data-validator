@@ -24,11 +24,8 @@ import ibis.expr.datatypes as dt
 import pandas
 import pytest
 
-# Import tabulate and ibis duckdb/pandas backends here because they are lazily loaded which fails when fakefs is in play.
+# Import tabulate here because it is lazily loaded which fails when fakefs is in play.
 import tabulate  # noqa: F401
-import ibis.backends.duckdb  # noqa: F401
-import ibis.backends.pandas  # noqa: F401
-_ = (ibis.pandas, ibis.duckdb)
 
 from data_validation import consts
 from data_validation.result_handlers.bigquery import BQRH_NO_WRITE_MESSAGE
@@ -783,11 +780,7 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
         for _ in caplog.records
         if _.message == f"Results written to BigQuery, run id: {run_id}"
     )
-    assert any(
-        _
-        for _ in caplog.records
-        if CAPLOG_DF_HEADER in _.message
-    )
+    assert any(_ for _ in caplog.records if CAPLOG_DF_HEADER in _.message)
     assert any(_ for _ in caplog.records if f"fail {run_id}" in _.message)
 
 

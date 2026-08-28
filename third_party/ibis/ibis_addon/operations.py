@@ -46,11 +46,14 @@ import third_party.ibis.ibis_pandas
 # In Ibis 7.1.0, BigQueryType handles type conversion natively.
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import bigquery_cast
+from ibis.backends.duckdb.compiler import DuckDBSQLExprTranslator
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+
+_ = (ibis.pandas, ibis.duckdb)
 from ibis.expr.types import (
     BinaryValue,
     NumericValue,
@@ -471,26 +474,25 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
     SybaseExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
 
-try:
-    from ibis.backends.duckdb.compiler import DuckDBSQLExprTranslator
 
-    def duckdb_sa_epoch_seconds(translator, op):
-        arg = translator.translate(op.arg)
-        return sa.cast(sa.func.epoch(arg), sa.BIGINT)
+def duckdb_sa_epoch_seconds(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.cast(sa.func.epoch(arg), sa.BIGINT)
 
-    DuckDBSQLExprTranslator._registry[ops.ExtractEpochSeconds] = duckdb_sa_epoch_seconds
 
-    def duckdb_sa_cast(t, op):
-        arg = op.arg
-        typ = op.to
-        arg_dtype = arg.dtype
+DuckDBSQLExprTranslator._registry[ops.ExtractEpochSeconds] = duckdb_sa_epoch_seconds
 
-        sa_arg = t.translate(arg)
-        if arg_dtype.is_binary() and typ.is_string():
-            return sa.func.lower(sa.func.hex(sa_arg))
 
-        return sa_fixed_cast(t, op)
+def duckdb_sa_cast(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.dtype
 
-    DuckDBSQLExprTranslator._registry[ops.Cast] = duckdb_sa_cast
-except Exception:
-    pass
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        return sa.func.lower(sa.func.hex(sa_arg))
+
+    return sa_fixed_cast(t, op)
+
+
+DuckDBSQLExprTranslator._registry[ops.Cast] = duckdb_sa_cast

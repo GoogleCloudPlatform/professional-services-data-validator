@@ -15,13 +15,11 @@ We resolved all unit test failures (`pytest tests/unit`) and BigQuery system int
 * **Recursion & Slicing**: Set `sys.setrecursionlimit(max(sys.getrecursionlimit(), 20000))` and tuned `COMBINER_COLUMN_SLICE_WIDTH = 60` with clean Python `range(0, len(...), width)` step slicing.
 * **Output Format**: Coerced `NUM_RANDOM_ROWS` to object dtype with `None` when null to match expected validation schema.
 
-### 2. Backend Discovery & PyFakeFS Compatibility
-[data_validation/clients.py](file:///Users/mudupalli/professional-services-data-validator/data_validation/clients.py) and [tests/unit/test_data_validation.py](file:///Users/mudupalli/professional-services-data-validator/tests/unit/test_data_validation.py)
-* Added top-level backend imports (`import ibis.backends.duckdb`, `import ibis.backends.pandas`) and eager attribute evaluation (`_ = (ibis.pandas, ibis.duckdb)`) so that backends are cached on the `ibis` module before `pyfakefs` intercepts filesystem lookups.
-
-### 3. Ibis Addon Operations (DuckDB Compiler)
+### 2. Consolidated Backend Discovery & Ibis Addon Operations
 [third_party/ibis/ibis_addon/operations.py](file:///Users/mudupalli/professional-services-data-validator/third_party/ibis/ibis_addon/operations.py)
-* Added DuckDB compiler translators for `ops.ExtractEpochSeconds` (epoch conversion) and `ops.Cast` (binary to lower hex string).
+* **Consolidated Imports**: Imported `DuckDBSQLExprTranslator` at the top level of `operations.py` alongside the other backend translators (`BigQuery`, `Impala`, `Postgres`, `MySQL`, `Pandas`).
+* **Backend Pre-Resolution**: Added eager evaluation `_ = (ibis.pandas, ibis.duckdb)` in `operations.py` so that backends are registered and cached on the `ibis` module during package startup before `pyfakefs` intercepts filesystem lookups in unit tests.
+* **DuckDB Custom Translations**: Added DuckDB compiler translators for `ops.ExtractEpochSeconds` (epoch conversion) and `ops.Cast` (binary to lower hex string).
 
 ### 4. Oracle Database Listing
 [third_party/ibis/ibis_oracle/\_\_init\_\_.py](file:///Users/mudupalli/professional-services-data-validator/third_party/ibis/ibis_oracle/__init__.py)
