@@ -157,17 +157,32 @@ def generate_report(
 
 
 def _sanitize_df_for_duckdb(df: pandas.DataFrame) -> pandas.DataFrame:
+    df_copied = False
     if df.empty:
         df = df.copy()
         for col in df.columns:
             if df[col].dtype == object:
                 df[col] = df[col].astype("string")
         return df
+
+    # DuckDB's native pandas/arrow integration requires timedelta64 to be nanosecond precision ('timedelta64[ns]')
+    for col in df.columns:
+        if (
+            pandas.api.types.is_timedelta64_dtype(df[col])
+            and df[col].dtype != "timedelta64[ns]"
+        ):
+            if not df_copied:
+                df = df.copy()
+                df_copied = True
+            df[col] = df[col].astype("timedelta64[ns]")
+
     obj_cols = [col for col in df.columns if df[col].dtype == object]
     if obj_cols:
         null_cols = [col for col in obj_cols if df[col].isnull().all()]
         if null_cols:
-            df = df.copy()
+            if not df_copied:
+                df = df.copy()
+                df_copied = True
             for col in null_cols:
                 df[col] = df[col].astype("string")
     return df
@@ -279,14 +294,28 @@ def _calculate_difference(
     ):
         # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
         difference = pct_difference = ibis.null().cast("float64")
+        is_source_null = (
+            source_value.isnull()
+            | (source_value.cast("string") == "<NA>")
+            | (source_value.cast("string") == "nan")
+            | (source_value.cast("string") == "None")
+            | (source_value.cast("string") == "NULL")
+        )
+        is_target_null = (
+            target_value.isnull()
+            | (target_value.cast("string") == "<NA>")
+            | (target_value.cast("string") == "nan")
+            | (target_value.cast("string") == "None")
+            | (target_value.cast("string") == "NULL")
+        )
         validation_status = (
             ibis.case()
             .when(
-                target_value.isnull() & source_value.isnull(),
+                is_target_null & is_source_null,
                 consts.VALIDATION_STATUS_SUCCESS,
             )
             .when(
-                target_value == source_value,
+                target_value.cast("string") == source_value.cast("string"),
                 consts.VALIDATION_STATUS_SUCCESS,
             )
             .else_(consts.VALIDATION_STATUS_FAIL)
