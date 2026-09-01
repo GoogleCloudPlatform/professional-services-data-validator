@@ -61,7 +61,7 @@ CONN = {
     "password": SYBASE_PASSWORD,
     "database": SYBASE_DATABASE,
     "odbc_driver": SYBASE_ODBC_DRIVER,
-    "query": '{"autocommit": "True"}',
+    "query": '{"autocommit": "True", "tds_version":"5.0"}',
 }
 
 # Expected result from partitioning table on 3 keys, 9 partitions
@@ -848,7 +848,7 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--odbc-driver",
         SYBASE_ODBC_DRIVER,
         "--query",
-        '{"autocommit": "True"}',
+        '{"autocommit": "True", "tds_version":"5.0"}',
     ]
     connections_add_test(
         caplog, consts.SOURCE_TYPE_SYBASE, conn_args, tmp_path, monkeypatch
