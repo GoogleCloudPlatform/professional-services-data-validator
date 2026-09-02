@@ -180,13 +180,17 @@ data-validation connections add
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Teradata                Connection name
     --host HOST                                         Teradata host
-    --port PORT                                         Teradata port, defaults to 1025
+    [--port PORT]                                       Teradata port; uses the driver default when omitted
     --user-name USER                                    Teradata user
     --password PASSWORD                                 Teradata password
-    [--logmech LOGMECH]                                 Teradata logmech, defaults to "TD2"
+    [--logmech LOGMECH]                                 Teradata logmech; uses the driver default when omitted
     [--use-no-lock-tables USE_NO_LOCK_TABLES]           Use access lock for queries, defaults to "False"
     [--json-params JSON_PARAMS]                         Additional teradatasql JSON string dict (Optional)
 ```
+
+Connection options supplied explicitly take precedence over equivalent
+`--json-params` values. The driver parameter names for `--port` and
+`--user-name` are `dbs_port` and `user`, respectively.
 
 ## Oracle
 
