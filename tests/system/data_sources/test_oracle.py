@@ -194,32 +194,6 @@ EXPECTED_PARTITION_FILTER = [
     ],
 ]
 
-# For some reason integers from subqueries are converted to decimals
-QUERY_PARTITION_FILTER = [
-    [
-        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
-    ],
-    [
-        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
-    ],
-]
-
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -232,7 +206,7 @@ def test_generate_partitions(tmp_path: pathlib.Path):
         pk="course_id,quarter_id,approved",
     )
     partition_query_test(
-        QUERY_PARTITION_FILTER,
+        EXPECTED_PARTITION_FILTER,
         tmp_path,
         pk="course_id,quarter_id,approved",
     )

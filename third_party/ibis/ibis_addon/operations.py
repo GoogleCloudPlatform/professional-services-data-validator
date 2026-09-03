@@ -318,7 +318,12 @@ def _dvt_list_tables(self, like=None, database=None) -> list:
 
 
 def _dvt_fetch_from_cursor(self, cursor, schema: sch.Schema) -> pd.DataFrame:
-    """Alternative to BaseAlchemyBackend.fetch_from_cursor that does not coerce Decimals to float."""
+    """Alternative to BaseAlchemyBackend.fetch_from_cursor that does not coerce Decimals to float.
+
+    In Ibis 8.x+, BaseAlchemyBackend.fetch_from_cursor and the coerce_float parameter were removed
+    as part of the transition to PyArrow-backed execution. Therefore, this method should no longer
+    be needed when we next upgrade Ibis.
+    """
     try:
         df = pd.DataFrame.from_records(cursor, columns=schema.names, coerce_float=False)
     except Exception:
