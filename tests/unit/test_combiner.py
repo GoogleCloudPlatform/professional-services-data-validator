@@ -16,9 +16,9 @@ import decimal
 import json
 import logging
 
-import numpy
 import pandas
 import pandas.testing
+import pyarrow
 import pytest
 
 from freezegun import freeze_time
@@ -72,12 +72,12 @@ def pandas_df(cols: int, rows: int):
     for i in range(cols):
         col_name = f"count__col{i + 1}"
         data[col_name] = range(rows)
-    return pandas.DataFrame(data)
+    return pyarrow.table(data)
 
 
 def test_generate_report_with_different_columns(module_under_test):
-    source = pandas.DataFrame({"count": [1], "sum": [3]})
-    target = pandas.DataFrame({"count": [2]})
+    source = pyarrow.table({"count": [1], "sum": [3]})
+    target = pyarrow.table({"count": [2]})
     with pytest.raises(
         ValueError, match="Expected source and target to have same schema"
     ):
@@ -89,9 +89,31 @@ def test_generate_report_with_different_columns(module_under_test):
         )
 
 
+def test_generate_report_with_arrow_decimal(module_under_test):
+    decimal_type = pyarrow.decimal128(38, 0)
+    source = pyarrow.table(
+        {
+            "count": pyarrow.array(
+                [decimal.Decimal("100000000000000000000")], type=decimal_type
+            )
+        }
+    )
+    target = pyarrow.table(
+        {
+            "count": pyarrow.array(
+                [decimal.Decimal("100000000000000000000")], type=decimal_type
+            )
+        }
+    )
+
+    report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+
+
 def test_generate_report_with_too_many_rows(module_under_test):
-    source = pandas.DataFrame({"count": [1, 1]})
-    target = pandas.DataFrame({"count": [2, 2]})
+    source = pyarrow.table({"count": [1, 1]})
+    target = pyarrow.table({"count": [2, 2]})
     report = module_under_test.generate_report(
         # Validation occurs before run_metadata is needed.
         EXAMPLE_RUN_METADATA,
@@ -128,7 +150,7 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
             num_random_rows=None,
             threshold=0.0,
         )
-        for _ in input_df.columns
+        for _ in input_df.column_names
     }
     run_metadata = metadata.RunMetadata(
         validations=validations,
@@ -410,8 +432,8 @@ def test_generate_report_without_group_by(
 ):
     report = module_under_test.generate_report(
         run_metadata,
-        source_df,
-        target_df,
+        pyarrow.Table.from_pandas(source_df, preserve_index=False),
+        pyarrow.Table.from_pandas(target_df, preserve_index=False),
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
@@ -684,8 +706,8 @@ def test_generate_report_with_group_by(
 ):
     report = module_under_test.generate_report(
         run_metadata,
-        source_df,
-        target_df,
+        pyarrow.Table.from_pandas(source_df, preserve_index=False),
+        pyarrow.Table.from_pandas(target_df, preserve_index=False),
         join_on_fields=join_on_fields,
     )
     # Sort columns by name to order in the comparison.
@@ -1006,8 +1028,8 @@ def test_generate_report_with_nan_agg_value(
 ):
     report = module_under_test.generate_report(
         run_metadata,
-        source_df,
-        target_df,
+        pyarrow.Table.from_pandas(source_df, preserve_index=False),
+        pyarrow.Table.from_pandas(target_df, preserve_index=False),
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
@@ -1191,7 +1213,12 @@ def test_get_summary_with_values_for_all_stats(
     module_under_test, caplog, run_metadata, result_df, source_df, target_df, expected
 ):
     caplog.set_level(logging.INFO)
-    module_under_test._get_summary(run_metadata, result_df, source_df, target_df)
+    module_under_test._get_summary(
+        run_metadata,
+        result_df,
+        pyarrow.Table.from_pandas(source_df, preserve_index=False),
+        pyarrow.Table.from_pandas(target_df, preserve_index=False),
+    )
 
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"
@@ -1233,37 +1260,16 @@ def test_get_summary_with_empty_inputs(
     module_under_test, caplog, run_metadata, result_df, source_df, target_df
 ):
     caplog.set_level(logging.INFO)
-    module_under_test._get_summary(run_metadata, result_df, source_df, target_df)
+    module_under_test._get_summary(
+        run_metadata,
+        result_df,
+        pyarrow.Table.from_pandas(source_df, preserve_index=False),
+        pyarrow.Table.from_pandas(target_df, preserve_index=False),
+    )
     assert all(
         module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
         for _ in caplog.records
     )
-
-
-def test_convert_large_ints_to_decimals(module_under_test):
-    df = pandas.DataFrame(
-        {
-            "normal_int": [1, 2],
-            "large_pos": [module_under_test._MAX_INT64 * 10, 1],
-            "large_neg": [module_under_test._MIN_INT64 * 10, 1],
-            "string_col": ["a", "b"],
-            "bool_col": [True, False],
-            "float_col": [1.1, 2.2],
-        }
-    )
-
-    res = module_under_test._convert_large_ints_to_decimals(df)
-
-    assert isinstance(res["large_pos"][0], decimal.Decimal)
-    assert str(res["large_pos"][0]) == str(module_under_test._MAX_INT64 * 10)
-    assert isinstance(res["large_pos"][1], int)
-
-    assert isinstance(res["large_neg"][0], decimal.Decimal)
-    assert str(res["large_neg"][0]) == str(module_under_test._MIN_INT64 * 10)
-    assert isinstance(res["large_neg"][1], int)
-
-    assert isinstance(res["normal_int"][0], (int, numpy.integer))
-    assert isinstance(res["string_col"][0], str)
 
 
 def test_generate_report_with_binary_data(module_under_test):
@@ -1275,8 +1281,8 @@ def test_generate_report_with_binary_data(module_under_test):
     """
     # Binary data with non-UTF-8 bytes (e.g. 0xac)
     binary_data = b"\xac\xed\x00\x05"
-    source_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
-    target_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
+    source_table = pyarrow.table({"id": [1], "bin_col": [binary_data]})
+    target_table = pyarrow.table({"id": [1], "bin_col": [binary_data]})
 
     run_metadata = metadata.RunMetadata(
         validations={
@@ -1302,8 +1308,8 @@ def test_generate_report_with_binary_data(module_under_test):
 
     report = module_under_test.generate_report(
         run_metadata,
-        source_df,
-        target_df,
+        source_table,
+        target_table,
         join_on_fields=("id",),
         is_value_comparison=True,
     )
