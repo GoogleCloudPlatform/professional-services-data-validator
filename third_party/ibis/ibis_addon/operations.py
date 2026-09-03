@@ -32,15 +32,17 @@ import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
+import ibis.expr.schema as sch
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 from ibis.backends.base import BaseBackend
-from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
+from ibis.backends.base.sql.alchemy import BaseAlchemyBackend, geospatial_supported
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
+from ibis.formats.pandas import PandasData
 import third_party.ibis.ibis_pandas
 
 # In Ibis 7.1.0, BigQueryType handles type conversion natively.
@@ -315,6 +317,19 @@ def _dvt_list_tables(self, like=None, database=None) -> list:
     return self._filter_with_like(tables, like)
 
 
+def _dvt_fetch_from_cursor(self, cursor, schema: sch.Schema) -> pd.DataFrame:
+    """Alternative to BaseAlchemyBackend.fetch_from_cursor that does not coerce Decimals to float."""
+    try:
+        df = pd.DataFrame.from_records(cursor, columns=schema.names, coerce_float=False)
+    except Exception:
+        cursor.close()
+        raise
+    df = PandasData.convert_table(df, schema)
+    if not df.empty and geospatial_supported:
+        return self._to_geodataframe(df, schema)
+    return df
+
+
 def _sa_whitespace_rstrip(t, op):
     sa_arg = t.translate(op.arg)
     return sa.func.rtrim(sa_arg, string.whitespace)
@@ -334,6 +349,7 @@ TimestampValue.to_char = compile_to_char
 # This is an additional DVT only method. We tag this onto BaseAlchemyBackend
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
+BaseAlchemyBackend.fetch_from_cursor = _dvt_fetch_from_cursor
 
 # Default to False for native SQL tuple/struct IN expression support.
 # Backends supporting native tuple IN (e.g., PostgreSQL, MySQL, Snowflake, Oracle, Db2)
