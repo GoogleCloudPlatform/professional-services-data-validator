@@ -347,6 +347,7 @@ BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary
 BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = (
     bigquery_registry.extract_epoch_seconds
 )
+BigQueryExprTranslator._registry[ops.Literal] = bigquery_registry.format_literal
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
