@@ -132,3 +132,49 @@ def test_decimal_literal_bigquery(bigquery_client):
 
     assert "123.456" in sql_small
     assert "NUMERIC" in sql_small
+
+
+def test_decimal_literal_db2():
+    import sqlalchemy as sa
+    from third_party.ibis.ibis_db2.compiler import Db2Compiler
+
+    schema = ibis.schema({"id": dt.Decimal(31, 0)})
+    t = ibis.table(schema, name="dvt_large_decimals")
+    vals = [decimal.Decimal("223456789012345678901234567890")]
+    expr = t.filter(t.id.isin(vals))
+
+    ast = Db2Compiler.to_ast(expr.op())
+    query = ast.queries[0]
+    metadata = sa.MetaData()
+    sa_t = sa.Table("dvt_large_decimals", metadata, sa.Column("id", sa.DECIMAL(31, 0)))
+    query.context.set_ref(t.op(), sa_t)
+
+    w = query._translate(query.where[0])
+    compiled = str(w.compile(compile_kwargs={"literal_binds": True}))
+    assert "223456789012345678901234567890" in compiled
+    assert "E+" not in compiled
+
+
+def test_decimal_literal_mssql():
+    import sqlalchemy as sa
+    from ibis.backends.mssql.compiler import MsSqlCompiler
+
+    schema = ibis.schema({"id": dt.Decimal(38, 0)})
+    t = ibis.table(schema, name="dvt_large_decimals")
+    vals = [decimal.Decimal("223456789012345678901234567890")]
+    expr = t.filter(t.id.isin(vals))
+
+    ast = MsSqlCompiler.to_ast(expr.op())
+    query = ast.queries[0]
+    metadata = sa.MetaData()
+    sa_t = sa.Table("dvt_large_decimals", metadata, sa.Column("id", sa.DECIMAL(38, 0)))
+    query.context.set_ref(t.op(), sa_t)
+
+    w = query._translate(query.where[0])
+    compiled = str(
+        w.compile(
+            dialect=sa.dialects.mssql.dialect(), compile_kwargs={"literal_binds": True}
+        )
+    )
+    assert "223456789012345678901234567890" in compiled
+    assert "E+" not in compiled

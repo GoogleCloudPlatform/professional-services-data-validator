@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
 import functools
 import itertools
 import operator
@@ -480,6 +481,8 @@ def _literal(t, op):
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
     elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
+    elif dtype.is_decimal() or isinstance(value, decimal.Decimal):
+        return sa.literal_column(format(value, "f"))
     else:
         return sa.literal(value)
 

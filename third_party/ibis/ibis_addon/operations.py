@@ -412,6 +412,7 @@ PostgreSQLExprTranslator._registry[PaddedCharLength] = (
 )
 
 
+MsSqlExprTranslator._registry[ops.Literal] = mssql_registry.sa_format_literal
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
