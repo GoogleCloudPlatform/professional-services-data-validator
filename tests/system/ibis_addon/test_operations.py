@@ -178,3 +178,16 @@ def test_decimal_literal_mssql():
     )
     assert "223456789012345678901234567890" in compiled
     assert "E+" not in compiled
+
+
+def test_null_decimal_literal():
+    from ibis.backends.mssql.compiler import MsSqlCompiler
+    from third_party.ibis.ibis_db2.compiler import Db2Compiler
+
+    expr = ibis.literal(None, type=dt.Decimal(10, 2))
+    # Test that compiling NULL decimal literal does not raise TypeError
+    mssql_res = MsSqlCompiler.to_ast(expr.op()).queries[0]._translate(expr.op())
+    db2_res = Db2Compiler.to_ast(expr.op()).queries[0]._translate(expr.op())
+
+    assert str(mssql_res) == "NULL"
+    assert str(db2_res) == "NULL"

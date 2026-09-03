@@ -27,6 +27,9 @@ def sa_format_literal(t, op):
     dtype = op.dtype
     value = op.value
 
+    if value is None:
+        return sa.null()
+
     if dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
     elif isinstance(dtype, dt.Set):

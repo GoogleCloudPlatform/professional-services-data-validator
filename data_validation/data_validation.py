@@ -159,7 +159,7 @@ class DataValidation(object):
             and client.name == "oracle"
             and ValidationBuilder.is_padded_char(client, raw_data_types, col_name)
         ):
-            char_length = raw_data_types[col_name][2]
+            char_length = raw_data_types[col_name.casefold()][2]
             return [
                 (
                     key_value.ljust(char_length)
@@ -390,7 +390,7 @@ class DataValidation(object):
 
         else:
             warnings.warn(
-                "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
+                "WARNING: No Primary Keys Supplied in Row Validation", UserWarning
             )
             return None
 
