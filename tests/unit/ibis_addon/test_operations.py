@@ -40,6 +40,14 @@ except Exception as exc:
 else:
     SYBASE_SKIP_REASON = ""
 
+try:
+    from third_party.ibis.ibis_teradata.compiler import TeradataCompiler
+except Exception as exc:
+    TeradataCompiler = None
+    TERADATA_SKIP_REASON = f"Teradata compiler unavailable: {exc}"
+else:
+    TERADATA_SKIP_REASON = ""
+
 TABLE_DF = pandas.DataFrame([{"column": "value"}])
 CLIENT = ibis.pandas.connect({"table": TABLE_DF})
 WHERE_FILTER = "id > 100"
@@ -293,6 +301,18 @@ def test_sybase_decimal_literal_compiles_without_scientific_notation():
     assert "E+" not in compiled
 
 
+@pytest.mark.skipif(TeradataCompiler is None, reason=TERADATA_SKIP_REASON)
+def test_teradata_decimal_literal_compiles():
+    schema = ibis.schema({"id": dt.Decimal(38, 0)})
+    t = ibis.table(schema, name="dvt_large_decimals")
+    vals = [decimal.Decimal("5.234567890123457E+29")]
+    expr = t.filter(t.id.isin(vals))
+
+    sql = TeradataCompiler.to_ast(expr.op()).queries[0].compile()
+    assert "Decimal(" not in sql
+    assert "523456789012345700000000000000" in sql
+
+
 def test_null_decimal_literal():
     expr = ibis.literal(None, type=dt.Decimal(10, 2))
     # Test that compiling NULL decimal literal does not raise TypeError
@@ -306,3 +326,9 @@ def test_null_decimal_literal():
     if SybaseCompiler is not None:
         sybase_res = SybaseCompiler.to_ast(expr.op()).queries[0]._translate(expr.op())
         assert str(sybase_res) == "NULL"
+
+    if TeradataCompiler is not None:
+        teradata_res = (
+            TeradataCompiler.to_ast(expr.op()).queries[0]._translate(expr.op())
+        )
+        assert str(teradata_res) == "NULL"
