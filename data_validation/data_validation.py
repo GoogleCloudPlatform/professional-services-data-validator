@@ -145,12 +145,18 @@ class DataValidation(object):
                 for _ in values
             ]
         elif col_type.is_decimal():
+            # Ensure sampled primary key values are preserved as decimal.Decimal
+            # (e.g. converting ints, floats, or numeric strings returned by drivers)
+            # without float precision loss or scientific notation formatting issues in filters.
             return [
                 (
-                    decimal.Decimal(str(_))
-                    if not pandas.isna(_)
-                    and isinstance(_, (int, float, str, decimal.Decimal))
-                    else _
+                    _
+                    if isinstance(_, decimal.Decimal)
+                    else (
+                        decimal.Decimal(str(_))
+                        if not pandas.isna(_) and isinstance(_, (int, float, str))
+                        else _
+                    )
                 )
                 for _ in values
             ]
