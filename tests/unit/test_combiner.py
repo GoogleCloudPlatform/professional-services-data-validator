@@ -121,8 +121,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
         target,
     )
 
-    # TODO: how do we want to handle this going forward?
-    assert len(report) == 16
+    # In the PyArrow implementation, a cross-join of 2 source rows and 2 target rows produces 4 rows.
+    assert len(report) == 4
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -1215,7 +1215,7 @@ def test_get_summary_with_values_for_all_stats(
     caplog.set_level(logging.INFO)
     module_under_test._get_summary(
         run_metadata,
-        result_df,
+        pyarrow.Table.from_pandas(result_df, preserve_index=False),
         pyarrow.Table.from_pandas(source_df, preserve_index=False),
         pyarrow.Table.from_pandas(target_df, preserve_index=False),
     )
@@ -1262,7 +1262,7 @@ def test_get_summary_with_empty_inputs(
     caplog.set_level(logging.INFO)
     module_under_test._get_summary(
         run_metadata,
-        result_df,
+        pyarrow.Table.from_pandas(result_df, preserve_index=False),
         pyarrow.Table.from_pandas(source_df, preserve_index=False),
         pyarrow.Table.from_pandas(target_df, preserve_index=False),
     )

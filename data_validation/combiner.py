@@ -196,6 +196,7 @@ def _rename_columns(table, result_type):
 def _report_for_validation(
     aligned, field, validation, join_on_fields, is_value_comparison
 ):
+    length = aligned.num_rows
     source_value = aligned[f"{field}_{consts.RESULT_TYPE_SOURCE}"]
     target_value = aligned[f"{field}_{consts.RESULT_TYPE_TARGET}"]
     source_type = source_value.type
@@ -203,6 +204,19 @@ def _report_for_validation(
     source_compare, target_compare = _comparison_values(
         source_value, target_value, source_type, target_type
     )
+    if join_on_fields:
+        missing_either = pc.or_kleene(
+            pc.is_null(source_value), pc.is_null(target_value)
+        )
+        pct_threshold = pc.if_else(
+            missing_either,
+            pyarrow.scalar(None, type=pyarrow.float64()),
+            validation.threshold,
+        )
+    else:
+        pct_threshold = pyarrow.array(
+            [validation.threshold] * length, type=pyarrow.float64()
+        )
     difference, pct_difference, validation_status = _comparison_result(
         source_compare,
         target_compare,
@@ -211,7 +225,6 @@ def _report_for_validation(
         validation.threshold,
         is_value_comparison,
     )
-    length = aligned.num_rows
     return pyarrow.table(
         {
             consts.VALIDATION_NAME: pyarrow.array(
@@ -253,9 +266,7 @@ def _report_for_validation(
             ),
             consts.VALIDATION_DIFFERENCE: difference,
             consts.VALIDATION_PCT_DIFFERENCE: pct_difference,
-            consts.VALIDATION_PCT_THRESHOLD: pyarrow.array(
-                [validation.threshold] * length, type=pyarrow.float64()
-            ),
+            consts.VALIDATION_PCT_THRESHOLD: pct_threshold,
             consts.VALIDATION_STATUS: validation_status,
         }
     )
@@ -272,7 +283,10 @@ def _comparison_values(source_value, target_value, source_type, target_type):
     elif pyarrow.types.is_boolean(source_type) or pyarrow.types.is_boolean(target_type):
         source_value = pc.cast(source_value, pyarrow.bool_())
         target_value = pc.cast(target_value, pyarrow.bool_())
-    elif pyarrow.types.is_decimal(source_type) or pyarrow.types.is_float64(source_type):
+    elif pyarrow.types.is_decimal(source_type) or pyarrow.types.is_floating(source_type):
+        # Cast to float32 and round to 4 decimal places to prevent false-positive failures
+        # caused by minor cross-database floating-point imprecision in aggregate calculations
+        # (e.g. AVG, STDDEV, float SUM across heterogeneous database engines).
         source_value = pc.round(pc.cast(source_value, pyarrow.float32()), ndigits=4)
         target_value = pc.round(pc.cast(target_value, pyarrow.float32()), ndigits=4)
     return source_value, target_value
@@ -343,14 +357,18 @@ def _is_null(value):
 def _format_value(value):
     if pyarrow.types.is_binary(value.type):
         return _string_array(
-            [item.hex() if item is not None else "nan" for item in value.to_pylist()]
+            [item.hex() if item is not None else None for item in value.to_pylist()]
         )
+    elif pyarrow.types.is_floating(value.type):
+        return pc.fill_null(pc.cast(value, pyarrow.string()), "nan")
     else:
         formatted = pc.cast(value, pyarrow.string())
     if pyarrow.types.is_timestamp(value.type):
         formatted = pc.replace_substring_regex(formatted, r" 00:00:00(\.0+)?$", "")
+        formatted = pc.replace_substring_regex(formatted, r"(\.0+)?Z$", "+00:00")
+        formatted = pc.replace_substring_regex(formatted, r"\.0+$", "")
         formatted = pc.replace_substring_regex(formatted, r"\+00$", "+00:00")
-    return pc.fill_null(formatted, "nan")
+    return formatted
 
 
 def _group_by_columns(aligned, join_on_fields):
@@ -360,9 +378,8 @@ def _group_by_columns(aligned, join_on_fields):
     for field in join_on_fields:
         source_value = aligned[f"{field}_{consts.RESULT_TYPE_SOURCE}"]
         target_value = aligned[f"{field}_{consts.RESULT_TYPE_TARGET}"]
-        group_values[field] = pc.fill_null(
-            _format_value(source_value), _format_value(target_value)
-        ).to_pylist()
+        value = pc.fill_null(source_value, target_value)
+        group_values[field] = _format_value(value).to_pylist()
     return pyarrow.array(
         [
             json.dumps({field: group_values[field][index] for field in join_on_fields})

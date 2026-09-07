@@ -38,13 +38,29 @@ pytest tests/unit
 pytest tests/unit/test_combiner.py
 ```
 
+If tests fail due to missing dependencies, you can install them by running:
+```bash
+pip install -e.[dev]
+```
+
 ### System / Integration Tests
-Integration tests run against live cloud data sources:
+Integration tests run against live cloud data sources and require specific
+configuration to be passed via environment variables, e.g.:
 
 * **BigQuery Integration Tests**:
   ```bash
-  PROJECT_ID=pso-kokoro-resources pytest tests/system/data_sources/test_bigquery.py
+  PROJECT_ID=my-gcp-project-id pytest tests/system/data_sources/test_bigquery.py
   ```
+
+* **Postgres Integration Tests**:
+  ```bash
+  export PROJECT_ID=my-gcp-project-id
+  export POSTGRES_PASSWORD=my-postgres-password
+  export POSTGRES_HOST=my-postgres-host
+  export POSTGRES_DATABASE=my-postgres-database
+  pytest tests/system/data_sources/test_postgres.py --no-cloud-sql
+  ```
+
 * **Other Data Sources**:
   ```bash
   pytest tests/system/data_sources/test_<source>.py
