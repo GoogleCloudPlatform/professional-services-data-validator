@@ -454,7 +454,7 @@ CAPLOG_DF_HEADER = "validation_name validation_type source_table_name"
 def ibis_pandas():
     import ibis
 
-    return ibis.duckdb.connect()
+    return ibis.pandas.connect()
 
 
 @pytest.fixture
