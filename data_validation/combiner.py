@@ -164,15 +164,11 @@ def _align_tables(source_table, target_table, join_on_fields):
             null_marker = f"__dvt_null_{field}"
             source = source.append_column(
                 key_name,
-                pc.fill_null(
-                    pc.cast(source[f"{field}_source"], pyarrow.string()), null_marker
-                ),
+                pc.fill_null(_format_value(source[f"{field}_source"]), null_marker),
             )
             target = target.append_column(
                 key_name,
-                pc.fill_null(
-                    pc.cast(target[f"{field}_target"], pyarrow.string()), null_marker
-                ),
+                pc.fill_null(_format_value(target[f"{field}_target"]), null_marker),
             )
             join_keys.append(key_name)
         return source.join(target, keys=join_keys, join_type="full outer")
@@ -275,20 +271,14 @@ def _report_for_validation(
 def _comparison_values(source_value, target_value, source_type, target_type):
     if pyarrow.types.is_timestamp(source_type) or pyarrow.types.is_date(source_type):
         source_value = pc.cast(
-            pc.cast(source_value, pyarrow.timestamp("s")), pyarrow.int64()
+            pc.cast(source_value, pyarrow.timestamp("s"), safe=False), pyarrow.int64()
         )
         target_value = pc.cast(
-            pc.cast(target_value, pyarrow.timestamp("s")), pyarrow.int64()
+            pc.cast(target_value, pyarrow.timestamp("s"), safe=False), pyarrow.int64()
         )
     elif pyarrow.types.is_boolean(source_type) or pyarrow.types.is_boolean(target_type):
         source_value = pc.cast(source_value, pyarrow.bool_())
         target_value = pc.cast(target_value, pyarrow.bool_())
-    elif pyarrow.types.is_decimal(source_type) or pyarrow.types.is_floating(source_type):
-        # Cast to float32 and round to 4 decimal places to prevent false-positive failures
-        # caused by minor cross-database floating-point imprecision in aggregate calculations
-        # (e.g. AVG, STDDEV, float SUM across heterogeneous database engines).
-        source_value = pc.round(pc.cast(source_value, pyarrow.float32()), ndigits=4)
-        target_value = pc.round(pc.cast(target_value, pyarrow.float32()), ndigits=4)
     return source_value, target_value
 
 
@@ -306,11 +296,25 @@ def _comparison_result(
         or pyarrow.types.is_null(source_type)
         or pyarrow.types.is_null(target_type)
     )
+
+    def _safe_equal(s_val, t_val):
+        if pyarrow.types.is_decimal(s_val.type):
+            s_val = pc.cast(
+                s_val,
+                pyarrow.decimal256(s_val.type.precision, s_val.type.scale),
+            )
+        if pyarrow.types.is_decimal(t_val.type):
+            t_val = pc.cast(
+                t_val,
+                pyarrow.decimal256(t_val.type.precision, t_val.type.scale),
+            )
+        return pc.fill_null(pc.equal(s_val, t_val), False)
+
     if compare_as_values:
         source_null = _is_null(source_value)
         target_null = _is_null(target_value)
         both_null = pc.and_kleene(source_null, target_null)
-        values_equal = pc.fill_null(pc.equal(source_value, target_value), False)
+        values_equal = _safe_equal(source_value, target_value)
         status = pc.if_else(
             pc.or_kleene(both_null, values_equal),
             consts.VALIDATION_STATUS_SUCCESS,
@@ -319,13 +323,21 @@ def _comparison_result(
         nulls = pyarrow.nulls(len(source_value), type=pyarrow.float64())
         return nulls, nulls, status
 
-    difference = pc.cast(pc.subtract(target_value, source_value), pyarrow.float64())
-    denominator = pc.if_else(pc.equal(source_value, 0), target_value, source_value)
+    source_num = pc.cast(source_value, pyarrow.float64(), safe=False)
+    target_num = pc.cast(target_value, pyarrow.float64(), safe=False)
+    exact_equal = _safe_equal(source_value, target_value)
+    raw_diff = pc.subtract(target_num, source_num)
+    difference = pc.if_else(exact_equal, 0.0, raw_diff)
+    denominator = pc.if_else(pc.equal(source_num, 0), target_num, source_num)
     pct_difference_nonzero = pc.divide(
-        pc.multiply(100.0, pc.cast(difference, pyarrow.float32())),
-        pc.cast(denominator, pyarrow.float64()),
+        pc.multiply(100.0, pc.cast(difference, pyarrow.float32(), safe=False)),
+        pc.cast(denominator, pyarrow.float64(), safe=False),
     )
-    pct_difference = pc.if_else(pc.equal(difference, 0), 0.0, pct_difference_nonzero)
+    pct_difference = pc.if_else(
+        pc.equal(difference, 0),
+        0.0,
+        pc.round(pct_difference_nonzero, ndigits=4),
+    )
     threshold_difference = pc.subtract(pc.abs(pct_difference), threshold)
     both_null = pc.and_kleene(pc.is_null(source_value), pc.is_null(target_value))
     is_failure = pc.or_kleene(
@@ -378,8 +390,8 @@ def _group_by_columns(aligned, join_on_fields):
     for field in join_on_fields:
         source_value = aligned[f"{field}_{consts.RESULT_TYPE_SOURCE}"]
         target_value = aligned[f"{field}_{consts.RESULT_TYPE_TARGET}"]
-        value = pc.fill_null(source_value, target_value)
-        group_values[field] = _format_value(value).to_pylist()
+        value = pc.coalesce(_format_value(source_value), _format_value(target_value))
+        group_values[field] = value.to_pylist()
     return pyarrow.array(
         [
             json.dumps({field: group_values[field][index] for field in join_on_fields})
