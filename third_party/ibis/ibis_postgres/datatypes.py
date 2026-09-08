@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import ibis.expr.datatypes as dt
-from ibis.backends.postgres.datatypes import sa_postgres_interval
+from ibis.backends.postgres.datatypes import PostgresType
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql.base import PGDialect, ischema_names
+from sqlalchemy.dialects.postgresql.base import ischema_names
 
 
 class XML(sqltypes.TypeEngine):
@@ -25,22 +25,20 @@ class XML(sqltypes.TypeEngine):
 
 ischema_names["xml"] = XML
 
-
-@dt.dtype.register(PGDialect, postgresql.INTERVAL)
-def dvt_sa_postgres_interval(_, satype, nullable=True):
-    """DVT override of ibis/backends/postgres/datatypes/sa_postgres_interval to support INTERVAL with no fields."""
-    if satype.fields is None:
-        return dt.Interval(nullable=nullable)
-
-    return sa_postgres_interval(_, satype, nullable)
+orig_to_ibis = PostgresType.to_ibis
 
 
-@dt.dtype.register(PGDialect, postgresql.OID)
-def sa_pg_oid(_, sa_type, nullable=True):
-    return dt.int32(nullable=nullable)
+@classmethod
+def dvt_postgres_to_ibis(cls, typ, nullable=True):
+    if isinstance(typ, postgresql.INTERVAL) and typ.fields is None:
+        return dt.Interval(unit="s", nullable=nullable)
+    elif isinstance(typ, sqltypes.Time):
+        return dt.Time(nullable=nullable)
+    elif isinstance(typ, postgresql.OID):
+        return dt.Int32(nullable=nullable)
+    elif isinstance(typ, XML):
+        return dt.Unknown(nullable=nullable)
+    return orig_to_ibis(typ, nullable=nullable)
 
 
-# Matching Ibis v9.2 behaviour and mapping PostgreSQL xml type to unknown.
-@dt.dtype.register(PGDialect, XML)
-def sa_pg_xml(_, sa_type, nullable=True):
-    return dt.Unknown(nullable=nullable)
+PostgresType.to_ibis = dvt_postgres_to_ibis

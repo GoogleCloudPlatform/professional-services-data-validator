@@ -147,7 +147,7 @@ class MockIbisClient(object):
     _source_type = "BigQuery"
     name = "bigquery"
 
-    def table(self, table, database=None):
+    def table(self, table, database=None, schema=None):
         return MockIbisTable()
 
 

@@ -116,7 +116,7 @@ TERADATA_ROW_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "cast__calendar_date",
             consts.CONFIG_TYPE: "custom",
             consts.CONFIG_DEPTH: 0,
-            consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
+            consts.CONFIG_CUSTOM_IBIS_EXPR: "lambda expr, format_str: expr.strftime(format_str)",
             consts.CONFIG_CUSTOM_PARAMS: [{"format_str": "%Y-%m-%d"}],
         },
         {
@@ -382,6 +382,23 @@ def test_column_validation_time_table_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="udf.dvt_decimals=pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """Teradata to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
@@ -559,6 +576,20 @@ def test_row_validation_core_types_to_bigquery():
         tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
         filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="udf.dvt_decimals=pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 
@@ -1016,6 +1047,7 @@ def test_schema_validation_intervals():
     schema_validation_test(
         tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
         tc="bq-conn",
+        allow_list="interval('M'):interval('s')",
     )
 
 
@@ -1050,6 +1082,46 @@ def test_row_validation_intervals():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_composite_pk_to_bigquery():
+    """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
+    df = row_validation_test(
+        tables="udf.dvt_composite_pk=pso_data_validator.dvt_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=5,
+        filter_status=None,
+    )
+    assert len(df) == 5
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_bigquery():
+    """Test composite primary key high volume row sampling validation."""
+    df = row_validation_test(
+        tables="udf.dvt_vol_composite_pk=pso_data_validator.dvt_vol_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        # Only testing with 1000 due to high elapsed time using higher sample sizes.
+        random_row_batch_size=1000,
+    )
+    assert len(df) == 0
+
+
+####################
+# RAW QUERY TESTS
+####################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,

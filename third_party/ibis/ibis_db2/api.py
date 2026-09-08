@@ -12,22 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# from ibis.backends.base_sqlalchemy.alchemy import to_sqlalchemy
-# from third_party.ibis.ibis_db2.compiler import dialect, rewrites  # noqa: F401
+from typing import Optional
 
 from third_party.ibis.ibis_db2 import Backend as DB2Backend
 import ibm_db_sa  # NOQA fail early if driver is missing
 
+from data_validation.util import dvt_config_string_to_dict
+
 
 def db2_connect(
     host: str = "localhost",
-    user: str = None,
-    password: str = None,
-    port: int = 50000,
-    database: str = None,
-    url: str = None,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    port: Optional[int] = None,
+    database: Optional[str] = None,
+    url: Optional[str] = None,
     driver: str = "ibm_db_sa",
+    connect_args: Optional[str] = None,
 ):
+    connect_args_dict = dvt_config_string_to_dict(connect_args) if connect_args else {}
     backend = DB2Backend()
     backend.do_connect(
         host=host,
@@ -37,5 +40,6 @@ def db2_connect(
         database=database,
         url=url,
         driver=driver,
+        connect_args=connect_args_dict,
     )
     return backend

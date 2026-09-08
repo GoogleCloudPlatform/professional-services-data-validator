@@ -30,8 +30,8 @@ def sa_table_column(t, op):
     out_expr = get_col(sa_table, op)
     out_expr.quote = t._quote_column_names
 
-    if op.output_dtype.is_timestamp():
-        timezone = op.output_dtype.timezone
+    if op.dtype.is_timestamp():
+        timezone = op.dtype.timezone
         if timezone is not None:
             # Using literal_column on SQL Server because the time zone string cannot be a bind.
             out_expr = sa.literal_column(
@@ -68,7 +68,7 @@ def strftime(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    arg_type = op.args[0].output_dtype
+    arg_type = op.args[0].dtype
     if (
         hasattr(arg_type, "timezone") and arg_type.timezone
     ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
@@ -118,7 +118,7 @@ def sa_format_hashbytes(translator, op):
 def sa_cast_mssql(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     # Specialize going from a binary float type to a string.
@@ -144,8 +144,7 @@ def sa_cast_mssql(t, op):
         # Considering any number of fractional digits
         format_string = f'0.{("#" * scale)}'
         formatted_value = sa.func.format(sa_arg, format_string)
-        # Replace trailing '.0' with ''
-        return sa.func.replace(formatted_value, ".0", "")
+        return formatted_value
     elif arg_dtype.is_boolean() and typ.is_string():
         return sa.case(
             (sa_arg == 0, sa.literal_column("'false'")),
@@ -176,3 +175,29 @@ def sa_string_join(t, op):
 def sa_whitespace_rstrip(t, op):
     sa_arg = t.translate(op.arg)
     return sa.func.rtrim(sa.cast(sa_arg, sa.VARCHAR(length=None)))
+
+
+def sa_format_mean(translator, op):
+    """Calculate the average aggregation.
+
+    Casts integer inputs to FLOAT to prevent integer truncation. Leaves other
+    types unchanged to preserve precision (e.g., Decimals).
+    """
+    arg = translator.translate(op.arg)
+
+    if op.arg.output_dtype.is_integer():
+        return sa.func.avg(sa.cast(arg, sa.FLOAT))
+    return sa.func.avg(arg)
+
+
+def sa_format_sum(translator, op):
+    """Calculate the sum aggregation for SQL Server.
+
+    Casts integer inputs to BIGINT to prevent 32-bit integer arithmetic overflow (Error 8115).
+    Leaves non-integer types (e.g., Decimals, Floats) unchanged to preserve precision.
+    """
+    arg = translator.translate(op.arg)
+
+    if op.arg.output_dtype.is_integer():
+        return sa.func.sum(sa.cast(arg, sa.BIGINT))
+    return sa.func.sum(arg)

@@ -19,16 +19,38 @@ from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
+    varargs,
 )
 from ibis.backends.base.sql.alchemy.registry import _literal as base_literal
 
+from ibis.backends.base.sql.alchemy import get_sqla_table
+from ibis.backends.base.sql.alchemy.registry import get_col
 from third_party.ibis.ibis_mssql import registry as mssql_registry
+
+
+def sa_format_new_id(t, op):
+    return sa.func.NEWID()
+
+
+def sa_table_column(t, op):
+    ctx = t.context
+    table = op.table
+    sa_table = get_sqla_table(ctx, table)
+    out_expr = get_col(sa_table, op)
+    out_expr.quote = t._quote_column_names
+    if t.permit_subquery and ctx.is_foreign_expr(table):
+        try:
+            subq = sa_table.subquery()
+        except AttributeError:
+            subq = sa_table
+        return sa.select(subq.c[out_expr.name])
+    return out_expr
 
 
 def sa_cast_sybase(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     # Specialize going from DECIMAL(p,s>0) to string
@@ -142,7 +164,7 @@ def strftime(translator, op):
 
     Incredibly there isn't a format matching ISO formats."""
     arg, pattern = map(translator.translate, op.args)
-    arg_type = op.args[0].output_dtype
+    arg_type = op.args[0].dtype
     if (
         hasattr(arg_type, "timezone") and arg_type.timezone
     ):  # Our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
@@ -185,7 +207,7 @@ def sa_whitespace_rstrip(t, op):
 
 
 def sa_literal(t, op):
-    if op.output_dtype.is_timestamp() and op.output_dtype.timezone:
+    if op.dtype.is_timestamp() and op.dtype.timezone:
         # Sybase ASE does not have a time zoned data type.
         value = op.value.replace(tzinfo=None)
         return sa.literal(value)
@@ -199,11 +221,11 @@ operation_registry.update(sqlalchemy_window_functions_registry)
 operation_registry[ops.Cast] = sa_cast_sybase
 operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
 operation_registry[ops.HashBytes] = sa_format_hashbytes
-operation_registry[ops.IfNull] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.Coalesce] = varargs(sa.func.coalesce)
 operation_registry[ops.Literal] = sa_literal
-operation_registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+operation_registry[ops.RandomScalar] = sa_format_new_id
 operation_registry[ops.RStrip] = sa_whitespace_rstrip
 operation_registry[ops.Strftime] = strftime
 operation_registry[ops.StringJoin] = sa_string_join
 operation_registry[ops.StringLength] = sa_format_string_length
-operation_registry[ops.TableColumn] = mssql_registry.sa_table_column
+operation_registry[ops.TableColumn] = sa_table_column

@@ -105,7 +105,7 @@ CLI_ADD_SNOWFLAKE_CONNECTION_ARGS = [
     f"--connect-args={SNOWFLAKE_CONNECTION_ARGS_DICT_STR}",
 ]
 
-TERADATA_CONNECTION_ARGS_DICT_STR = '{"a": "1", "b": 2}'
+CONNECTION_ARGS_DICT_STR = '{"a": "1", "b": 2}'
 CLI_ADD_TERADATA_CONNECTION_ARGS = [
     "connections",
     "add",
@@ -116,7 +116,7 @@ CLI_ADD_TERADATA_CONNECTION_ARGS = [
     "--port=123",
     "--user-name=dvt_user",
     "--password=dvt_pass",
-    f"--json-params={TERADATA_CONNECTION_ARGS_DICT_STR}",
+    f"--json-params={CONNECTION_ARGS_DICT_STR}",
 ]
 
 CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
@@ -158,6 +158,24 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "--thick-mode",
 ]
 
+CLI_ADD_DB2_CONNECTION_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    "db2_conn",
+    "DB2",
+    "--host=host_name",
+    "--port=123",
+    "--user=dvt_user",
+    "--password=dvt_pass",
+    "--database=db",
+    f"--connect-args={CONNECTION_ARGS_DICT_STR}",
+]
+
+CLI_ADD_DB2_ZOS_CONNECTION_ARGS = [
+    "DB2_ZOS" if _ == "DB2" else _ for _ in CLI_ADD_DB2_CONNECTION_ARGS
+]
+
 TEST_VALIDATION_CONFIG = {
     "source": "example",
     "target": "example",
@@ -169,7 +187,7 @@ TEST_VALIDATION_CONFIG = {
             "schema_name": "bigquery-public-data.new_york_citibike",
             "target_schema_name": "bigquery-public-data.new_york_citibike",
             "target_table_name": "citibike_trips",
-            "labels": [],
+            "labels": [("name", "test_run")],
             "threshold": 0.0,
             "format": consts.FORMAT_TYPE_TABLE,
             "filters": [],
@@ -374,7 +392,51 @@ def test_create_teradata_connection(caplog, fs):
     assert conn["password"] == args.password
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
-    assert conn_from_file["json_params"] == TERADATA_CONNECTION_ARGS_DICT_STR
+    assert conn_from_file["json_params"] == CONNECTION_ARGS_DICT_STR
+
+
+def test_create_db2_connection(caplog, fs):
+    caplog.set_level(logging.INFO)
+    # Create Connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_DB2_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+
+    conn = cli_tools.get_connection(args.connection_name)
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_DB2
+    assert conn["host"] == args.host
+    assert conn["port"] == args.port
+    assert conn["user"] == args.user
+    assert conn["password"] == args.password
+    assert conn["database"] == args.database
+
+    conn_from_file = cli_tools.get_connection(args.connection_name)
+    assert conn_from_file["connect_args"] == CONNECTION_ARGS_DICT_STR
+
+
+def test_create_db2_zos_connection(caplog, fs):
+    caplog.set_level(logging.INFO)
+    # Create Connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_DB2_ZOS_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+
+    conn = cli_tools.get_connection(args.connection_name)
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_DB2_ZOS
+    assert conn["host"] == args.host
+    assert conn["port"] == args.port
+    assert conn["user"] == args.user
+    assert conn["password"] == args.password
+    assert conn["database"] == args.database
+
+    conn_from_file = cli_tools.get_connection(args.connection_name)
+    assert conn_from_file["connect_args"] == CONNECTION_ARGS_DICT_STR
 
 
 def test_configure_arg_parser_list_and_run_validation_configs():
@@ -403,6 +465,20 @@ def test_create_and_list_and_get_validations(caplog, fs):
     # Retrieve the stored validation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")
     assert yaml_config == TEST_VALIDATION_CONFIG
+
+
+def test_get_validation_unsafe_yaml(fs):
+    """Test that get_validation safely rejects unsafe YAML payloads.
+
+    This regression test ensures that !!python/object/apply and other unsafe
+    tags are rejected with a ConstructorError.
+    """
+    unsafe_yaml = "!!python/object/apply:eval ['print(\"hello\")']"
+    validation_path = gcs_helper.get_validation_path("unsafe_validation.yaml")
+    fs.create_file(validation_path, contents=unsafe_yaml)
+
+    with pytest.raises(yaml.constructor.ConstructorError):
+        cli_tools.get_validation("unsafe_validation.yaml")
 
 
 def test_find_tables_config():
@@ -1115,3 +1191,55 @@ def test_check_gt_one_fail(test_input: int):
     """Test _check_positive."""
     with pytest.raises(argparse.ArgumentTypeError):
         _ = cli_tools._check_gt_one(test_input)
+
+
+def test_config_mutually_exclusive_args():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "column",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-tbls",
+        "s.t=s.t",
+    ]
+
+    for arg1, arg2 in [
+        ("-c", "-cj"),
+        ("-c", "-cdir"),
+        ("-c", "-cdirj"),
+        ("-cj", "-cdir"),
+        ("-cj", "-cdirj"),
+        ("-cdir", "-cdirj"),
+    ]:
+        with pytest.raises(SystemExit):
+            parser.parse_args(base_args + [arg1, "path1", arg2, "path2"])
+
+
+def test_custom_query_with_config_dir_errors():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "custom-query",
+        "row",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-sq",
+        "SELECT 1",
+        "-tq",
+        "SELECT 1",
+    ]
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir", "dir_path"])
+        )
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir-json", "dir_path"])
+        )

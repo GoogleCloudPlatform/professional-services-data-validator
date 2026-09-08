@@ -16,7 +16,7 @@ from typing import Iterable, Optional
 import functools
 import inspect
 
-from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
+from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 from ibis.expr.types.generic import Value
@@ -146,7 +146,7 @@ def dvt_handle_failed_column_type_inference(
             table.append_column(
                 sa.Column(
                     colname.lower(),
-                    to_sqla_type(dialect, type),
+                    AlchemyType.from_ibis(type),
                     nullable=type.nullable,
                     quote=self.compiler.translator_class._quote_column_names,
                 ),

@@ -18,7 +18,7 @@ import re
 import time
 import uuid
 
-from data_validation import clients, exceptions
+from data_validation import exceptions
 
 from typing import TYPE_CHECKING
 
@@ -76,6 +76,10 @@ def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") ->
 
     We need the client in order to find the dialect, otherwise we end up with generic literals.
     """
+    # Import clients here because it is a heavy weight import for a utility module
+    # and we want to avoid circular imports since clients also (eventually) imports utils.
+    from data_validation import clients
+
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
     if alchemy_client and clients.is_sqlalchemy_backend(alchemy_client):
@@ -97,10 +101,15 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
         prefix: The prefix to use for the temporary object name.
 
     Returns:
-        A lower case random name for when DVT needs to create a temporary object.
+        A random name for when DVT needs to create a temporary object.
     """
     if not isinstance(prefix, str) or not re.match(r"^[a-zA-Z0-9_]+$", prefix):
         raise exceptions.ValidationException(
             f"Invalid prefix: '{prefix}'. Only alphanumeric and underscore characters are allowed."
         )
     return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"
+
+
+def list_to_sublists(id_list: list, max_size: int) -> list:
+    """Return a list of items as a list of lists based on a max list length of max_size."""
+    return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]

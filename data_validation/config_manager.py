@@ -676,17 +676,31 @@ class ConfigManager(object):
         )
 
     def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
-        """Returns True when either source or target column is Oracle LOB data type."""
+        """Returns True when either source or target column is Db2 XML data type."""
         return self._is_raw_data_type(
             "db2", source_column_name, target_column_name, ["XML"]
+        )
+
+    def _is_db2_zos_blob(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is Db2 z/OS BLOB data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
+    def _is_db2_zos_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 z/OS XML data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["XML"]
         )
 
     def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Oracle LOB data type.
 
         Unexpectedly the raw types for for LOB types are:
-            BLOB: LONG_RAW
-            CLOB: LONG
+            BLOB: LONG_RAW (this covers Oracle LONG_RAW too)
+            CLOB: LONG (this covers Oracle LONG too)
             NCLOB: LONG_NVARCHAR
         """
         return self._is_raw_data_type(
@@ -1066,7 +1080,11 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return self._is_oracle_lob(source_column, target_column)
+                    # Same for Db2 z/OS.
+                    return bool(
+                        self._is_oracle_lob(source_column, target_column)
+                        or self._is_db2_zos_blob(source_column, target_column)
+                    )
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
@@ -1090,6 +1108,11 @@ class ConfigManager(object):
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
+
+        logging.debug(
+            f"Building aggregates for validation of {self.source_schema}.{self.source_table} "
+            f"against {self.target_schema}.{self.target_table}"
+        )
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
@@ -1124,6 +1147,14 @@ class ConfigManager(object):
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
+            if column not in allowlist_columns:
+                continue
+            elif column not in casefold_target_columns:
+                logging.warning(
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
+                )
+                continue
+
             # Get column type and remove precision/scale attributes
             source_column_ibis_type = source_table[
                 casefold_source_columns[column]
@@ -1134,14 +1165,7 @@ class ConfigManager(object):
             ].type()
             target_column_type = str(target_column_ibis_type).split("(")[0]
 
-            if column not in allowlist_columns:
-                continue
-            elif column not in casefold_target_columns:
-                logging.warning(
-                    f"Skipping {agg_type} on {column} as column is not present in target table"
-                )
-                continue
-            elif supported_types and not self._type_is_supported_for_agg_validation(
+            if supported_types and not self._type_is_supported_for_agg_validation(
                 column_type, target_column_type, supported_types
             ):
                 if self.verbose:
@@ -1152,6 +1176,11 @@ class ConfigManager(object):
             elif self._is_sql_server_image(column, column):
                 logging.info(
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
+            elif self._is_db2_zos_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 z/OS XML data type"
                 )
                 continue
             elif agg_type != "count" and self._is_db2_xml(column, column):
@@ -1286,7 +1315,7 @@ class ConfigManager(object):
             col_config["calc_type"] = consts.CONFIG_CUSTOM
             custom_params = {
                 "calc_params": {
-                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
+                    consts.CONFIG_CUSTOM_IBIS_EXPR: "lambda expr, format_str: expr.strftime(format_str)",
                     consts.CONFIG_CUSTOM_PARAMS: [
                         {consts.CONFIG_CUSTOM_PARAM_FORMAT_STR: fmt}
                     ],
@@ -1356,6 +1385,12 @@ class ConfigManager(object):
             if self._is_sql_server_image(source_column, target_column):
                 logging.info(
                     f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+            if self._is_oracle_lob(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to Oracle LOB data type"
                 )
                 result_source_columns.pop(source_column)
                 result_target_columns.pop(target_column)

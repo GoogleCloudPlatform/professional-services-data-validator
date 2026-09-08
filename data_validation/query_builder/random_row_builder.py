@@ -20,7 +20,7 @@ from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
 # Adding new data sources should be done by adding the Backend name here
-RANDOM_SORT_SUPPORTS = [
+SUPPORTS_SORT_BY_RANDOM = [
     "bigquery",
     "teradata",
     "impala",
@@ -33,6 +33,10 @@ RANDOM_SORT_SUPPORTS = [
     "snowflake",
     "spanner",
     "sybase",
+]
+
+SUPPORTS_SORT_BY_ALIASED_RANDOM = [
+    "db2_zos",
 ]
 
 
@@ -87,7 +91,16 @@ class RandomRowBuilder(object):
         self, data_client: ibis.backends.base.BaseBackend, table: ibis.Expr
     ) -> ibis.Expr:
         """Return a randomly sorted query if it is supported for the client."""
-        if data_client.name in RANDOM_SORT_SUPPORTS:
+        if data_client.name in SUPPORTS_SORT_BY_ALIASED_RANDOM:
+            random_sort_col = "random_sort"
+            return (
+                table[self.primary_keys]
+                .mutate(**{random_sort_col: ibis.random()})
+                .order_by(random_sort_col)
+                .limit(self.batch_size)[self.primary_keys]
+            )
+
+        if data_client.name in SUPPORTS_SORT_BY_RANDOM:
             # Teradata 'SAMPLE' and Spanner 'TABLESAMPLE' is random by nature
             # and does not require a sort by
             if data_client.name == "teradata" or data_client.name == "spanner":

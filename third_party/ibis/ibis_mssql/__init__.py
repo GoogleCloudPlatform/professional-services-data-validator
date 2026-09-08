@@ -20,6 +20,9 @@ from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.mssql.compiler import MsSqlCompiler
 from ibis.backends.mssql.datatypes import _type_from_result_set_info
 
+# Import datatypes to patch Ibis MSSQL support.
+import third_party.ibis.ibis_mssql.datatypes
+
 import json
 
 DEFAULT_DRIVER_NAME = "ODBC Driver 17 for SQL Server"
@@ -74,7 +77,7 @@ class Backend(BaseAlchemyBackend):
         self.database_name = alchemy_url.database
         engine = sa.create_engine(
             alchemy_url,
-            poolclass=sa.pool.StaticPool,
+            poolclass=sa.pool.NullPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
         )
@@ -151,11 +154,17 @@ class Backend(BaseAlchemyBackend):
             for column in result.mappings():
                 # Extract relevant metadata from the result set and construct the metadata tuple (DB API format)
                 # Note: Metadata may vary based on the SQL Server version and the specific query used.
+                system_type = column["system_type_name"]
+                base_type = (
+                    system_type.split("(")[0].strip().lower() if system_type else None
+                )
+                max_length = column.get("max_length")
+
                 yield (
                     column["name"],
-                    column["system_type_name"],  # type_code
-                    None,  # display_size
-                    None,  # internal_size
+                    base_type,  # type_code
+                    max_length,  # display_size
+                    max_length,  # internal_size
                     column["precision"],
                     column["scale"],
                     column["is_nullable"],
@@ -195,3 +204,7 @@ class Backend(BaseAlchemyBackend):
     def dvt_list_tables(self, like=None, database=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
         return self.list_tables(table=like, schema=database, type_like="BASE TABLE")
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False

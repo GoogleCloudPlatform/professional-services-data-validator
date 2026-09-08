@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "8.5.2"
+version = "8.9.3"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -33,7 +33,7 @@ dependencies = [
     "google-cloud-secret-manager>=2.20.2",
     "google-cloud-spanner>=3.49.1",
     "google-cloud-storage>=2.18.2",
-    "ibis-framework==5.1.0",  # Pinned to 5.1.0, significant work to bump to 7.1.0
+    "ibis-framework==7.1.0",
     "impyla>=0.19.0",
     "jellyfish>=1.1.0",
     "pandas",
@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy==2.0.41",  # Need 2.0 or higher for oracledb
+    "SQLAlchemy>=2.0.49",  # Fixes warning when using MS SQL 2025
     "tabulate>=0.9.0",
 ]
 
@@ -51,7 +51,7 @@ extras_require = {
     "apache-airflow": "1.10.11",
     "pyspark": "3.0.0",
     "develop": [
-        "black==26.1.0",
+        "black==26.5.1",
         "flake8",
         "freezegun",
         "pyfakefs",
@@ -59,6 +59,8 @@ extras_require = {
         "pytest-cov",
         "pytest-rerunfailures",
         "pytest-timeout",
+        "snowflake-connector-python",
+        "snowflake-sqlalchemy",
     ],
 }
 
@@ -88,6 +90,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.9",

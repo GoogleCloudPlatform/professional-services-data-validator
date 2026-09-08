@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 import pathlib
 
 import pytest
+from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -397,7 +398,7 @@ def column_validation_test(
     expected_rows=0,
     result_handler: Optional[str] = None,
     cast_to_bigint: Optional[bool] = False,
-):
+) -> "DataFrame":
     """Generic column validation test.
 
     Standard test expects an empty dataframe as the assertion but has override.
@@ -419,7 +420,14 @@ def column_validation_test(
         result_handler=result_handler,
         cast_to_bigint=cast_to_bigint,
     )
-    df = run_test_from_cli_args(args)
+    with mock.patch("data_validation.combiner.logging.warning") as mock_warning:
+        df = run_test_from_cli_args(args)
+        for call in mock_warning.call_args_list:
+            from data_validation import combiner
+
+            assert combiner.COMBINER_GET_SUMMARY_EXC_TEXT not in str(
+                call.args[0]
+            ), "Combiner summary warning was logged"
     assert (
         len(df) == expected_rows
     ), f"len(df) != expected_rows: {len(df)} != {expected_rows}"
@@ -461,7 +469,7 @@ def row_validation_test(
     use_random_row=False,
     random_row_batch_size=None,
     result_handler: Optional[str] = None,
-):
+) -> "DataFrame":
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
     if comp_fields:

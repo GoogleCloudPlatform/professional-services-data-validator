@@ -2,6 +2,131 @@
 
 ## Untagged
 
+## [8.9.3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.2...v8.9.3) (2026-08-27)
+
+
+### Bug Fixes
+
+* clean up Teradata connection parameters ([#1820](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1820)) ([ee92c7d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee92c7de793b20df477769ca57bb2b6f035e3dee))
+* Exclude Oracle system schemas from list_databases ([#1812](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1812)) ([dd0955f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dd0955f30c0ce891dd62102f92bbaa1255508129))
+
+
+### Documentation
+
+* Fix documented Oracle NCLOB sample ([#1815](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1815)) ([54ce3ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/54ce3ca7a4c0b9dc72740daed6b4e83c6bb15361))
+
+## [8.9.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.1...v8.9.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* Cast binary values to hex in combiner before reporting them to screen ([#1811](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1811)) ([03e031e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/03e031e228b29f0e6a3bd2bd25b074144b81eeea))
+
+## [8.9.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.0...v8.9.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* Add support for random row sampling on composite primary keys ([#1803](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1803)) ([d6d16da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d6d16dab92a798db8aaedd067bd95dbd5d9078ee))
+* Fix SQL Server decimal format bug ([#1806](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1806)) ([62eacd1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62eacd19f65fa9658e5111bae37e060fd83a4970))
+
+## [8.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.2...v8.9.0) (2026-07-31)
+
+
+### Features
+
+* modernize DVT to upgrade ibis-framework to 7.1.0 ([#1802](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1802)) ([5c3160d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5c3160d9ebc41df31c71c106c41987bcfd54900f))
+
+
+### Bug Fixes
+
+* Type hints compatible with Python 3.9 ([#1797](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1797)) ([0830ad9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0830ad99466f3845831df2dba45e520dc02c64f9))
+
+## [8.8.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.1...v8.8.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* Ensure padded char PK detection works for upper case columns ([#1792](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1792)) ([9019167](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/901916735a6f1c837ff942cd42d4074066ac365d))
+* Fix SQL Server overflow on SUM(INT) ([#1790](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1790)) ([b4eb1cb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b4eb1cbc36eab1ae6229c0c24d147aed1e95bb11))
+* SQL Server tinyint type detection ([#1784](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1784)) ([78658ab](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78658ab718ca021e8a280f1a4c649a8c39ab834e))
+
+## [8.8.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.0...v8.8.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* Better message when all columns are pks for -comp-fields ([#1780](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1780)) ([b0d2fae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b0d2fae534f9a5d029d16b6c9cae00d96fe53ebd))
+* Fix SQL Server avg for integer columns ([#1782](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1782)) ([42be1e5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/42be1e515aec61a9c3a4f2c2ce9f85fbfd307946))
+* Incorrect concat of Dataframes when broken up into multiple slices ([#1775](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1775)) ([2b3f61f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2b3f61f49d96deb9e6b5f700778f84aa43c78d0b))
+* SQL Server padded char columns are detected correctly ([#1779](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1779)) ([b3ce0ba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b3ce0ba1444e8ad0d659e31e0a4740b6147d4755))
+
+
+### Documentation
+
+* Update internal throughput test case ([#1770](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1770)) ([634a07a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/634a07a41710f2acc3a4b667516047dc44032709))
+
+## [8.8.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.1...v8.8.0) (2026-06-18)
+
+
+### Features
+
+* Add --config-dir/--config-dir-json to table validation commands ([#1742](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1742)) ([f5e9f79](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f5e9f79983da6ad046f1aa0ca5b3d12a5a4150ff))
+
+
+### Bug Fixes
+
+* Fix extract epoch expression for Db2 ([#1750](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1750)) ([a09844d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a09844dfe52a38b1bc7e6c8df746b121f1cbefaf))
+* Use UTC for naive timestamp epoch conversion ([#1761](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1761)) ([d3bba8d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d3bba8d2e48861f3bb3e2cd58f4d29bd7cbe8a7f))
+* Workaround for ibm_db_sa ForeignKeyConstraint exception ([#1756](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1756)) ([0c52e8e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0c52e8e40bffb4c600ea21a72c69662de46f87cd))
+* YAML deserialization fix ([#1752](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1752)) ([8a7944e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8a7944e40ccf6a33099fb0b8bd47c90f1aff4132))
+
+## [8.7.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.0...v8.7.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* Remove source/target conn from JSON config file ([#1739](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1739)) ([76d797d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/76d797dd1176bb8c2a1baeed5dde4639aa833b76))
+* Review and update samples/cloud_run files ([#1730](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1730)) ([b62e238](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b62e238bb63104588a471b3e1e56e6b1c09bae26))
+
+## [8.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.6.0...v8.7.0) (2026-04-20)
+
+
+### Features
+
+* Add Db2 z/OS support ([#1721](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1721)) ([62cef8c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62cef8cfc42282993ebd909c8477d76defcac3bc))
+
+
+### Bug Fixes
+
+* Modify BQ connection to use the correct project id for billing. ([#1715](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1715)) ([c9ccb0c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c9ccb0c05830420cf561ec21dc0720b2d5c8e5d2))
+
+
+### Documentation
+
+* Documentation and samples updates ([#1677](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1677)) ([0c0c557](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0c0c557ccc84d5d0e4e589d6fb5f8e1c3d36067f))
+
+## [8.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.2...v8.6.0) (2026-04-10)
+
+
+### Features
+
+* Add caching mechanism for Backend functions ([#1711](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1711)) ([b9e6f27](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b9e6f27cfaa823b4af0e2fa71b8eabafb03cdc40))
+* Add Db2 binary types to supported types ([#1679](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1679)) ([04ad3a8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/04ad3a8551e8d55226c0b1de567dad9cd16d8e0b))
+* Add support for differing source/target schema names to find-tables ([#1692](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1692)) ([a9b5377](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a9b537756c9312a2b572b8c3f1d799164ea54e0e))
+* Reduce Redshift queries ([#1687](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1687)) ([b0155ec](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b0155eccb9d9258695b30f09483f02e48467120b))
+
+
+### Bug Fixes
+
+* Add raw datatype support for Db2 custom queries ([#1707](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1707)) ([cc0b62f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cc0b62f3e875b0c935e1f24cbbd7d0793f943706))
+* custom query row validation on Db2 loses precision and scale ([#1727](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1727)) ([ff3573f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ff3573f2c9e293ec5bc243f4431e1863dab094ac))
+* Force Db2 FOR BIT DATA columns to Ibis Binary ([#1690](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1690)) ([752170b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/752170b682ab23fb167e020b08e7a8d1bf2c5936))
+* mock list_validations in config_runner tests to remove GCS dependency ([#1708](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1708)) ([2882d50](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2882d50ebe85ba1af2dadf3bac39a23df0d5159a)), closes [#1482](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1482)
+* Prevent scientific notation in row validation for Db2 REAL/DOUBLE columns ([#1723](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1723)) ([e67dccf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e67dccfd27746567c05e56e1ffc8d2b095b575be))
+* Protect PostgreSQL padded chars length expression from NULLs ([#1726](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1726)) ([806e30b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/806e30b6c6a1415a8317030795b728dc8fd48e1c))
+* Replace typehints that are incompatible with Python 3.9 ([#1704](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1704)) ([97e959c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/97e959c0bbe615103b89844b23f7c2a40a9bf8a1))
+
 ## [8.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.1...v8.5.2) (2026-02-26)
 
 

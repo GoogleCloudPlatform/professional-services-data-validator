@@ -78,6 +78,16 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
 ,   col_src_n_trg_nn   DATETIME NOT NULL
 ) OPTIONS (description='Nullable integration test table, BigQuery is assumed to be a DVT target (not source)');
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals`
+(   id                INT64 NOT NULL
+,   col_dec_16_8      NUMERIC(16,8)
+) OPTIONS (description='Decimals integration test table');
+INSERT INTO `pso_data_validator`.`dvt_decimals` VALUES
+ (1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),
+ (9,0.00000001),(10,-0.00000001),(11,0.00010001),(12,-0.00010001),
+ (13,123.01),(14,-123.01),(15,12345678.12345678),(16,-12345678.12345678)
+ ,(17,99999999.99999999),(18,-99999999.99999999);
+
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_large_decimals`
 (   id                BIGNUMERIC(38) NOT NULL
 ,   col_data          STRING(10)
@@ -856,3 +866,35 @@ INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
 (1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_composite_pk` (
+  key1 INT64
+, key2 STRING
+, key3 STRING
+, val  STRING
+) OPTIONS (description='Integration test table used to test composite primary keys.');
+INSERT INTO `pso_data_validator`.`dvt_composite_pk` VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_vol_composite_pk` (
+  key1 INT64
+, key2 INT64
+, key3 INT64
+, val  INT64
+) OPTIONS (description='Integration test table used for volume testing composite primary keys.');
+INSERT INTO `pso_data_validator`.`dvt_vol_composite_pk`
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD(DIV(x - 1, 10), 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;

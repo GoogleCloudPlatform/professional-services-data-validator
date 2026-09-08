@@ -166,6 +166,7 @@ CONNECTION_ADD_ARGS = {
     consts.API_ENDPOINT: None,
     consts.STORAGE_API_ENDPOINT: None,
     consts.CLIENT_PROJECT_ID: None,
+    consts.BILLING_PROJECT_ID: None,
 }
 CONNECTION_DESCRIBE_ARGS = {
     "verbose": False,
@@ -604,3 +605,149 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
 )
 def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()
+
+
+@mock.patch("data_validation.cli_tools.store_validation")
+@mock.patch("data_validation.gcs_helper.list_gcs_directory", return_value=[])
+@mock.patch("data_validation.gcs_helper._is_gcs_path", return_value=False)
+@mock.patch("os.path.exists", return_value=True)
+@mock.patch("os.listdir", return_value=[])
+def test_store_config_dir_yaml_success(
+    mock_listdir, mock_exists, mock_is_gcs, mock_list_gcs, mock_store_validation
+):
+    """Test storing validation configs inside a directory succeeds and handles naming collisions with suffixes."""
+    config_mgr_1 = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    config_mgr_2 = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    args = argparse.Namespace(config_dir="my_dir", source_conn="src", target_conn="tgt")
+
+    main.store_config_dir(args, [config_mgr_1, config_mgr_2], is_json=False)
+
+    # Assert store_validation was called twice
+    assert mock_store_validation.call_count == 2
+
+    # First call: s_t.yaml
+    call_1 = mock_store_validation.call_args_list[0]
+    assert call_1.args[0] == "my_dir/s.t.yaml"
+
+    # Second call: s_t_1.yaml (collision handled)
+    call_2 = mock_store_validation.call_args_list[1]
+    assert call_2.args[0] == "my_dir/s.t_1.yaml"
+
+
+@mock.patch("os.path.exists", return_value=True)
+@mock.patch("os.listdir", return_value=["existing_file.yaml"])
+@mock.patch("data_validation.gcs_helper._is_gcs_path", return_value=False)
+def test_store_config_dir_not_empty_raises(mock_is_gcs, mock_listdir, mock_exists):
+    """Test storing validations in a non-empty directory raises ValueError to prevent accidental overrides."""
+    config_mgr = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    args = argparse.Namespace(config_dir="my_dir")
+
+    with pytest.raises(ValueError) as exc_info:
+        main.store_config_dir(args, [config_mgr], is_json=False)
+
+    assert "is not empty. Aborting." in str(exc_info.value)
+
+
+def test_store_config_dir_custom_query_raises():
+    """Test that attempting to save custom-query validations to a config directory raises ValueError."""
+    config_mgr = config_manager.ConfigManager(
+        {"type": consts.CUSTOM_QUERY, "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    args = argparse.Namespace(config_dir="my_dir")
+
+    with pytest.raises(ValueError) as exc_info:
+        main.store_config_dir(args, [config_mgr], is_json=False)
+
+    assert main.CUSTOM_QUERY_DIR_SUPPORT_ERROR in str(exc_info.value)
+
+
+@mock.patch("data_validation.__main__.DataValidation")
+def test_run_validation_exception_handling(mock_data_validation):
+    """Test that exceptions in run_validation are wrapped with table names."""
+    mock_validator = mock.Mock()
+    mock_validator.execute.side_effect = ValueError("Some execution error")
+    mock_data_validation.return_value.__enter__.return_value = mock_validator
+
+    mock_config_manager = mock.Mock()
+    mock_config_manager.full_source_table = "test_schema.test_table"
+    mock_config_manager.config = {}
+
+    with pytest.raises(exceptions.ValidationException) as exc_info:
+        main.run_validation(mock_config_manager)
+
+    assert (
+        "Validation failed for table 'test_schema.test_table': Some execution error"
+        in str(exc_info.value)
+    )
+    assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_raises_build_config_exception(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [
+        {consts.CONFIG_PRE_BUILD_TABLE_OBJ: {consts.CONFIG_TABLE_NAME: "test_table"}}
+    ]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(exceptions.BuildConfigException) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert "Validation failed for table 'test_table': Invalid schema" in str(
+        exc_info.value
+    )
+    assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_raises_build_config_exception_when_table_obj_missing(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [{}]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(exceptions.BuildConfigException) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert "Validation build failed: Invalid schema" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_raises_build_config_exception_when_table_name_missing(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [{consts.CONFIG_PRE_BUILD_TABLE_OBJ: {}}]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(exceptions.BuildConfigException) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert "Validation build failed: Invalid schema" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, ValueError)

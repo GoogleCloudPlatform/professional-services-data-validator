@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import sqlglot as sg
 
 import ibis.expr.operations as ops
 from ibis.backends.base.sql import compiler as sql_compiler
@@ -44,7 +45,7 @@ class SpannerExprTranslator(sql_compiler.ExprTranslator):
     )
 
     _unsupported_reductions = (ops.ApproxMedian, ops.ApproxCountDistinct)
-    _dialect_name = "spanner"
+    _dialect_name = "bigquery"
 
     @staticmethod
     def _gen_valid_name(name: str) -> str:
@@ -72,13 +73,35 @@ class SpannerExprTranslator(sql_compiler.ExprTranslator):
         return f"@{op.name}"
 
 
+class SpannerTableSetFormatter(bigquery_compiler.BigQueryTableSetFormatter):
+    def _format_table(self, op):
+        ctx = self.context
+        orig_op = op
+        if isinstance(op, (ops.SelfReference, ops.Sample)):
+            op = op.table
+
+        if isinstance(op, ops.PhysicalTable):
+            alias = ctx.get_ref(orig_op)
+            result = sg.table(
+                op.name,
+                quoted=self.parent.translator_class._quote_identifiers,
+            ).sql(dialect=self.parent.translator_class._dialect_name)
+            if result != alias:
+                result = f"{result} {alias}"
+            if isinstance(orig_op, ops.Sample):
+                result = self._format_sample(orig_op, result)
+            return result
+
+        return super()._format_table(op)
+
+
 compiles = SpannerExprTranslator.compiles
 
 
 class SpannerCompiler(sql_compiler.Compiler):
     # Spanner uses BigQuery SQL syntax
     translator_class = SpannerExprTranslator
-    table_set_formatter_class = bigquery_compiler.BigQueryTableSetFormatter
+    table_set_formatter_class = SpannerTableSetFormatter
     union_class = bigquery_compiler.BigQueryUnion
     intersect_class = bigquery_compiler.BigQueryIntersection
     difference_class = bigquery_compiler.BigQueryDifference

@@ -65,6 +65,31 @@ CREATE TABLE udf.dvt_null_not_null
 );
 COMMENT ON TABLE udf.dvt_null_not_null AS 'Nullable integration test table, Teradata is assumed to be a DVT source (not target).';
 
+DROP TABLE udf.dvt_decimals;
+CREATE TABLE udf.dvt_decimals
+(   id                INTEGER NOT NULL PRIMARY KEY
+,   col_dec_16_8      NUMBER(16,8)
+);
+COMMENT ON TABLE udf.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO udf.dvt_decimals VALUES(1,NULL);
+INSERT INTO udf.dvt_decimals VALUES(2,0);
+INSERT INTO udf.dvt_decimals VALUES(3,1);
+INSERT INTO udf.dvt_decimals VALUES(4,-1);
+INSERT INTO udf.dvt_decimals VALUES(5,0.1);
+INSERT INTO udf.dvt_decimals VALUES(6,-0.1);
+INSERT INTO udf.dvt_decimals VALUES(7,0.01);
+INSERT INTO udf.dvt_decimals VALUES(8,-0.01);
+INSERT INTO udf.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO udf.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO udf.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO udf.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO udf.dvt_decimals VALUES(13,123.01);
+INSERT INTO udf.dvt_decimals VALUES(14,-123.01);
+INSERT INTO udf.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO udf.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO udf.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO udf.dvt_decimals VALUES(18,-99999999.99999999);
+
 DROP TABLE udf.dvt_large_decimals;
 CREATE TABLE udf.dvt_large_decimals
 (   id                NUMBER(38) NOT NULL PRIMARY KEY
@@ -798,3 +823,41 @@ INSERT INTO udf.dvt_intervals VALUES
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-02' YEAR TO MONTH);
 INSERT INTO udf.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+DROP TABLE udf.dvt_composite_pk;
+CREATE TABLE udf.dvt_composite_pk (
+  key1 INTEGER NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE udf.dvt_composite_pk IS 'Teradata table for testing composite primary key validations.';
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO udf.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO udf.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO udf.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO udf.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO udf.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO udf.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+
+DROP TABLE udf.dvt_vol_composite_pk;
+CREATE TABLE udf.dvt_vol_composite_pk
+(   key1       INTEGER NOT NULL
+,   key2       INTEGER NOT NULL
+,   key3       INTEGER NOT NULL
+,   val        INTEGER
+,   PRIMARY KEY (key1, key2, key3)
+);
+COMMENT ON TABLE udf.dvt_vol_composite_pk AS 'Teradata table for volume testing composite primary key validations.';
+
+INSERT INTO udf.dvt_vol_composite_pk
+SELECT
+    ((day_of_calendar - 1) MOD 10) + 1 AS key1,
+    (((day_of_calendar - 1) / 10) MOD 10) + 1 AS key2,
+    day_of_calendar AS key3,
+    day_of_calendar * 10 AS val
+FROM sys_calendar.calendar
+WHERE day_of_calendar <= 10000;

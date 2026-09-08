@@ -14,26 +14,32 @@
 from typing import Iterable, Tuple
 
 import ibis.expr.datatypes as dt
-import sqlalchemy as sa
 from ibis.backends.snowflake import Backend as SnowflakeBackend
-from ibis.backends.snowflake.datatypes import parse
+from ibis.backends.snowflake.datatypes import SnowflakeType
 from snowflake.connector.constants import FIELD_ID_TO_NAME
 from snowflake.sqlalchemy import NUMBER, BINARY
-from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
+from sqlalchemy.types import VARBINARY, Numeric, Float
+
+orig_snowflake_to_ibis = SnowflakeType.to_ibis
 
 
-@dt.dtype.register(SnowflakeDialect, NUMBER)
-def sa_sf_numeric(_, satype, nullable=True):
-    return dt.Decimal(
-        precision=satype.precision or 38,
-        scale=satype.scale or 0,
+@classmethod
+def dvt_snowflake_to_ibis(cls, typ, nullable=True):
+    if isinstance(typ, Numeric) and not isinstance(typ, Float):
+        return dt.Decimal(
+            precision=typ.precision or 38,
+            scale=typ.scale or 0,
+            nullable=nullable,
+        )
+    elif isinstance(typ, (BINARY, VARBINARY)):
+        return dt.Binary(nullable=nullable)
+    return orig_snowflake_to_ibis(
+        typ,
         nullable=nullable,
     )
 
 
-@dt.dtype.register(SnowflakeDialect, BINARY)
-def sa_sf_binary(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
+SnowflakeType.to_ibis = dvt_snowflake_to_ibis
 
 
 def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
@@ -46,7 +52,9 @@ def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
         if type_code < 3 and precision is not None and scale is not None:
             typ = dt.Decimal(precision=precision, scale=scale, nullable=is_nullable)
         else:
-            typ = parse(FIELD_ID_TO_NAME[type_code]).copy(nullable=is_nullable)
+            typ = SnowflakeType.from_string(
+                FIELD_ID_TO_NAME[type_code], nullable=is_nullable
+            )
         yield name, typ
 
 

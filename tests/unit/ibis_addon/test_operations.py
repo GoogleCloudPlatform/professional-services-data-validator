@@ -79,6 +79,22 @@ def test_format_raw_sql_expr(module_under_test):
             "1969-12-31 23:59:00",
             -60,
         ),
+        (
+            "1969-12-31 23:59:00Z",
+            -60,
+        ),
+        (
+            "1970-01-01T00:00:00Z",
+            0,
+        ),
+        (
+            "1970-01-01T01:00:00+01:00",
+            0,
+        ),
+        (
+            "1969-12-31T23:00:00-01:00",
+            0,
+        ),
     ],
 )
 def test_string_to_epoch(module_under_test, test_input: str, expected: int):

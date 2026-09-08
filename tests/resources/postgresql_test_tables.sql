@@ -120,7 +120,6 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_tsltz       timestamp(6) with time zone
 ,   col_interval_ds interval day to second (3)
 ,   col_raw         bytea
-,   col_long_raw    bytea
 ,   col_blob        bytea
 ,   col_clob        text
 ,   col_nclob       text
@@ -141,8 +140,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA)
-,CAST('DVT' AS BYTEA),'DVT A','DVT A'
+,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA),'DVT A','DVT A'
 ,uuid('187bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 123, "status": "abc"}','{"dvt": 123, "status": "abc"}')
 ,(2,2222,123456789,123456789012345678,1234567890123456789012345
@@ -154,8 +152,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 ,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA)
-,CAST('DVT DVT' AS BYTEA),'DVT B','DVT B'
+,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA),'DVT B','DVT B'
 ,uuid('287bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 234, "status": "def"}','{"dvt": 234, "status": "def"}')
 ,(3,3333,123456789,123456789012345678,1234567890123456789012345
@@ -167,8 +164,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
-,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
+,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 ,uuid('387bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}')
 ,(4,NULL,NULL,NULL,NULL,NULL,NULL
@@ -176,7 +172,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL,NULL
-,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
 ,NULL,NULL);
 
  /* Following table used for validating generating table partitions */
@@ -345,6 +341,17 @@ VALUES
 ,gen_random_uuid(),2
 ,'<?xml version="1.0"?><Test><Name>Test 2</Name><Command>test2.sh</Command></Test>'
 );
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_decimals;
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                integer NOT NULL PRIMARY KEY
+,   col_dec_16_8      decimal(16,8)
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES
+(1,NULL),(2,0),(3,1),(4,-1),(5,0.1),(6,-0.1),(7,0.01),(8,-0.01),(9,0.00000001),
+(10,-0.00000001),(11,0.00010001),(12,-0.00010001),(13,123.01),(14,-123.01),
+(15,12345678.12345678),(16,-12345678.12345678),(17,99999999.99999999),(18,-99999999.99999999);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
@@ -1021,3 +1028,79 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 (1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
 (2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
 (3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1  integer NOT NULL
+, key2  varchar(10) NOT NULL
+, key3  char(2) NOT NULL
+, val   varchar(50)
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Integration test table used to test composite primary keys.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk (
+  key1  bigint NOT NULL
+, key2  bigint NOT NULL
+, key3  bigint NOT NULL
+, val   bigint
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Integration test table used for volume testing composite primary keys.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    ((x - 1) % 10) + 1 AS key1,
+    (((x - 1) / 10) % 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM generate_series(1, 10000) AS x;
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_lobs;
+CREATE TABLE pso_data_validator.dvt_lobs
+(   id              int NOT NULL PRIMARY KEY
+,   col_blob        bytea
+,   col_clob        text
+,   col_nclob       text
+,   col_blob_fail   bytea
+,   col_clob_fail   text
+,   col_nclob_fail  text
+);
+COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table';
+
+INSERT INTO pso_data_validator.dvt_lobs
+(id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+VALUES
+( 1
+, repeat('A', 500000)::bytea
+, repeat('A', 500000)
+, repeat('A', 500000)
+, (repeat('A', 499999) || 'Z')::bytea
+, repeat('A', 499999) || 'Z'
+, repeat('A', 499999) || 'Z'
+),
+( 2
+, repeat('B', 500000)::bytea
+, repeat('B', 500000)
+, repeat('B', 500000)
+, (repeat('B', 499999) || 'Z')::bytea
+, repeat('B', 499999) || 'Z'
+, repeat('B', 499999) || 'Z'
+),
+( 3
+, NULL
+, NULL
+, NULL
+, NULL
+, NULL
+, NULL
+);

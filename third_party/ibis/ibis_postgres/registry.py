@@ -38,7 +38,7 @@ def sa_epoch_seconds(translator, op):
 def sa_cast_postgres(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
     sa_arg = t.translate(arg)
 
     if arg_dtype.is_decimal() and typ.is_string():

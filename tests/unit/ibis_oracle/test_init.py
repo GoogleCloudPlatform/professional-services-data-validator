@@ -75,6 +75,14 @@ def test_raw_column_metadata_no_args(module_under_test):
 def test_raw_column_metadata_core_types(mock_begin, module_under_test):
     mock_begin().__enter__().exec_driver_sql().cursor.description = DVT_CORE_TYPES_CURS
     backend = module_under_test.Backend()
+    backend.list_tables = mock.Mock(return_value=["dvt_core_types"])
+
+    mock_dialect = mock.Mock()
+    mock_preparer = mock.Mock()
+    mock_preparer.quote.side_effect = lambda val, *args: f'"{val}"'
+    mock_dialect.identifier_preparer = mock_preparer
+    backend.con = mock.Mock(dialect=mock_dialect)
+
     raw_types = list(
         backend.raw_column_metadata(
             database="pso_data_validator", table="dvt_core_types"
@@ -100,3 +108,54 @@ def test_raw_column_metadata_qry(mock_begin, module_under_test):
     assert all(_[1] == "MOCKTYPE" for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
+@mock.patch("sqlalchemy.inspect")
+def test_list_databases(mock_inspect, module_under_test):
+    """Test that list_databases excludes Oracle system schemas while preserving user and monitoring schemas."""
+    mock_inspect_result = mock.Mock()
+    mock_inspect_result.get_schema_names.return_value = [
+        "SYS",
+        "SYSTEM",
+        "DBSNMP",
+        "C##DS",
+        "DVT_TEST",
+    ]
+    mock_inspect.return_value = mock_inspect_result
+
+    backend = module_under_test.Backend()
+    # Need to set self.con for sa.inspect to work
+    backend.con = mock.Mock()
+
+    schemas = backend.list_databases()
+
+    # SYS and C##DS should be filtered out.
+    # SYSTEM, DBSNMP, and DVT_TEST should remain.
+    assert sorted(schemas) == sorted(["SYSTEM", "DBSNMP", "DVT_TEST"])
+    mock_inspect.assert_called_with(backend.con)
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
+@mock.patch("sqlalchemy.inspect")
+def test_list_databases_with_like(mock_inspect, module_under_test):
+    """Test that list_databases correctly filters schemas when a like pattern is provided."""
+    mock_inspect_result = mock.Mock()
+    mock_inspect_result.get_schema_names.return_value = [
+        "SYS",
+        "SYSTEM",
+        "DBSNMP",
+        "C##DS",
+        "DVT_TEST",
+    ]
+    mock_inspect.return_value = mock_inspect_result
+
+    backend = module_under_test.Backend()
+    # Need to set self.con for sa.inspect to work
+    backend.con = mock.Mock()
+
+    schemas = backend.list_databases(like=".*DVT.*")
+
+    # Only DVT_TEST should match
+    assert schemas == ["DVT_TEST"]
+    mock_inspect.assert_called_with(backend.con)

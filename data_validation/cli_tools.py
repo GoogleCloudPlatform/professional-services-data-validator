@@ -53,7 +53,7 @@ import uuid
 import os
 import math
 from typing import Dict, List, Optional, TYPE_CHECKING
-from yaml import Dumper, Loader, dump, load
+import yaml
 
 from data_validation import (
     clients,
@@ -70,14 +70,25 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
 
+def _construct_yaml_tuple(loader, node):
+    return tuple(loader.construct_sequence(node))
+
+
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/tuple", _construct_yaml_tuple)
+
+
 CONNECTION_SOURCE_FIELDS = {
     consts.SOURCE_TYPE_BIGQUERY: [
         ["project_id", "GCP Project to use for BigQuery"],
         [
             "client_project_id",
-            "(Optional) BigQuery job/billing project (can differ from data project)",
+            "(Deprecated) BigQuery job/billing project (can differ from data project)",
         ],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        [
+            "billing_project_id",
+            "(Optional) BigQuery billing project to override default billing project",
+        ],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
@@ -149,7 +160,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["project_id", "GCP Project to use for Spanner"],
         ["instance_id", "ID of Spanner instance to connect to"],
         ["database_id", "ID of Spanner database (schema) to connect to"],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
@@ -203,13 +214,24 @@ CONNECTION_SOURCE_FIELDS = {
         ["http_path", "URL path of HTTP proxy"],
     ],
     consts.SOURCE_TYPE_DB2: [
-        ["host", "DB2 host"],
-        ["port", "DB2 port (50000 if not provided)"],
+        ["host", "Db2 host"],
+        ["port", "Db2 port (50000 if not provided)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
-        ["database", "Database in DB2 to connect to"],
-        ["url", "URL link in DB2 to connect to"],
-        ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+        ["database", "Database in Db2 to connect to"],
+        ["url", "URL link in Db2 to connect to"],
+        ["driver", "Driver link in Db2 to connect to (default ibm_db_sa)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
+    ],
+    consts.SOURCE_TYPE_DB2_ZOS: [
+        ["host", "Db2 host"],
+        ["port", "Db2 port (50000 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in Db2 to connect to"],
+        ["url", "URL link in Db2 to connect to"],
+        ["driver", "Driver link in Db2 to connect to (default ibm_db_sa)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
 }
 
@@ -233,6 +255,17 @@ class deprecate_action(argparse.Action):
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
+    if (
+        getattr(parsed_args, "command", None) == "validate"
+        and getattr(parsed_args, "validate_cmd", None) == "custom-query"
+    ):
+        if getattr(parsed_args, "config_dir", None) or getattr(
+            parsed_args, "config_dir_json", None
+        ):
+            parser.error(
+                "validate custom-query: directory-based validation storage (--config-dir / --config-dir-json) is not supported for custom-query validations"
+            )
+
     if hasattr(parsed_args, "tables_list") and hasattr(
         parsed_args, "source_query"
     ):  # New Format
@@ -1085,15 +1118,26 @@ def _add_common_arguments(
         help="Path to SA key file for result handler output",
     )
     if not is_generate_partitions:
-        optional_arguments.add_argument(
+        config_group = optional_arguments.add_mutually_exclusive_group()
+        config_group.add_argument(
             "--config-file",
             "-c",
             help="Store the validation config in the YAML File Path specified",
         )
-        optional_arguments.add_argument(
+        config_group.add_argument(
             "--config-file-json",
             "-cj",
             help="Store the validation config in the JSON File Path specified to be used for application use cases",
+        )
+        config_group.add_argument(
+            "--config-dir",
+            "-cdir",
+            help="Store the validation configs as individual YAML files in the specified directory path (GCS or local)",
+        )
+        config_group.add_argument(
+            "--config-dir-json",
+            "-cdirj",
+            help="Store the validation configs as individual JSON files in the specified directory path (GCS or local)",
         )
 
     optional_arguments.add_argument(
@@ -1229,7 +1273,7 @@ def store_validation(validation_file_name, config, include_log=True):
     validation_path = gcs_helper.get_validation_path(validation_file_name)
 
     if validation_file_name.endswith(".yaml"):
-        config_str = dump(config, Dumper=Dumper)
+        config_str = yaml.dump(config, Dumper=yaml.Dumper)
     elif validation_file_name.endswith("json"):
         config_str = json.dumps(config)
     else:
@@ -1246,7 +1290,7 @@ def get_validation(name: str, config_dir: str = None):
         validation_path = gcs_helper.get_validation_path(name)
 
     validation_bytes = gcs_helper.read_file(validation_path)
-    return load(validation_bytes, Loader=Loader)
+    return yaml.safe_load(validation_bytes)
 
 
 def list_validations(config_dir="./"):
@@ -1408,8 +1452,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
                 tables_map, schema_required=source_schema_required
             )
             table_dict = {
-                "schema_name": schema,
-                "table_name": table,
+                consts.CONFIG_SCHEMA_NAME: schema,
+                consts.CONFIG_TABLE_NAME: table,
             }
         elif len(tables_map) == 2:
             src_schema, src_table = split_table(
@@ -1417,8 +1461,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
             )
 
             table_dict = {
-                "schema_name": src_schema,
-                "table_name": src_table,
+                consts.CONFIG_SCHEMA_NAME: src_schema,
+                consts.CONFIG_TABLE_NAME: src_table,
             }
 
             targ_schema, targ_table = split_table(
@@ -1426,8 +1470,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
             )
 
             if targ_schema:
-                table_dict["target_schema_name"] = targ_schema
-            table_dict["target_table_name"] = targ_table
+                table_dict[consts.CONFIG_TARGET_SCHEMA_NAME] = targ_schema
+            table_dict[consts.CONFIG_TARGET_TABLE_NAME] = targ_table
 
         else:
             raise ValueError(
@@ -1664,7 +1708,7 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             "config_type": config_type,
             consts.CONFIG_SOURCE_CONN_NAME: args.source_conn,
             consts.CONFIG_TARGET_CONN_NAME: args.target_conn,
-            "table_obj": table_obj,
+            consts.CONFIG_PRE_BUILD_TABLE_OBJ: table_obj,
             consts.CONFIG_LABELS: labels,
             consts.CONFIG_THRESHOLD: threshold,
             consts.CONFIG_FORMAT: format,

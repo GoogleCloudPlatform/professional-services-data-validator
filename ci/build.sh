@@ -45,7 +45,7 @@ ${PYTHON} -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
 if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" || "$NOX_SESSION" == "integration_mysql" || "$NOX_SESSION" =~ integration_oracle.* ) ]]; then
-    ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ./cloud_sql_proxy --private-ip "$CLOUD_SQL_CONNECTION" & ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 elif [[ -n "${NOX_SESSION:-}" ]]; then
     ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 else

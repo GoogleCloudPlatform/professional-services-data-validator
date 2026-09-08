@@ -16,12 +16,14 @@ from ibis.backends.base.sql.alchemy import (
     AlchemyExprTranslator,
 )
 from third_party.ibis.ibis_db2.registry import operation_registry
+from third_party.ibis.ibis_db2.datatypes import Db2Type
 
 
 class Db2ExprTranslator(AlchemyExprTranslator):
     _registry = operation_registry.copy()
     _rewrites = AlchemyExprTranslator._rewrites.copy()
     _dialect_name = "db2"
+    type_mapper = Db2Type
 
 
 rewrites = Db2ExprTranslator.rewrites

@@ -84,6 +84,8 @@ CONFIG_EXCLUSION_COLUMNS = "exclusion_columns"
 CONFIG_ALLOW_LIST = "allow_list"
 CONFIG_FILTER_STATUS = "filter_status"
 
+CONFIG_PRE_BUILD_TABLE_OBJ = "table_obj"
+
 CONFIG_RESULT_HANDLER = "result_handler"
 
 CONFIG_TYPE_AVG = "avg"
@@ -130,6 +132,7 @@ YAML_VALIDATIONS = "validations"
 # Connection key constants.
 SOURCE_TYPE_BIGQUERY = "BigQuery"
 SOURCE_TYPE_DB2 = "DB2"
+SOURCE_TYPE_DB2_ZOS = "DB2_ZOS"
 SOURCE_TYPE_FILESYSTEM = "FileSystem"
 SOURCE_TYPE_IMPALA = "Impala"
 SOURCE_TYPE_MSSQL = "MSSQL"
@@ -146,12 +149,15 @@ SOURCE_TYPE_TERADATA = "Teradata"
 # BigQuery Result Handler Configs
 RH_TYPE = "type"
 RH_CONN = "connection"
-PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
+
+# BigQuery connection attributes
+PROJECT_ID = "project_id"
 API_ENDPOINT = "api_endpoint"
 STORAGE_API_ENDPOINT = "storage_api_endpoint"
 CLIENT_PROJECT_ID = "client_project_id"
+BILLING_PROJECT_ID = "billing_project_id"
 
 # Result Handler Output Table Fields
 VALIDATION_TYPE = "validation_type"
@@ -189,6 +195,11 @@ TOTAL_ROWS_FAIL = "total_rows_fail_validation_status"
 FAILED_SOURCE_NOT_IN_TARGET = "failed_rows_present_in_source_not_in_target"
 FAILED_TARGET_NOT_IN_SOURCE = "failed_rows_present_in_target_not_in_source"
 FAILED_PRESENT_IN_BOTH_TABLES = "failed_rows_present_in_both_source_and_target"
+
+# Summary stats of Validation results (Generic)
+TOTAL_VALIDATIONS = "total_validations"
+TOTAL_VALIDATIONS_SUCCESS = "total_success_validation_status"
+TOTAL_VALIDATIONS_FAIL = "total_fail_validation_status"
 
 # Combiner only constants
 COMBINER_TABLE_NAME = "dvt_table_name"

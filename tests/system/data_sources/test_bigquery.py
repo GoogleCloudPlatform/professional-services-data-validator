@@ -26,6 +26,7 @@ from data_validation import (
     clients,
     consts,
     data_validation,
+    exceptions,
     find_tables,
     gcs_helper,
 )
@@ -49,7 +50,11 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 PROJECT_ID = os.environ["PROJECT_ID"]
 TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
-BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
+BQ_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+    consts.PROJECT_ID: PROJECT_ID,
+    consts.BILLING_PROJECT_ID: PROJECT_ID,
+}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -377,14 +382,18 @@ CLI_FIND_TABLES_ARGS = [
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
 
 EXPECTED_RANDOM_ROW_QUERY = """
-SELECT t0.*
+SELECT
+  t0.*
 FROM (
-  SELECT t1.`station_id`
-  FROM `bigquery-public-data.new_york_citibike.citibike_stations` t1
-) t0
-ORDER BY RAND() ASC
+  SELECT
+    t1.`station_id`
+  FROM `bigquery-public-data`.new_york_citibike.citibike_stations AS t1
+) AS t0
+ORDER BY
+  RAND() ASC
 LIMIT 10
 """.strip()
+
 
 TEST_JSON_VALIDATION_CONFIG = {
     consts.CONFIG_TYPE: "Column",
@@ -411,8 +420,6 @@ TEST_JSON_VALIDATION_CONFIG = {
             consts.CONFIG_TYPE: "count",
         },
     ],
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
     consts.CONFIG_CASE_INSENSITIVE_MATCH: False,
     consts.CONFIG_ROW_CONCAT: None,
     consts.CONFIG_ROW_HASH: None,
@@ -480,7 +487,11 @@ def test_numeric_types():
         )
 
 
-def test_cli_store_yaml_then_run_gcs():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_gcs(mock_conn):
     """Test storing and retrieving validation YAMLs in GCS."""
     # Store BQ Connection
     _store_bq_conn()
@@ -506,7 +517,11 @@ def test_cli_store_yaml_then_run_gcs():
     main.run_validations(run_config_args, config_managers)
 
 
-def test_cli_store_yaml_then_run_local():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_local(mock_conn):
     """Test storing and retrieving validation YAML locally."""
     # Store BQ Connection
     _store_bq_conn()
@@ -1012,12 +1027,16 @@ def test_bigquery_row():
     assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
-def test_custom_query():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_custom_query(mock_conn):
     """Test custom query validation config with row-level comparison."""
     SAMPLE_CUSTOMQUERY_CONFIG = {
         "type": "Custom-query",
-        "source_conn_name": BQ_CONN_NAME,
-        "target_conn_name": BQ_CONN_NAME,
+        "source_conn_name": "mock-conn",
+        "target_conn_name": "mock-conn",
         "table_name": None,
         "schema_name": None,
         "target_schema_name": None,
@@ -1137,26 +1156,26 @@ def test_custom_query():
 # Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
     [
-        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE)))))))))",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG002  t0.' ) OR ( ( `course_id` = 'ALG002  t0.' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG002  t0.' ) OR ( ( `course_id` = 'ALG002  t0.' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG003' ) OR ( ( `course_id` = 'ALG003' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG003' ) OR ( ( `course_id` = 'ALG003' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG004' ) OR ( ( `course_id` = 'ALG004' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG004' ) OR ( ( `course_id` = 'ALG004' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Edward\\'\\'s' ) OR ( ( `course_id` = 'St. Edward\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Edward\\'\\'s' ) OR ( ( `course_id` = 'St. Edward\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. John\\'\\'s' ) OR ( ( `course_id` = 'St. John\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. John\\'\\'s' ) OR ( ( `course_id` = 'St. John\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Jude\\'\\'s' ) OR ( ( `course_id` = 'St. Jude\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Jude\\'\\'s' ) OR ( ( `course_id` = 'St. Jude\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Paul\\'\\'s' ) OR ( ( `course_id` = 'St. Paul\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Paul\\'\\'s' ) OR ( ( `course_id` = 'St. Paul\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) )",
     ],
     [
-        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
-        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE)))))))))",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG002  t0.' ) OR ( ( `course_id` = 'ALG002  t0.' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG002  t0.' ) OR ( ( `course_id` = 'ALG002  t0.' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG003' ) OR ( ( `course_id` = 'ALG003' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG003' ) OR ( ( `course_id` = 'ALG003' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'ALG004' ) OR ( ( `course_id` = 'ALG004' ) AND ( ( `quarter_id` < 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG004' ) OR ( ( `course_id` = 'ALG004' ) AND ( ( `quarter_id` > 5678 ) OR ( ( `quarter_id` = 5678 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('2023-08-23' AS DATE) ) OR ( ( `registration_date` = CAST('2023-08-23' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Edward\\'\\'s' ) OR ( ( `course_id` = 'St. Edward\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Edward\\'\\'s' ) OR ( ( `course_id` = 'St. Edward\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. John\\'\\'s' ) OR ( ( `course_id` = 'St. John\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < TRUE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. John\\'\\'s' ) OR ( ( `course_id` = 'St. John\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-26 16:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= TRUE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Jude\\'\\'s' ) OR ( ( `course_id` = 'St. Jude\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Jude\\'\\'s' ) OR ( ( `course_id` = 'St. Jude\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) ) AND ( ( `course_id` < 'St. Paul\\'\\'s' ) OR ( ( `course_id` = 'St. Paul\\'\\'s' ) AND ( ( `quarter_id` < 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` < CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` < CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` < FALSE ) ) ) ) ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'St. Paul\\'\\'s' ) OR ( ( `course_id` = 'St. Paul\\'\\'s' ) AND ( ( `quarter_id` > 1234 ) OR ( ( `quarter_id` = 1234 ) AND ( ( `recd_timestamp` > CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) OR ( ( `recd_timestamp` = CAST('2023-08-27 15:00:00+00:00' AS TIMESTAMP) ) AND ( ( `registration_date` > CAST('1969-07-20' AS DATE) ) OR ( ( `registration_date` = CAST('1969-07-20' AS DATE) ) AND ( `approved` >= FALSE ) ) ) ) ) ) ) ) )",
     ],
 ]
 
@@ -1202,7 +1221,7 @@ def test_bigquery_dry_run(mock_conn, capsys):
     dry_run = json.loads(out)
     assert (
         dry_run["source_query"]
-        == f"WITH t0 AS (\n  SELECT t5.*, t5.`col_string` AS `cast__col_string`\n  FROM `{PROJECT_ID}.pso_data_validator.dvt_core_types` t5\n),\nt1 AS (\n  SELECT t0.*,\n         IFNULL(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT t4.`hash__all`, t4.`id`\nFROM (\n  SELECT t3.*, TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) t4"
+        == f"WITH t0 AS (\n  SELECT\n    t5.*,\n    t5.`col_string` AS `cast__col_string`\n  FROM `{PROJECT_ID}`.pso_data_validator.dvt_core_types AS t5\n), t1 AS (\n  SELECT\n    t0.*,\n    coalesce(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n), t2 AS (\n  SELECT\n    t1.*,\n    rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n), t3 AS (\n  SELECT\n    t2.*,\n    ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT\n  t4.`hash__all`,\n  t4.`id`\nFROM (\n  SELECT\n    t3.*,\n    TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) AS t4"
     )
 
 
@@ -1329,7 +1348,7 @@ def test_row_validation_core_types_auto_pks(mock_conn):
     Expects:
       ValueError: --primary-keys argument is required for this validation
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.BuildConfigException):
         row_validation_test(
             tc="mock-conn",
             hash="col_int8,col_int16",
@@ -1370,8 +1389,15 @@ def test_column_validation_convert_config_to_json(mock_conn):
     assert len(config_managers) == 1
 
     json_config = main.convert_config_to_json(config_managers)
-    # assert structure
+    # Assert structure
     assert json_config == TEST_JSON_VALIDATION_CONFIG
+    # Ensure that raw connection info is not in the JSON anywhere.
+    assert consts.SOURCE_TYPE not in str(json_config)
+
+    # Ensure that the final validation executes successfully using the converted JSON config
+    data_validator = data_validation.DataValidation(json_config, verbose=False)
+    _ = data_validator.execute()
+    # If we get to here then there was no exception, meaning the JSON was valid.
 
 
 @mock.patch(

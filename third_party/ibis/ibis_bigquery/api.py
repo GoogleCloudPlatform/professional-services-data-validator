@@ -29,7 +29,7 @@ def bigquery_connect(
         project_id=project_id,
         dataset_id=dataset_id,
         credentials=credentials,
-        bigquery_client=bigquery_client,
-        bqstorage_client=bqstorage_client,
+        client=bigquery_client,
+        storage_client=bqstorage_client,
     )
     return backend

@@ -24,12 +24,14 @@ import sqlalchemy as sa
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
+import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
     unary,
     get_sqla_table,
+    varargs,
 )
 from ibis.backends.base.sql.alchemy.registry import variance_reduction
 from ibm_db_sa import DOUBLE
@@ -67,6 +69,10 @@ def _extract(fmt: str):
         return sa.cast(sa.extract(fmt, t.translate(op.arg)), sa.SMALLINT)
 
     return translator
+
+
+def _extract_epoch(t, op):
+    return sa.cast(sa.extract("epoch", t.translate(op.arg)), sa.BIGINT)
 
 
 def _second(t, op):
@@ -117,10 +123,10 @@ def _is_inf(t, op):
     return sa.or_(sa_arg == inf, sa_arg == -inf)
 
 
-def _cast(t, op):
+def db2_luw_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
 
@@ -144,12 +150,13 @@ def _cast(t, op):
         if arg_dtype.scale is not None and arg_dtype.scale > 0:
             # Db2 always pads fractional part of the number out to length of scale.
             # We need to remove those insignificant digits.
-            precision = arg_dtype.precision or 31
+            precision = min(arg_dtype.precision or 31, 31)
             fmt = (
                 ("9" * (precision - arg_dtype.scale - 1))
                 + "0."
                 + ("9" * arg_dtype.scale)
             )
+            # Using sa.literal_column below because z/OS does not support parameterized queries.
             return sa.func.ltrim(
                 sa.func.regexp_replace(
                     sa.func.to_char(sa_arg, fmt),
@@ -157,8 +164,8 @@ def _cast(t, op):
                     sa.literal_column("''"),
                 )
             )
-        # Max expected precision 38 plus 2 for minus sign and decimal place.
-        return sa.cast(sa_arg, sa.String(40))
+        # Max expected precision 31 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(33))
 
     if arg_dtype.is_time() and typ.is_string():
         # Force colons as time separator with CHAR(column,JIS) expression.
@@ -247,7 +254,13 @@ _lexicon_values = frozenset(_strftime_to_db2_rules.values())
 _strftime_excludelist = frozenset(["%w", "%U", "%c", "%x", "%X", "%e"])
 
 
-def _reduce_tokens(tokens, arg):
+def _reduce_tokens(tokens, arg, allow_query_params=True):
+    def literal_arg(s: str):
+        if allow_query_params:
+            return s
+        else:
+            return sa.sql.literal_column(f"'{s}'")
+
     # current list of tokens
     curtokens = []
 
@@ -272,7 +285,9 @@ def _reduce_tokens(tokens, arg):
             if token == "%w":
                 value = sa.extract("dow", arg)  # 0 based day of week
             elif token == "%U":
-                value = sa.cast(sa.func.to_char(arg, "WW"), sa.SMALLINT) - 1
+                value = (
+                    sa.cast(sa.func.to_char(arg, literal_arg("WW")), sa.SMALLINT) - 1
+                )
             elif token == "%c" or token == "%x" or token == "%X":
                 # re scan and tokenize this pattern
                 try:
@@ -286,14 +301,18 @@ def _reduce_tokens(tokens, arg):
                 new_tokens, _ = _scanner.scan(new_pattern)
                 value = functools.reduce(
                     sa.sql.ColumnElement.concat,
-                    _reduce_tokens(new_tokens, arg),
+                    _reduce_tokens(
+                        new_tokens, arg, allow_query_params=allow_query_params
+                    ),
                 )
             elif token == "%e":
                 # pad with spaces instead of zeros
-                value = sa.func.replace(sa.func.to_char(arg, "DD"), "0", " ")
+                value = sa.func.replace(
+                    sa.func.to_char(arg, literal_arg("DD")), "0", " "
+                )
 
             reduced += [
-                sa.func.to_char(arg, "".join(curtokens)),
+                sa.func.to_char(arg, literal_arg("".join(curtokens))),
                 sa.cast(value, sa.TEXT),
             ]
 
@@ -307,14 +326,20 @@ def _reduce_tokens(tokens, arg):
         # append result to r if we had more tokens or if we have no
         # blacklisted tokens
         if curtokens:
-            reduced.append(sa.func.to_char(arg, "".join(curtokens)))
+            reduced.append(sa.func.to_char(arg, literal_arg("".join(curtokens))))
     return reduced
 
 
-def _strftime(t, op):
+def db2_luw_strftime(t, op, allow_query_params=True):
     tokens, _ = _scanner.scan(op.format_str.value)
-    reduced = _reduce_tokens(tokens, t.translate(op.arg))
+    reduced = _reduce_tokens(
+        tokens, t.translate(op.arg), allow_query_params=allow_query_params
+    )
     return functools.reduce(sa.sql.ColumnElement.concat, reduced)
+
+
+def _sa_strftime(t, op):
+    return db2_luw_strftime(t, op)
 
 
 def _regex_replace(t, op):
@@ -327,7 +352,7 @@ def _reduction(func_name):
     def reduction_compiler(t, op):
         arg, where = op.args
 
-        if arg.output_dtype.is_boolean():
+        if arg.dtype.is_boolean():
             arg = arg.cast("int32")
 
         func = getattr(sa.func, func_name)
@@ -368,7 +393,7 @@ def _log(t, op):
         sa_base = t.translate(base)
         return sa.cast(
             sa.func.log(sa.cast(sa_base, sa.NUMERIC), sa.cast(sa_arg, sa.NUMERIC)),
-            t.get_sqla_type(op.output_dtype),
+            t.get_sqla_type(op.dtype),
         )
     return sa.func.ln(sa_arg)
 
@@ -448,12 +473,12 @@ def _string_join(t, op):
 
 
 def _literal(t, op):
-    dtype = op.output_dtype
+    dtype = op.dtype
     value = op.value
 
     if dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
-    elif dtype.is_set():
+    elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
     else:
         return sa.literal(value)
@@ -486,17 +511,15 @@ operation_registry.update(
         ops.Literal: _literal,
         ops.TableColumn: _table_column,
         # types
-        ops.Cast: _cast,
+        ops.Cast: db2_luw_cast,
         # Floating
         ops.IsNan: _is_nan,
         ops.IsInf: _is_inf,
         # null handling
-        ops.IfNull: fixed_arity(sa.func.coalesce, 2),
+        ops.Coalesce: varargs(sa.func.coalesce),
         # boolean reductions
         ops.Any: unary(sa.func.bool_or),
         ops.All: unary(sa.func.bool_and),
-        ops.NotAny: unary(lambda x: sa.not_(sa.func.bool_or(x))),
-        ops.NotAll: unary(lambda x: sa.not_(sa.func.bool_and(x))),
         # strings
         ops.Substring: _substr,
         ops.StringFind: _string_find,
@@ -525,13 +548,13 @@ operation_registry.update(
         ops.TimestampAdd: fixed_arity(operator.add, 2),
         ops.TimestampSub: fixed_arity(operator.sub, 2),
         ops.TimestampDiff: fixed_arity(operator.sub, 2),
-        ops.Strftime: _strftime,
+        ops.Strftime: _sa_strftime,
         ops.ExtractYear: _extract("year"),
         ops.ExtractMonth: _extract("month"),
         ops.ExtractDay: _extract("day"),
         ops.ExtractDayOfYear: _extract("doy"),
         ops.ExtractQuarter: _extract("quarter"),
-        ops.ExtractEpochSeconds: _extract("epoch"),
+        ops.ExtractEpochSeconds: _extract_epoch,
         ops.ExtractHour: _extract("hour"),
         ops.ExtractMinute: _extract("minute"),
         ops.ExtractSecond: _second,
@@ -545,10 +568,8 @@ operation_registry.update(
         ops.Variance: variance_reduction("var", suffix={"sample": "", "pop": "p"}),
         ops.RandomScalar: _random,
         ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
-        ops.CumulativeAll: unary(sa.func.bool_and),
-        ops.CumulativeAny: unary(sa.func.bool_or),
         ops.IdenticalTo: _identical_to,
         # aggregate methods
-        ops.Count: _reduction_count(sa.func.count),
+        ops.Count: _reduction_count(sa.func.count_big),
     }
 )

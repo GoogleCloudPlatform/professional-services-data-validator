@@ -496,3 +496,17 @@ CREATE TABLE dvt_tricky_strings (
 , col_string   STRING(20)
 , col_comment  STRING(40)
 ) PRIMARY KEY (id);
+
+CREATE TABLE dvt_composite_pk (
+  key1 INT64 NOT NULL
+, key2 STRING(10) NOT NULL
+, key3 STRING(2) NOT NULL
+, val  STRING(50)
+) PRIMARY KEY (key1, key2, key3);
+
+CREATE TABLE dvt_vol_composite_pk (
+  key1 INT64 NOT NULL
+, key2 INT64 NOT NULL
+, key3 INT64 NOT NULL
+, val  INT64
+) PRIMARY KEY (key1, key2, key3);

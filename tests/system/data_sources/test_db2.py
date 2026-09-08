@@ -15,9 +15,10 @@
 import os
 from unittest import mock
 
+import ibis
 import pytest
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools, clients, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
@@ -35,6 +36,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     schema_validation_test,
 )
+
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 # Our Db2 test infra has a habit of failing to connect but then working on retry.
@@ -52,6 +54,15 @@ DB2_PORT = os.getenv("DB2_PORT", "50000")
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
+    "host": DB2_HOST,
+    "user": DB2_USER,
+    "password": DB2_PASSWORD,
+    "port": int(DB2_PORT),
+    "database": DB2_DATABASE,
+}
+
+ZOS_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2_ZOS,
     "host": DB2_HOST,
     "user": DB2_USER,
     "password": DB2_PASSWORD,
@@ -111,7 +122,7 @@ def test_schema_validation_db2_types_to_bigquery():
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
-        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9)"),
+        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9),float32:float64"),
     )
 
 
@@ -135,9 +146,21 @@ def test_schema_validation_not_null_vs_nullable():
     null_not_null_assertions(df)
 
 
-##########################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_db2_generated_cols():
+    """Test schema validation for tables with Db2 internal generated columns."""
+    schema_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+    )
+
+
+###########################
 # COLUMN VALIDATION TESTS
-##########################
+###########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -230,12 +253,29 @@ def test_column_validation_binary_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """Db2 to BigQuery dvt_large_decimals column validation.
 
     Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
     """
-    cols = "id,col_dec_18"
+    cols = "col_dec_18"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
@@ -276,6 +316,7 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_column_validation_group_by_timestamp():
     """Test that --grouped-columns on Timestamps works correctly.
+
     DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
     which should be removed in SQL otherwise groups will not match Pandas.
     """
@@ -311,6 +352,18 @@ def test_column_validation_tricky_dates_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+    )
+
+
 ###########################
 # ROW VALIDATION TESTS
 ###########################
@@ -321,7 +374,6 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -329,7 +381,6 @@ def test_row_validation_core_types():
             if _
             not in (
                 "id",
-                "col_char_2",
                 "col_string",
             )
         ]
@@ -365,7 +416,6 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -375,7 +425,6 @@ def test_row_validation_core_types_to_bigquery():
                 "id",
                 "col_float32",
                 "col_float64",
-                "col_char_2",
                 "col_string",
                 "col_tstz",
             )
@@ -413,11 +462,7 @@ def test_row_validation_db2_types_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_random_row option below when issue-1445 is actioned.
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_datetime_id",
-        use_random_row=False,
-    )
+    id_column_row_validation_test("pso_data_validator.dvt_datetime_id")
 
 
 @mock.patch(
@@ -468,6 +513,20 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
 def test_varchar_pk_row_validation_to_bigquery():
     """Test varchar primary keys"""
     id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
+    )
 
 
 @mock.patch(
@@ -530,6 +589,43 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_composite_pk_to_bigquery():
+    """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=5,
+        filter_status=None,
+    )
+    assert len(df) == 5
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_bigquery():
+    """Test composite primary key high volume row sampling validation."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_vol_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        # Only testing with 1000 due to low SQL OR-of-ANDs limit on Db2.
+        random_row_batch_size=1000,
+    )
+    assert len(df) == 0
+
+
 ################################
 # CUSTOM-QUERY VALIDATION TESTS
 ################################
@@ -590,6 +686,21 @@ def test_varchar_pk_query_row_validation_to_bigquery():
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    row_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+        hash="*",
+        primary_keys="id",
+        use_random_row=False,
+    )
+
+
 ##############################
 # FIND-TABLE VALIDATION TESTS
 ##############################
@@ -630,7 +741,63 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         str(DB2_PORT),
         "--database",
         DB2_DATABASE,
+        # QueryTimeout is a harmless setting we can use to exercise --connect-args.
+        "--connect-args",
+        '{ "QueryTimeout": "0" }',
     ]
     connections_add_test(
         caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch
     )
+
+
+def test_db2_zos_expressions():
+    """Test Db2 z/OS code path using an LUW base table.
+
+    This is a bit of a fudge but we do not have any Db2 z/OS test infrastructure.
+
+    This test builds a bound table using Db2ZosBackend over the LUW connection,
+    and verifies Db2 z/OS SQL expression generation (without executing any SQL).
+
+    We can't do this as a pure unit test because unbound tables in Ibis use sqlglot,
+    bound tables, like in this test, allow the specific driver to handle SQL generation.
+    """
+    # The Z/OS backend executes a connect event that fails on LUW databases.
+    # We patch it out for this test.
+    with mock.patch("sqlalchemy.event.listens_for", lambda *a, **k: lambda f: f):
+        client = clients.get_data_client(ZOS_CONN)
+
+    # The Z/OS client uses 'CCSID' for reflection, which fails on LUW databases.
+    # We patch it to use 'CODEPAGE' like LUW does, just so we can reflect the bound table.
+    with mock.patch.object(
+        client,
+        "raw_column_metadata_sql",
+        new="""
+        SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
+        FROM SYSIBM.SYSCOLUMNS
+        WHERE TBCREATOR = ? AND TBNAME = ?
+        ORDER BY COLNO""",
+    ), mock.patch.object(client, "for_bit_data_codepage", new=0):
+        table = client.table("dvt_core_types", schema="pso_data_validator")
+
+    # 1. Hashbytes.
+    expr_hash = table.col_string.hashbytes().name("h")
+    sa_select_hash = expr_hash.compile()
+    sql_hash = str(sa_select_hash.compile(dialect=client.con.dialect)).lower()
+    assert "lower(hex(hash_sha256(unicode_str(t0.col_string))))" in sql_hash
+
+    # 2. Cast decimal to string.
+    expr_cast = table.col_dec_10_2.cast("string").name("c")
+    sa_select_cast = expr_cast.compile()
+    sql_cast = str(sa_select_cast.compile(dialect=client.con.dialect)).lower()
+    assert (
+        "ltrim(rtrim(rtrim(to_char(t0.col_dec_10_2, '99999990.99'), '0'), '.'))"
+        in sql_cast
+    )
+
+    # 3. Coalesce (Db2 z/OS specific sa.literal_column handling).
+    expr_coalesce = ibis.coalesce(table.col_string, ibis.literal("default")).name(
+        "coal"
+    )
+    sa_select_coalesce = expr_coalesce.compile()
+    sql_coalesce = str(sa_select_coalesce.compile(dialect=client.con.dialect)).lower()
+    assert "coalesce(t0.col_string, 'default')" in sql_coalesce

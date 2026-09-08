@@ -188,3 +188,67 @@ def test_dvt_temp_object_name(module_under_test):
 
     with pytest.raises(module_under_test.exceptions.ValidationException):
         module_under_test.dvt_temp_object_name(None)
+
+
+@pytest.mark.parametrize(
+    "input_list,max_length,expected_result",
+    [
+        (
+            [],
+            3,
+            [],
+        ),
+        (
+            [1, 2],
+            3,
+            [
+                [1, 2],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            3,
+            [
+                [1, 2, 3],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            2,
+            [
+                [1, 2],
+                [3],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            3,
+            [
+                [1, 2, 3],
+            ],
+        ),
+        (
+            [1, 2, 3, 4],
+            3,
+            [
+                [1, 2, 3],
+                [
+                    4,
+                ],
+            ],
+        ),
+        (
+            [1, 2, 3, 4, 5, 6],
+            3,
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+        ),
+    ],
+)
+def test_list_to_sublists(
+    module_under_test, input_list: list, max_length: int, expected_result: list
+):
+    result = module_under_test.list_to_sublists(input_list, max_length)
+    assert result == expected_result

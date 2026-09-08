@@ -23,6 +23,7 @@ import google.oauth2.service_account
 from google.cloud import bigquery
 from google.api_core import client_options
 import ibis
+
 import pandas
 
 from data_validation import client_info, consts, exceptions
@@ -31,7 +32,6 @@ from data_validation.secret_manager import SecretManagerBuilder
 from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
 from third_party.ibis.ibis_spanner_postgres.api import spanner_postgres_connect
 
@@ -54,12 +54,21 @@ IBIS_ALCHEMY_BACKENDS = [
     "oracle",
     "postgres",
     "db2",
+    "db2_zos",
     "mssql",
     "redshift",
     "snowflake",
     "spanner_postgres",
     "sybase",
 ]
+
+
+def dvt_tuple_in_supported(client) -> bool:
+    """Return True if backend client supports native SQL tuple/struct IN expressions."""
+    if hasattr(client, "dvt_tuple_in_supported"):
+        return client.dvt_tuple_in_supported()
+    else:
+        return False
 
 
 def _raise_missing_client_error(msg):
@@ -76,13 +85,12 @@ except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
-# Oracle requires python-oracldb driver
+# Oracle requires oracledb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
 
-# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from third_party.ibis.ibis_snowflake.api import snowflake_connect
 except ImportError:
@@ -93,14 +101,23 @@ except ImportError:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
+    from third_party.ibis.ibis_db2_zos.api import db2_zos_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+    db2_zos_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 # Sybase requires sqlalchemy_sybase package.
 try:
     from third_party.ibis.ibis_sybase.api import sybase_connect
 except ImportError:
     sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
+
+
+# MSSQL requires pyodbc package.
+try:
+    from third_party.ibis.ibis_mssql.api import mssql_connect
+except ImportError:
+    mssql_connect = _raise_missing_client_error("pip install pyodbc")
 
 
 def get_google_bigquery_client(
@@ -113,15 +130,13 @@ def get_google_bigquery_client(
     job_config = bigquery.QueryJobConfig(
         connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
     )
-    effective_project = quota_project_id or project_id
     options = None
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
-            quota_project_id=quota_project_id if quota_project_id else None,
         )
     return bigquery.Client(
-        project=effective_project,
+        project=quota_project_id,
         client_info=info,
         credentials=credentials,
         default_query_job_config=job_config,
@@ -138,7 +153,6 @@ def _get_google_bqstorage_client(
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
-            quota_project_id=quota_project_id if quota_project_id else None,
         )
     from google.cloud import bigquery_storage_v1 as bigquery_storage
 
@@ -154,20 +168,26 @@ def get_bigquery_client(
     credentials=None,
     api_endpoint: Optional[str] = None,
     storage_api_endpoint: Optional[str] = None,
-    client_project_id: Optional[str] = None,
+    client_project_id: Optional[str] = None,  # to be deprecated in the future
+    billing_project_id: Optional[str] = None,
 ):
+    if client_project_id:
+        logging.warning(
+            "client_project_id is deprecated and will be removed in the future, use --billing-project-id instead"
+        )
+        billing_project_id = client_project_id
     google_client = get_google_bigquery_client(
         project_id,
         credentials=credentials,
         api_endpoint=api_endpoint,
-        quota_project_id=client_project_id,
+        quota_project_id=billing_project_id,
     )
     bqstorage_client = None
     if storage_api_endpoint:
         bqstorage_client = _get_google_bqstorage_client(
             credentials=credentials,
             api_endpoint=storage_api_endpoint,
-            quota_project_id=client_project_id,
+            quota_project_id=billing_project_id,
         )
 
     return bigquery_connect(
@@ -217,6 +237,22 @@ def is_oracle_client(client):
         return False
 
 
+def _split_bigquery_table_location(schema_name, database_name=None):
+    if database_name:
+        return database_name, schema_name
+    if schema_name and "." in schema_name:
+        return schema_name.split(".", 1)
+    return None, schema_name
+
+
+def _split_snowflake_table_location(schema_name, database_name=None):
+    if database_name:
+        return database_name, schema_name
+    if schema_name and "." in schema_name:
+        return schema_name.split(".", 1)
+    return None, schema_name
+
+
 def get_ibis_table(client, schema_name, table_name, database_name=None):
     """Return Ibis Table for Supplied Client.
 
@@ -225,10 +261,23 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if client.name in [
+    if client.name == "bigquery":
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
+        return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name == "snowflake":
+        database_name, schema_name = _split_snowflake_table_location(
+            schema_name, database_name
+        )
+        return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name == "spanner":
+        return client.table(table_name)
+    elif client.name in [
         "oracle",
         "postgres",
         "db2",
+        "db2_zos",
         "mssql",
         "redshift",
         "spanner_postgres",
@@ -244,13 +293,13 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 def get_ibis_query(client, query) -> "ir.Table":
     """Return Ibis Table from query expression for Supplied Client."""
     iq = client.sql(query)
-    # Normalise all columns in the query to lower case.
-    # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/992
-    iq = iq.relabel(dict(zip(iq.columns, [_.lower() for _ in iq.columns])))
+    iq = iq.rename(dict(zip([_.lower() for _ in iq.columns], iq.columns)))
     return iq
 
 
-def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Schema":
+def get_ibis_table_schema(
+    client, schema_name: str, table_name: str, database_name=None
+) -> "sch.Schema":
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
@@ -258,8 +307,22 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if is_sqlalchemy_backend(client):
+    if client.name == "bigquery":
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
+        return client.get_schema(table_name, schema=schema_name, database=database_name)
+    elif client.name == "snowflake":
+        database_name, schema_name = _split_snowflake_table_location(
+            schema_name, database_name
+        )
+        return client.table(
+            table_name, database=database_name, schema=schema_name
+        ).schema()
+    elif is_sqlalchemy_backend(client):
         return client.table(table_name, schema=schema_name).schema()
+    elif client.name == "spanner":
+        return client.get_schema(table_name)
     else:
         return client.get_schema(table_name, schema_name)
 
@@ -274,22 +337,26 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
         return client._get_schema_using_query(query_str)
 
 
-def list_schemas(client):
-    """Return a list of schemas in the DB."""
+def list_databases(client):
+    """Return a list of databases in the DB.
+    In version 7.1, Ibis adopted a uniform way of referring (see https://ibis-project.org/concepts/backend-table-hierarchy)
+    to a collection of tables as a database, irrespective of the terminology used by the specific backend.
+    Here we want the collection of tables that may be used for validation, hence the changing
+    the function name to list_databases()."""
     if hasattr(client, "list_databases"):
         try:
             return client.list_databases()
         except NotImplementedError:
-            return [None]
-    else:
-        return [None]
+            raise NotImplementedError(
+                "list_databases is not implemented for this client"
+            )
 
 
 def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
     fn = (
         client.dvt_list_tables
-        if tables_only and client.name != "pandas"
+        if tables_only and hasattr(client, "dvt_list_tables")
         else client.list_tables
     )
     if client.name in ["redshift", "snowflake", "pandas"]:
@@ -304,7 +371,7 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     allowed_schemas (List[str]): List of schemas to pull.
     """
     table_objs = []
-    schemas = list_schemas(client)
+    schemas = list_databases(client)
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
@@ -345,6 +412,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
+            logging.warning(
+                """"Use of Service Account Keys is strongly discouraged. This option is deprecated and may be removed.
+                Run DVT with the service account identity by using application-default-credentials with --impersonate-service-account"""
+            )
             decrypted_connection_config["credentials"] = (
                 google.oauth2.service_account.Credentials.from_service_account_file(
                     key_path
@@ -415,6 +486,9 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         # This is a workaround for Oracle limitation:
         #   ORA-01795: maximum number of expressions in a list is 1000
         return 1000
+    elif client.name == "mssql":
+        # Workaround for SQL Server limitation: 2100 maximum parameters in a single query
+        return 2000
     else:
         return None
 
@@ -434,4 +508,5 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_SPANNER_POSTGRES: spanner_postgres_connect,
     consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
+    consts.SOURCE_TYPE_DB2_ZOS: db2_zos_connect,
 }

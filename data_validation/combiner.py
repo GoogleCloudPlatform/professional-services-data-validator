@@ -19,6 +19,7 @@ original data type is used.
 """
 
 import datetime
+import decimal
 import functools
 import json
 import logging
@@ -44,6 +45,39 @@ COMBINER_COLUMN_SLICE_WIDTH = 120
 COMBINER_GET_SUMMARY_EXC_TEXT = (
     "Error while generating summary report of row validation results"
 )
+
+_MAX_INT64 = 9223372036854775807
+_MIN_INT64 = -9223372036854775808
+
+
+def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
+    """Casts out-of-bounds 64-bit python int values to decimal.Decimal objects.
+
+    This prevents PyArrow from failing with `OverflowError: Python int too large to convert to C long`
+    during table inference, by converting integers that exceed 64-bit limits (e.g., 20-digit or 38-digit
+    integers returned by some database drivers) to decimals inside Pandas DataFrames prior to loading
+    them into the in-memory pandas client.
+    """
+    df_copied = False
+    for col in df.columns:
+        if df[col].dtype == object:
+            converted = False
+
+            def convert_if_large(x):
+                nonlocal converted
+                if type(x) is int and (x > _MAX_INT64 or x < _MIN_INT64):
+                    converted = True
+                    return decimal.Decimal(str(x))
+                return x
+
+            new_col = df[col].apply(convert_if_large)
+
+            if converted:
+                if not df_copied:
+                    df = df.copy()
+                    df_copied = True
+                df[col] = new_col
+    return df
 
 
 def generate_report(
@@ -72,6 +106,9 @@ def generate_report(
             A pandas DataFrame with the results of the validation in the same
             schema as the report table.
     """
+    source_df = _convert_large_ints_to_decimals(source_df)
+    target_df = _convert_large_ints_to_decimals(target_df)
+
     _check_schema_names(source_df, target_df)
 
     join_on_fields = tuple(join_on_fields)
@@ -108,7 +145,7 @@ def generate_report(
         if result_df is None:
             result_df = interim_result_df
         else:
-            result_df = pandas.concat([result_df, interim_result_df])
+            result_df = pandas.concat([result_df, interim_result_df], ignore_index=True)
 
     # Get the first validation metadata object to fill source and/or target empty table names.
     first = run_metadata.validations[next(iter(run_metadata.validations))]
@@ -522,13 +559,87 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
     return (joined, run_metadata)
 
 
-def _get_summary(
+def _log_row_validation_summary(
     run_metadata: "RunMetadata",
     result_df: "DataFrame",
     source_df: "DataFrame",
     target_df: "DataFrame",
 ):
     """Logs a summary report/stats of row validation results."""
+    success_condition = (
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+    )
+    fail_condition = ~success_condition
+
+    source_not_in_target = (
+        result_df[consts.SOURCE_AGG_VALUE].notnull()
+        & result_df[consts.TARGET_AGG_VALUE].isnull()
+    )
+    target_not_in_source = (
+        result_df[consts.SOURCE_AGG_VALUE].isnull()
+        & result_df[consts.TARGET_AGG_VALUE].notnull()
+    )
+    present_in_both_tables = (
+        result_df[consts.SOURCE_AGG_VALUE].notnull()
+        & result_df[consts.TARGET_AGG_VALUE].notnull()
+    )
+
+    logging.info(
+        json.dumps(
+            {
+                consts.CONFIG_RUN_ID: run_metadata.run_id,
+                consts.CONFIG_START_TIME: run_metadata.start_time.isoformat(),
+                consts.CONFIG_END_TIME: run_metadata.end_time.isoformat(),
+                consts.TOTAL_SOURCE_ROWS: int(source_df.shape[0]),
+                consts.TOTAL_TARGET_ROWS: int(target_df.shape[0]),
+                consts.TOTAL_ROWS_VALIDATED: int(result_df.shape[0]),
+                consts.TOTAL_ROWS_SUCCESS: int(success_condition.sum()),
+                consts.TOTAL_ROWS_FAIL: int(fail_condition.sum()),
+                consts.FAILED_SOURCE_NOT_IN_TARGET: int(
+                    (fail_condition & source_not_in_target).sum()
+                ),
+                consts.FAILED_TARGET_NOT_IN_SOURCE: int(
+                    (fail_condition & target_not_in_source).sum()
+                ),
+                consts.FAILED_PRESENT_IN_BOTH_TABLES: int(
+                    (fail_condition & present_in_both_tables).sum()
+                ),
+            }
+        )
+    )
+
+
+def _log_validation_summary(
+    run_metadata: "RunMetadata",
+    result_df: "DataFrame",
+):
+    """Logs a summary report/stats of validation results."""
+    success_condition = (
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+    )
+    fail_condition = ~success_condition
+
+    logging.info(
+        json.dumps(
+            {
+                consts.CONFIG_RUN_ID: run_metadata.run_id,
+                consts.CONFIG_START_TIME: run_metadata.start_time.isoformat(),
+                consts.CONFIG_END_TIME: run_metadata.end_time.isoformat(),
+                consts.TOTAL_VALIDATIONS: int(result_df.shape[0]),
+                consts.TOTAL_VALIDATIONS_SUCCESS: int(success_condition.sum()),
+                consts.TOTAL_VALIDATIONS_FAIL: int(fail_condition.sum()),
+            }
+        )
+    )
+
+
+def _get_summary(
+    run_metadata: "RunMetadata",
+    result_df: "DataFrame",
+    source_df: "DataFrame",
+    target_df: "DataFrame",
+):
+    """Logs a summary report/stats of validation results."""
     try:
         if result_df.empty:
             return
@@ -538,50 +649,10 @@ def _get_summary(
             result_df.loc[0, consts.VALIDATION_TYPE] == consts.CUSTOM_QUERY
             and result_df.loc[0, consts.CONFIG_PRIMARY_KEYS]
         ):
-            # Vectorized calculations for all counts.
-            success_condition = (
-                result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
-            )
-            fail_condition = ~success_condition  # Invert success for fail condition.
-
-            source_not_in_target = (
-                result_df[consts.SOURCE_AGG_VALUE].notnull()
-                & result_df[consts.TARGET_AGG_VALUE].isnull()
-            )
-            target_not_in_source = (
-                result_df[consts.SOURCE_AGG_VALUE].isnull()
-                & result_df[consts.TARGET_AGG_VALUE].notnull()
-            )
-            present_in_both_tables = (
-                result_df[consts.SOURCE_AGG_VALUE].notnull()
-                & result_df[consts.TARGET_AGG_VALUE].notnull()
-            )
-
-            logging.info(
-                json.dumps(
-                    {
-                        consts.CONFIG_RUN_ID: run_metadata.run_id,
-                        consts.CONFIG_START_TIME: run_metadata.start_time.isoformat(),
-                        consts.CONFIG_END_TIME: run_metadata.end_time.isoformat(),
-                        # Explicit conversion of numpy's int64 values to int for JSON serializability
-                        consts.TOTAL_SOURCE_ROWS: int(source_df.shape[0]),
-                        consts.TOTAL_TARGET_ROWS: int(target_df.shape[0]),
-                        consts.TOTAL_ROWS_VALIDATED: int(result_df.shape[0]),
-                        # Using .sum() on boolean Series for much faster counting
-                        consts.TOTAL_ROWS_SUCCESS: int(success_condition.sum()),
-                        consts.TOTAL_ROWS_FAIL: int(fail_condition.sum()),
-                        consts.FAILED_SOURCE_NOT_IN_TARGET: int(
-                            (fail_condition & source_not_in_target).sum()
-                        ),
-                        consts.FAILED_TARGET_NOT_IN_SOURCE: int(
-                            (fail_condition & target_not_in_source).sum()
-                        ),
-                        consts.FAILED_PRESENT_IN_BOTH_TABLES: int(
-                            (fail_condition & present_in_both_tables).sum()
-                        ),
-                    }
-                )
-            )
+            _log_row_validation_summary(run_metadata, result_df, source_df, target_df)
+        else:
+            # If we don't output the specific row validation INFO line, output a generic summary.
+            _log_validation_summary(run_metadata, result_df)
     except Exception as e:
         logging.warning(
             f"{COMBINER_GET_SUMMARY_EXC_TEXT}: {e}",

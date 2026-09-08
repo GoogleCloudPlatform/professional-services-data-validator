@@ -29,64 +29,61 @@ def bigquery_client():
 
 def test_bit_xor_bigquery(bigquery_client):
     tbl = bigquery_client.table(
-        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+        "citibike_trips", database="bigquery-public-data", schema="new_york_citibike"
     )
     expr = tbl["tripduration"].bit_xor().name("checksum")
     sql = expr.compile()
     assert sql == textwrap.dedent("""
-    SELECT BIT_XOR(t0.`tripduration`) AS `checksum`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
+    SELECT
+      BIT_XOR(t0.`tripduration`) AS `checksum`
+    FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()
 
 
 def test_hash_bigquery_string(bigquery_client):
     tbl = bigquery_client.table(
-        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+        "citibike_trips", database="bigquery-public-data", schema="new_york_citibike"
     )
-    expr = tbl[
-        tbl["start_station_name"].hash(how="farm_fingerprint").name("station_hash")
-    ]
+    expr = tbl[tbl["start_station_name"].hash().name("station_hash")]
     sql = expr.compile()
     assert sql == textwrap.dedent("""
-    SELECT farm_fingerprint(t0.`start_station_name`) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
+    SELECT
+      farm_fingerprint(t0.`start_station_name`) AS `station_hash`
+    FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()
 
 
 def test_hash_bigquery_binary(bigquery_client):
     tbl = bigquery_client.table(
-        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+        "citibike_trips", database="bigquery-public-data", schema="new_york_citibike"
     )
-    expr = tbl[
-        tbl["start_station_name"]
-        .cast(dt.binary)
-        .hash(how="farm_fingerprint")
-        .name("station_hash")
-    ]
+    expr = tbl[tbl["start_station_name"].cast(dt.binary).hash().name("station_hash")]
     sql = expr.compile()
     # TODO: Update the expected SQL to be a valid query once
     #       https://github.com/ibis-project/ibis/issues/2354 is fixed.
     assert sql == textwrap.dedent("""
-    SELECT farm_fingerprint(CAST(t0.`start_station_name` AS BYTES)) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
+    SELECT
+      farm_fingerprint(FROM_HEX(t0.`start_station_name`)) AS `station_hash`
+    FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()
 
 
 def test_hashbytes_bigquery_string(bigquery_client):
     tbl = bigquery_client.table(
-        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+        "citibike_trips", database="bigquery-public-data", schema="new_york_citibike"
     )
     expr = tbl[tbl["start_station_name"].hashbytes(how="sha256").name("station_hash")]
     sql = expr.compile()
     assert sql == textwrap.dedent("""
-    SELECT TO_HEX(SHA256(t0.`start_station_name`)) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
+    SELECT
+      TO_HEX(SHA256(t0.`start_station_name`)) AS `station_hash`
+    FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()
 
 
 def test_hashbytes_bigquery_binary(bigquery_client):
     tbl = bigquery_client.table(
-        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+        "citibike_trips", database="bigquery-public-data", schema="new_york_citibike"
     )
     expr = tbl[
         tbl["start_station_name"]
@@ -98,6 +95,7 @@ def test_hashbytes_bigquery_binary(bigquery_client):
     # TODO: Update the expected SQL to be a valid query once
     #       https://github.com/ibis-project/ibis/issues/2354 is fixed.
     assert sql == textwrap.dedent("""
-    SELECT TO_HEX(SHA256(CAST(t0.`start_station_name` AS BYTES))) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
+    SELECT
+      TO_HEX(SHA256(FROM_HEX(t0.`start_station_name`))) AS `station_hash`
+    FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()

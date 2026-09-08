@@ -43,11 +43,15 @@ HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
 
 
+HIVE_AUTH_MECH = os.getenv("HIVE_AUTH_MECH", "PLAIN")
+
+
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     "host": HIVE_HOST,
     "port": 10000,
     "database": HIVE_DATABASE,
+    "auth_mechanism": HIVE_AUTH_MECH,
 }
 
 
@@ -425,6 +429,21 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
         comp_fields=",".join(DVT_TRICKY_DATES_COLUMNS),
+    )
+
+
+@pytest.mark.slow
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 

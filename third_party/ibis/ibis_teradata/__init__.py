@@ -38,23 +38,25 @@ class Backend(BaseSQLBackend):
 
     def do_connect(
         self,
-        host: str = "localhost",
+        host: str = None,
         user_name: str = None,
         password: str = None,
-        port: int = 1025,
-        logmech: str = "TD2",
+        port: int = None,
+        logmech: str = None,
         use_no_lock_tables: str = "False",
         json_params: Mapping[str, Any] = None,
     ) -> None:
-        self.teradata_config = {
+        self.teradata_config = dict(json_params) if json_params else {}
+        explicit_config = {
             "host": host,
             "user": user_name,
             "password": password,
             "dbs_port": port,
             "logmech": logmech,
         }
-        if json_params:
-            self.teradata_config.update(json_params)
+        self.teradata_config.update(
+            {key: value for key, value in explicit_config.items() if value is not None}
+        )
 
         self.client = teradatasql.connect(**self.teradata_config)
         self.con = self.client.cursor()
@@ -67,7 +69,11 @@ class Backend(BaseSQLBackend):
         self.con.close()
 
     def __del__(self):
-        self.con.close()
+        if getattr(self, "con", None) is not None:
+            try:
+                self.con.close()
+            except Exception:
+                pass
 
     @property
     def version(self):
@@ -231,7 +237,7 @@ class Backend(BaseSQLBackend):
 
         self._log(sql)
 
-        schema = self.ast_schema(query_ast, **kwargs)
+        schema = expr.as_table().schema()
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
@@ -326,3 +332,7 @@ class Backend(BaseSQLBackend):
 
     def fetch_from_cursor(self, cursor, schema):
         pass
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False

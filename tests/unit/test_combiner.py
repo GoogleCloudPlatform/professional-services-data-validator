@@ -12,17 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
+import decimal
+import json
+import logging
 
+import numpy
 import pandas
 import pandas.testing
 import pytest
-import logging
-import json
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
 
+# Ensure Pandas is patched as it would be in a true DVT execution.
+import third_party.ibis.ibis_addon.operations  # noqa: F401
+
 _NAN = float("nan")
+
+
+def _assert_frame_equal(report, expected):
+    with pandas.option_context("future.no_silent_downcasting", True):
+        report_filled = report.fillna(value=_NAN)
+        expected_filled = expected.fillna(value=_NAN)
+    pandas.testing.assert_frame_equal(report_filled, expected_filled)
+
 
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     validations={
@@ -413,7 +426,7 @@ def test_generate_report_without_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -690,7 +703,7 @@ def test_generate_report_with_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -1009,7 +1022,7 @@ def test_generate_report_with_nan_agg_value(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @pytest.mark.parametrize(
@@ -1100,6 +1113,78 @@ def test_generate_report_with_nan_agg_value(
                 consts.FAILED_PRESENT_IN_BOTH_TABLES: 0,
             },
         ),
+        # Test Case 3: Column Validation Summary
+        # Verifies that a standard column validation correctly logs
+        # total, success, and fail validation counts.
+        (
+            metadata.RunMetadata(
+                run_id="col-test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.COLUMN_VALIDATION] * 5,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
+                    consts.SOURCE_COLUMN_NAME: ["col1", "col2", "col3", "col4", "col5"],
+                    consts.TARGET_COLUMN_NAME: ["col1", "col2", "col3", "col4", "col5"],
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame(),
+            pandas.DataFrame(),
+            {
+                consts.CONFIG_RUN_ID: "col-test-run",
+                consts.CONFIG_START_TIME: "2025-02-12T07:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-02-12T07:32:15+00:00",
+                consts.TOTAL_VALIDATIONS: 5,
+                consts.TOTAL_VALIDATIONS_SUCCESS: 2,
+                consts.TOTAL_VALIDATIONS_FAIL: 3,
+            },
+        ),
+        # Test Case 4: Custom Query (Column-like) Validation Summary
+        # Verifies that a custom query validation without primary keys
+        # (which behaves like a column validation) correctly logs
+        # total, success, and fail validation counts.
+        (
+            metadata.RunMetadata(
+                run_id="custom-col-test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.CUSTOM_QUERY] * 5,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 5,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
+                    consts.SOURCE_COLUMN_NAME: [None] * 5,
+                    consts.TARGET_COLUMN_NAME: [None] * 5,
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame(),
+            pandas.DataFrame(),
+            {
+                consts.CONFIG_RUN_ID: "custom-col-test-run",
+                consts.CONFIG_START_TIME: "2025-02-12T07:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-02-12T07:32:15+00:00",
+                consts.TOTAL_VALIDATIONS: 5,
+                consts.TOTAL_VALIDATIONS_SUCCESS: 2,
+                consts.TOTAL_VALIDATIONS_FAIL: 3,
+            },
+        ),
     ),
 )
 def test_get_summary_with_values_for_all_stats(
@@ -1153,3 +1238,77 @@ def test_get_summary_with_empty_inputs(
         module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
         for _ in caplog.records
     )
+
+
+def test_convert_large_ints_to_decimals(module_under_test):
+    df = pandas.DataFrame(
+        {
+            "normal_int": [1, 2],
+            "large_pos": [module_under_test._MAX_INT64 * 10, 1],
+            "large_neg": [module_under_test._MIN_INT64 * 10, 1],
+            "string_col": ["a", "b"],
+            "bool_col": [True, False],
+            "float_col": [1.1, 2.2],
+        }
+    )
+
+    res = module_under_test._convert_large_ints_to_decimals(df)
+
+    assert isinstance(res["large_pos"][0], decimal.Decimal)
+    assert str(res["large_pos"][0]) == str(module_under_test._MAX_INT64 * 10)
+    assert isinstance(res["large_pos"][1], int)
+
+    assert isinstance(res["large_neg"][0], decimal.Decimal)
+    assert str(res["large_neg"][0]) == str(module_under_test._MIN_INT64 * 10)
+    assert isinstance(res["large_neg"][1], int)
+
+    assert isinstance(res["normal_int"][0], (int, numpy.integer))
+    assert isinstance(res["string_col"][0], str)
+
+
+def test_generate_report_with_binary_data(module_under_test):
+    """Test report generation with binary data containing non-UTF-8 characters.
+
+    This ensures that DVT does not crash with a UnicodeDecodeError when
+    casting binary columns to string in the Pandas combiner phase. Instead,
+    the binary data should be formatted as a hex string in the report.
+    """
+    # Binary data with non-UTF-8 bytes (e.g. 0xac)
+    binary_data = b"\xac\xed\x00\x05"
+    source_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
+    target_df = pandas.DataFrame({"id": [1], "bin_col": [binary_data]})
+
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "bin_col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="bq-public.source_dataset",
+                source_column_name="bin_col",
+                target_table_name="test_target",
+                target_table_schema="bq-public.target_dataset",
+                target_column_name="bin_col",
+                validation_type="Row",
+                aggregation_type="hash",
+                primary_keys=["id"],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+        labels=[],
+        run_id="test-run",
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source_df,
+        target_df,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+
+    assert consts.SOURCE_AGG_VALUE in report.columns
+    assert consts.TARGET_AGG_VALUE in report.columns
+    assert report[consts.SOURCE_AGG_VALUE].iloc[0] == "aced0005"
+    assert report[consts.TARGET_AGG_VALUE].iloc[0] == "aced0005"

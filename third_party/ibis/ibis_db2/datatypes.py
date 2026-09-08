@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibm_db_dbi
-
+from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import ibis.expr.datatypes as dt
+import ibm_db_dbi
 from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
 import sqlalchemy as sa
 import sqlalchemy.types as sat
-
-from ibis.backends.base.sql.alchemy import to_sqla_type
 
 # Types from https://github.com/ibmdb/python-ibmdb/blob/master/IBM_DB/ibm_db/ibm_db_dbi.py
 _type_mapping = {
@@ -38,20 +36,28 @@ _type_mapping = {
 }
 
 
-@to_sqla_type.register(DB2Dialect_ibm_db, dt.String)
-def _string(_, itype):
-    """Include a limit for casts to String due to line size limits supported by Db2 concat()."""
-    return sa.sql.sqltypes.String(length=3000)
+class Db2Type(AlchemyType):
+    dialect = "db2"
+
+    @classmethod
+    def from_ibis(cls, dtype: dt.DataType) -> sat.TypeEngine:
+        if dtype.is_string():
+            return sa.sql.sqltypes.String(length=3000)
+        return super().from_ibis(dtype)
+
+    @classmethod
+    def to_ibis(cls, typ: sat.TypeEngine, nullable: bool = True) -> dt.DataType:
+        if isinstance(typ, sat.BINARY):
+            return dt.Binary(nullable=nullable)
+        return super().to_ibis(typ, nullable=nullable)
 
 
 DB2Dialect_ibm_db.ischema_names["BINARY"] = sat.BINARY
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
 DB2Dialect_ibm_db.ischema_names["VARBINARY"] = sat.BINARY
-
-
-@dt.dtype.register(DB2Dialect_ibm_db, sat.BINARY)
-def sa_sf_binary(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
+# Db2 z/OS variants.
+DB2Dialect_ibm_db.ischema_names["VARBIN"] = DB2Dialect_ibm_db.ischema_names["VARBINARY"]
+DB2Dialect_ibm_db.ischema_names["VARG"] = DB2Dialect_ibm_db.ischema_names["VARGRAPHIC"]
 
 
 def _get_type(column) -> dt.DataType:
@@ -65,5 +71,9 @@ def _get_type(column) -> dt.DataType:
         scale = column[5]
         if precision is not None and scale is not None:
             return dt.Decimal(precision, scale)
+        return dt.Decimal()
+
+    if isinstance(typ, type):
+        return typ()
 
     return typ

@@ -26,6 +26,7 @@ import sqlalchemy as sa
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
+import ibis.expr.datatypes as dt
 
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
@@ -102,7 +103,7 @@ def _timestamp_truncate(t, op):
 def _cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     if (
@@ -341,7 +342,7 @@ def _log(t, op):
         sa_base = t.translate(base)
         return sa.cast(
             sa.func.log(sa.cast(sa_base, sa.NUMERIC), sa.cast(sa_arg, sa.NUMERIC)),
-            t.get_sqla_type(op.output_dtype),
+            t.get_sqla_type(op.dtype),
         )
     return sa.func.ln(sa_arg)
 
@@ -384,8 +385,8 @@ def _table_column(t, op):
     out_expr = get_col(sa_table, op)
     out_expr.quote = t._quote_column_names
 
-    if op.output_dtype.is_timestamp():
-        timezone = op.output_dtype.timezone
+    if op.dtype.is_timestamp():
+        timezone = op.dtype.timezone
         if timezone is not None:
             # Using literal_column on Oracle because the time zone string cannot be a bind.
             # DVT by default converts everything to UTC, so special case it here to use numeric timezone to overcome that
@@ -422,12 +423,12 @@ def _string_join(t, op):
 
 
 def _literal(t, op):
-    dtype = op.output_dtype
+    dtype = op.dtype
     value = op.value
 
     if dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
-    elif dtype.is_set():
+    elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
     elif dtype.is_array():
         return pg.array(value)
@@ -469,13 +470,8 @@ operation_registry.update(
         # types
         ops.Cast: _cast,
         ops.TypeOf: _typeof,
-        # null handling
-        ops.IfNull: fixed_arity(sa.func.coalesce, 2),
-        # boolean reductions
         ops.Any: unary(sa.func.bool_or),
         ops.All: unary(sa.func.bool_and),
-        ops.NotAny: unary(lambda x: sa.not_(sa.func.bool_or(x))),
-        ops.NotAll: unary(lambda x: sa.not_(sa.func.bool_and(x))),
         # strings
         ops.Substring: _substr,
         ops.StringFind: _string_find,
@@ -499,7 +495,7 @@ operation_registry.update(
         ops.TimestampTruncate: _timestamp_truncate,
         ops.IntervalFromInteger: (
             lambda t, op: t.translate(op.arg)
-            * sa.text(f"INTERVAL '1 {op.output_dtype.resolution}'")
+            * sa.text(f"INTERVAL '1 {op.dtype.resolution}'")
         ),
         ops.DateAdd: fixed_arity(operator.add, 2),
         ops.DateSub: fixed_arity(operator.sub, 2),
@@ -524,3 +520,15 @@ operation_registry.update(
         ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
     }
 )
+
+
+def format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    convert = sa.func.convert(arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.standard_hash(convert, sa.sql.literal_column("'SHA256'"))
+    return sa.func.lower(hash_func)
+
+
+def format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.dbms_lob.getlength(arg)

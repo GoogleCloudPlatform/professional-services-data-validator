@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import logging
 import os
@@ -25,6 +26,7 @@ from data_validation import (
     clients,
     consts,
     exceptions,
+    gcs_helper,
     raw_query,
     state_manager,
     util,
@@ -48,6 +50,10 @@ LOG_LEVEL_MAP = {
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
 }
+
+CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
+    "Saving custom-query validations to directory configs is not supported."
+)
 
 
 def _get_arg_config_file(args):
@@ -330,6 +336,12 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
                 _get_comparison_config(args, config_manager, primary_keys)
             )
 
+        if not config_manager.comparison_fields:
+            raise ValueError(
+                "No comparison fields remaining after excluding primary keys. "
+                "Use --concat or --hash when all columns are also primary key columns."
+            )
+
     return config_manager
 
 
@@ -346,11 +358,20 @@ def build_config_managers_from_args(
 
         # Build a list of ConfigManager objects
         for pre_build_configs in pre_build_configs_list:
-            config_manager = ConfigManager.build_config_manager(**pre_build_configs)
+            try:
+                config_manager = ConfigManager.build_config_manager(**pre_build_configs)
 
-            # Append post build configs to ConfigManager object
-            config_manager = build_config_from_args(args, config_manager)
-
+                # Append post build configs to ConfigManager object
+                config_manager = build_config_from_args(args, config_manager)
+            except Exception as e:
+                table_obj = pre_build_configs.get(consts.CONFIG_PRE_BUILD_TABLE_OBJ)
+                if table_obj and consts.CONFIG_TABLE_NAME in table_obj:
+                    raise exceptions.BuildConfigException(
+                        f"Validation failed for table '{table_obj[consts.CONFIG_TABLE_NAME]}': {e}"
+                    ) from e
+                raise exceptions.BuildConfigException(
+                    f"Validation build failed: {e}"
+                ) from e
             # Append ConfigManager object to configs list
             configs.append(config_manager)
         return configs
@@ -489,9 +510,7 @@ def convert_config_to_json(config_managers: list) -> dict:
             "JSON configs can only be created for single table validations."
         )
     config_manager = config_managers[0]
-    json_config = config_manager.config
-    json_config[consts.CONFIG_SOURCE_CONN] = config_manager.get_source_connection()
-    json_config[consts.CONFIG_TARGET_CONN] = config_manager.get_target_connection()
+    json_config = copy.deepcopy(config_manager.config)
     return json_config
 
 
@@ -519,33 +538,40 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
         logging.warning(
             "Trim String Primary Keys has been deprecated, validation results may vary"
         )
-    with DataValidation(
-        config_manager.config,
-        validation_builder=None,
-        result_handler=None,
-        verbose=verbose,
-        cached_source_client=source_client,
-        cached_target_client=target_client,
-    ) as validator:
+    try:
+        with DataValidation(
+            config_manager.config,
+            validation_builder=None,
+            result_handler=None,
+            verbose=verbose,
+            cached_source_client=source_client,
+            cached_target_client=target_client,
+        ) as validator:
 
-        if dry_run:
-            print(
-                json.dumps(
-                    {
-                        "source_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_source_query(),
-                            source_client,
-                        ),
-                        "target_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_target_query(),
-                            target_client,
-                        ),
-                    },
-                    indent=4,
+            if dry_run:
+                print(
+                    json.dumps(
+                        {
+                            "source_query": util.ibis_table_to_sql(
+                                validator.validation_builder.get_source_query(),
+                                source_client,
+                            ),
+                            "target_query": util.ibis_table_to_sql(
+                                validator.validation_builder.get_target_query(),
+                                target_client,
+                            ),
+                        },
+                        indent=4,
+                    )
                 )
-            )
-        else:
-            validator.execute()
+            else:
+                validator.execute()
+    except Exception as e:
+        if config_manager.full_source_table:
+            raise exceptions.ValidationException(
+                f"Validation failed for table '{config_manager.full_source_table}': {e}"
+            ) from e
+        raise
 
 
 def run_validations(args, config_managers):
@@ -578,6 +604,58 @@ def store_json_config_file(args, config_managers):
     json_config = convert_config_to_json(config_managers)
     config_file_path = _get_arg_config_file_json(args)
     cli_tools.store_validation(config_file_path, json_config)
+
+
+def store_config_dir(args, config_managers, is_json=False):
+    """Build and store validation configs inside a directory (as YAML or JSON files).
+
+    Args:
+        args (Namespace): User specified Arguments.
+        config_managers (list[ConfigManager]): List of config manager instances.
+        is_json (bool): If True, store as JSON files. Otherwise, store as YAML.
+    """
+    if any(cm.validation_type == consts.CUSTOM_QUERY for cm in config_managers):
+        raise ValueError(CUSTOM_QUERY_DIR_SUPPORT_ERROR)
+
+    config_dir = args.config_dir_json if is_json else args.config_dir
+
+    # Enforce empty directory to prevent accidental overwrites (Abort and Fail)
+    if gcs_helper._is_gcs_path(config_dir):
+        if gcs_helper.list_gcs_directory(config_dir):
+            raise ValueError(f"GCS directory {config_dir} is not empty. Aborting.")
+    else:
+        if os.path.exists(config_dir) and os.listdir(config_dir):
+            raise ValueError(f"Directory {config_dir} is not empty. Aborting.")
+
+    seen_names = {}
+    extension = "json" if is_json else "yaml"
+    logging.info(f"Writing validation configs to directory: {config_dir}")
+
+    for config_manager in config_managers:
+        source_schema = config_manager.source_schema
+        source_table = config_manager.source_table
+
+        base_name = f"{source_schema}.{source_table}" if source_schema else source_table
+
+        # Prevent internal collisions within the same execution list
+        if base_name not in seen_names:
+            seen_names[base_name] = 0
+            file_name = f"{base_name}.{extension}"
+        else:
+            seen_names[base_name] += 1
+            file_name = f"{base_name}_{seen_names[base_name]}.{extension}"
+
+        # Format config format matching is_json
+        if is_json:
+            config_to_store = convert_config_to_json([config_manager])
+        else:
+            config_to_store = convert_config_to_yaml(args, [config_manager])
+
+        target_file_path = os.path.join(config_dir, file_name)
+        logging.debug(f"Saving config file: {target_file_path}")
+        cli_tools.store_validation(target_file_path, config_to_store, include_log=True)
+
+    logging.info(f"Success! Validation configs written to directory: {config_dir}")
 
 
 def partition_and_store_config_files(args: "Namespace") -> None:
@@ -616,6 +694,10 @@ def run(args) -> None:
         store_yaml_config_file(args, config_managers)
     elif args.config_file_json:
         store_json_config_file(args, config_managers)
+    elif getattr(args, "config_dir", None):
+        store_config_dir(args, config_managers, is_json=False)
+    elif getattr(args, "config_dir_json", None):
+        store_config_dir(args, config_managers, is_json=True)
     else:
         run_validations(args, config_managers)
 
