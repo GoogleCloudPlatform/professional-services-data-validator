@@ -470,7 +470,10 @@ def test_grouped_count_validator():
     partitions = frozenset(df[consts.GROUP_BY_COLUMNS])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df[consts.SOURCE_AGG_VALUE].sum() == df[consts.TARGET_AGG_VALUE].sum()
+    assert (
+        df[consts.SOURCE_AGG_VALUE].astype(float).sum()
+        == df[consts.TARGET_AGG_VALUE].astype(float).sum()
+    )
 
     for _, row in rows:
         assert float(row[consts.SOURCE_AGG_VALUE]) > 0
