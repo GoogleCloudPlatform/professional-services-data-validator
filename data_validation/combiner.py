@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 import pyarrow
 import pyarrow.compute as pc
 
+from data_validation import combiner_capture
 from data_validation import consts
 
 if TYPE_CHECKING:
@@ -53,50 +54,67 @@ def generate_report(
             A pandas DataFrame with the results of the validation in the same
             schema as the report table.
     """
-    _check_schema_names(source_table, target_table)
+    result_df = None
+    captured_exc = None
+    try:
+        _check_schema_names(source_table, target_table)
 
-    join_on_fields = tuple(join_on_fields)
-    report_table = _generate_report_slice(
-        run_metadata,
-        source_table,
-        target_table,
-        join_on_fields=join_on_fields,
-        is_value_comparison=is_value_comparison,
-        verbose=verbose,
-    )
-
-    # Get the first validation metadata object to fill source and/or target empty table names.
-    first = run_metadata.validations[next(iter(run_metadata.validations))]
-    if first.validation_type != consts.CUSTOM_QUERY:
-        report_table = report_table.set_column(
-            report_table.schema.get_field_index(consts.SOURCE_TABLE_NAME),
-            consts.SOURCE_TABLE_NAME,
-            pc.fill_null(
-                report_table[consts.SOURCE_TABLE_NAME],
-                first.get_table_name(consts.RESULT_TYPE_SOURCE),
-            ),
-        )
-        report_table = report_table.set_column(
-            report_table.schema.get_field_index(consts.TARGET_TABLE_NAME),
-            consts.TARGET_TABLE_NAME,
-            pc.fill_null(
-                report_table[consts.TARGET_TABLE_NAME],
-                first.get_table_name(consts.RESULT_TYPE_TARGET),
-            ),
+        join_on_fields = tuple(join_on_fields)
+        report_table = _generate_report_slice(
+            run_metadata,
+            source_table,
+            target_table,
+            join_on_fields=join_on_fields,
+            is_value_comparison=is_value_comparison,
+            verbose=verbose,
         )
 
-    _get_summary(run_metadata, report_table, source_table, target_table)
+        # Get the first validation metadata object to fill source and/or target empty table names.
+        first = run_metadata.validations[next(iter(run_metadata.validations))]
+        if first.validation_type != consts.CUSTOM_QUERY:
+            report_table = report_table.set_column(
+                report_table.schema.get_field_index(consts.SOURCE_TABLE_NAME),
+                consts.SOURCE_TABLE_NAME,
+                pc.fill_null(
+                    report_table[consts.SOURCE_TABLE_NAME],
+                    first.get_table_name(consts.RESULT_TYPE_SOURCE),
+                ),
+            )
+            report_table = report_table.set_column(
+                report_table.schema.get_field_index(consts.TARGET_TABLE_NAME),
+                consts.TARGET_TABLE_NAME,
+                pc.fill_null(
+                    report_table[consts.TARGET_TABLE_NAME],
+                    first.get_table_name(consts.RESULT_TYPE_TARGET),
+                ),
+            )
 
-    result_df = report_table.to_pandas(
-        timestamp_as_object=False, coerce_temporal_nanoseconds=True
-    )
-    if consts.NUM_RANDOM_ROWS in result_df.columns:
-        result_df[consts.NUM_RANDOM_ROWS] = (
-            result_df[consts.NUM_RANDOM_ROWS]
-            .where(result_df[consts.NUM_RANDOM_ROWS].notnull(), None)
-            .astype(object)
+        _get_summary(run_metadata, report_table, source_table, target_table)
+
+        result_df = report_table.to_pandas(
+            timestamp_as_object=False, coerce_temporal_nanoseconds=True
         )
-    return result_df
+        if consts.NUM_RANDOM_ROWS in result_df.columns:
+            result_df[consts.NUM_RANDOM_ROWS] = (
+                result_df[consts.NUM_RANDOM_ROWS]
+                .where(result_df[consts.NUM_RANDOM_ROWS].notnull(), None)
+                .astype(object)
+            )
+        return result_df
+    except Exception as exc:
+        captured_exc = exc
+        raise
+    finally:
+        combiner_capture.capture_generate_report(
+            run_metadata=run_metadata,
+            source_table=source_table,
+            target_table=target_table,
+            join_on_fields=join_on_fields,
+            is_value_comparison=is_value_comparison,
+            verbose=verbose,
+            result_df=result_df,
+            exception=captured_exc,
+        )
 
 
 def _generate_report_slice(
