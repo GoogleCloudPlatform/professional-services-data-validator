@@ -243,6 +243,18 @@ def test_configure_arg_parser(mock_args):
     assert file_path == "example_test.yaml"
 
 
+@pytest.fixture(autouse=True)
+def clean_completions_env(monkeypatch):
+    """Isolate tests from ambient Kubernetes / Cloud Run environment variables."""
+    for var in (
+        "JOB_COMPLETION_INDEX",
+        "JOB_COMPLETION_COUNT",
+        "CLOUD_RUN_TASK_INDEX",
+        "CLOUD_RUN_TASK_COUNT",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",
@@ -314,7 +326,7 @@ def test_config_runner_2(mock_args, mock_list, mock_build, mock_run, caplog):
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_3(mock_args, mock_build, mock_run, caplog, monkeypatch):
     """Second test - run validation on a directory - and provide the -kc argument,
     have system believe it is running in a Kubernetes Completion Environment. Expected result
     1. No warnings
@@ -323,7 +335,7 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     4. One config manager created for validation
     """
     caplog.set_level(logging.WARNING)
-    os.environ["JOB_COMPLETION_INDEX"] = "2"
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "2")
     args = cli_tools.get_parsed_args()
     caplog.clear()
     main.config_runner(args)
@@ -384,7 +396,7 @@ def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking(
-    mock_args, mock_list, mock_build, mock_run, caplog
+    mock_args, mock_list, mock_build, mock_run, caplog, monkeypatch
 ):
     """Test dynamic round-robin chunking in Kubernetes Completion Environment.
     With job_count=3 and job_index=1, and 5 files:
@@ -392,33 +404,25 @@ def test_config_runner_dynamic_chunking(
     Task 1 should get: b.yaml (idx 1), e.yaml (idx 4)
     """
     caplog.set_level(logging.INFO)
-    os.environ["JOB_COMPLETION_INDEX"] = "1"
-    os.environ["JOB_COMPLETION_COUNT"] = "3"
-    try:
-        args = cli_tools.get_parsed_args()
-        caplog.clear()
-        main.config_runner(args)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "1")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "3")
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
 
-        # Assert no warnings, check info logs
-        assert (
-            "Running in parallel completions mode with dynamic chunking." in caplog.text
-        )
-        assert "Task 1 of 3. Assigned 2 of 5 files." in caplog.text
+    # Assert no warnings, check info logs
+    assert "Running in parallel completions mode with dynamic chunking." in caplog.text
+    assert "Task 1 of 3. Assigned 2 of 5 files." in caplog.text
 
-        # Assert validations called twice for the correct files in round-robin order
-        assert mock_run.call_count == 2
-        # Call 1: b.yaml
-        assert mock_build.call_args_list[0][0][1] == "b.yaml"
-        # Call 2: e.yaml
-        assert mock_build.call_args_list[1][0][1] == "e.yaml"
-        # Unlike the legacy 1-to-1 path, config_dir remains set because the file
-        # names are relative to it.
-        assert (
-            mock_run.call_args.args[0].config_dir == CONFIG_RUNNER_ARGS_3["config_dir"]
-        )
-    finally:
-        del os.environ["JOB_COMPLETION_INDEX"]
-        del os.environ["JOB_COMPLETION_COUNT"]
+    # Assert validations called twice for the correct files in round-robin order
+    assert mock_run.call_count == 2
+    # Call 1: b.yaml
+    assert mock_build.call_args_list[0][0][1] == "b.yaml"
+    # Call 2: e.yaml
+    assert mock_build.call_args_list[1][0][1] == "e.yaml"
+    # Unlike the legacy 1-to-1 path, config_dir remains set because the file
+    # names are relative to it.
+    assert mock_run.call_args.args[0].config_dir == CONFIG_RUNNER_ARGS_3["config_dir"]
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -435,31 +439,27 @@ def test_config_runner_dynamic_chunking(
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_failures(
-    mock_args, mock_list, mock_build, mock_run, caplog
+    mock_args, mock_list, mock_build, mock_run, caplog, monkeypatch
 ):
     """Test dynamic round-robin chunking with failures in one of the validations."""
     mock_run.side_effect = [ValueError("Boom!"), 10]
     caplog.set_level(logging.ERROR)
-    os.environ["JOB_COMPLETION_INDEX"] = "1"
-    os.environ["JOB_COMPLETION_COUNT"] = "3"
-    try:
-        args = cli_tools.get_parsed_args()
-        caplog.clear()
-        with pytest.raises(exceptions.ValidationException) as e_info:
-            main.config_runner(args)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "1")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "3")
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    with pytest.raises(exceptions.ValidationException) as e_info:
+        main.config_runner(args)
 
-        # Assert error is logged for b.yaml
-        assert "Error 'Boom!' occurred while running config file b.yaml." in caplog.text
-        # The exception is trapped, so the log entry has to carry the stack trace,
-        # otherwise it is lost for good and cannot be diagnosed from container logs.
-        assert caplog.records[0].exc_info is not None
-        assert "Traceback (most recent call last)" in caplog.text
-        # But both b.yaml and e.yaml should still be processed
-        assert mock_run.call_count == 2
-        assert e_info.value.args[0] == "Some of the validations raised an exception"
-    finally:
-        del os.environ["JOB_COMPLETION_INDEX"]
-        del os.environ["JOB_COMPLETION_COUNT"]
+    # Assert error is logged for b.yaml
+    assert "Error 'Boom!' occurred while running config file b.yaml." in caplog.text
+    # The exception is trapped, so the log entry has to carry the stack trace,
+    # otherwise it is lost for good and cannot be diagnosed from container logs.
+    assert caplog.records[0].exc_info is not None
+    assert "Traceback (most recent call last)" in caplog.text
+    # But both b.yaml and e.yaml should still be processed
+    assert mock_run.call_count == 2
+    assert e_info.value.args[0] == "Some of the validations raised an exception"
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -476,7 +476,7 @@ def test_config_runner_dynamic_chunking_failures(
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_cloud_run(
-    mock_args, mock_list, mock_build, mock_run, caplog
+    mock_args, mock_list, mock_build, mock_run, caplog, monkeypatch
 ):
     """Test dynamic round-robin chunking using the Cloud Run environment variables.
     With task_count=2 and task_index=0, and 5 files:
@@ -484,23 +484,19 @@ def test_config_runner_dynamic_chunking_cloud_run(
     Task 0 should get: a.yaml (idx 0), c.yaml (idx 2), e.yaml (idx 4)
     """
     caplog.set_level(logging.INFO)
-    os.environ["CLOUD_RUN_TASK_INDEX"] = "0"
-    os.environ["CLOUD_RUN_TASK_COUNT"] = "2"
-    try:
-        args = cli_tools.get_parsed_args()
-        caplog.clear()
-        main.config_runner(args)
+    monkeypatch.setenv("CLOUD_RUN_TASK_INDEX", "0")
+    monkeypatch.setenv("CLOUD_RUN_TASK_COUNT", "2")
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
 
-        assert "Task 0 of 2. Assigned 3 of 5 files." in caplog.text
-        assert mock_run.call_count == 3
-        assert [_[0][1] for _ in mock_build.call_args_list] == [
-            "a.yaml",
-            "c.yaml",
-            "e.yaml",
-        ]
-    finally:
-        del os.environ["CLOUD_RUN_TASK_INDEX"]
-        del os.environ["CLOUD_RUN_TASK_COUNT"]
+    assert "Task 0 of 2. Assigned 3 of 5 files." in caplog.text
+    assert mock_run.call_count == 3
+    assert [_[0][1] for _ in mock_build.call_args_list] == [
+        "a.yaml",
+        "c.yaml",
+        "e.yaml",
+    ]
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -517,24 +513,20 @@ def test_config_runner_dynamic_chunking_cloud_run(
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_no_files(
-    mock_args, mock_list, mock_build, mock_run, caplog
+    mock_args, mock_list, mock_build, mock_run, caplog, monkeypatch
 ):
     """Test that a task with more tasks than config files runs nothing but says so.
     With job_count=5 and job_index=4, and only 3 files, this task has no work to do.
     """
     caplog.set_level(logging.WARNING)
-    os.environ["JOB_COMPLETION_INDEX"] = "4"
-    os.environ["JOB_COMPLETION_COUNT"] = "5"
-    try:
-        args = cli_tools.get_parsed_args()
-        caplog.clear()
-        main.config_runner(args)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "4")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "5")
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
 
-        assert "Task 4 has no config files to run" in caplog.text
-        assert mock_run.call_count == 0
-    finally:
-        del os.environ["JOB_COMPLETION_INDEX"]
-        del os.environ["JOB_COMPLETION_COUNT"]
+    assert "Task 4 has no config files to run" in caplog.text
+    assert mock_run.call_count == 0
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -551,25 +543,21 @@ def test_config_runner_dynamic_chunking_no_files(
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_empty_config_dir(
-    mock_args, mock_list, mock_build, mock_run
+    mock_args, mock_list, mock_build, mock_run, monkeypatch
 ):
     """Test that an empty config directory is an error and not a successful no-op.
 
     A misspelt GCS prefix simply matches no objects rather than raising an error,
     therefore each task has to fail rather than report a clean run of no validations.
     """
-    os.environ["CLOUD_RUN_TASK_INDEX"] = "0"
-    os.environ["CLOUD_RUN_TASK_COUNT"] = "4"
-    try:
-        args = cli_tools.get_parsed_args()
-        with pytest.raises(ValueError) as e_info:
-            main.config_runner(args)
+    monkeypatch.setenv("CLOUD_RUN_TASK_INDEX", "0")
+    monkeypatch.setenv("CLOUD_RUN_TASK_COUNT", "4")
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        main.config_runner(args)
 
-        assert "No validation YAML files found in config directory" in str(e_info.value)
-        assert mock_run.call_count == 0
-    finally:
-        del os.environ["CLOUD_RUN_TASK_INDEX"]
-        del os.environ["CLOUD_RUN_TASK_COUNT"]
+    assert "No validation YAML files found in config directory" in str(e_info.value)
+    assert mock_run.call_count == 0
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -609,25 +597,21 @@ def test_config_runner_empty_config_dir(mock_args, mock_list, mock_build, mock_r
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_negative_index(
-    mock_args, mock_list, mock_build, mock_run
+    mock_args, mock_list, mock_build, mock_run, monkeypatch
 ):
     """Test that a negative task index is rejected rather than treated as a slice offset.
 
     all_files[-1::3] would otherwise return the last file, re-running work already
     assigned to another task.
     """
-    os.environ["JOB_COMPLETION_INDEX"] = "-1"
-    os.environ["JOB_COMPLETION_COUNT"] = "3"
-    try:
-        args = cli_tools.get_parsed_args()
-        with pytest.raises(ValueError) as e_info:
-            main.config_runner(args)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "-1")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "3")
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        main.config_runner(args)
 
-        assert "Task index -1 cannot be negative" in str(e_info.value)
-        assert mock_run.call_count == 0
-    finally:
-        del os.environ["JOB_COMPLETION_INDEX"]
-        del os.environ["JOB_COMPLETION_COUNT"]
+    assert "Task index -1 cannot be negative" in str(e_info.value)
+    assert mock_run.call_count == 0
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -639,21 +623,20 @@ def test_config_runner_dynamic_chunking_negative_index(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_legacy_negative_index(mock_args, mock_build, mock_run):
+def test_config_runner_legacy_negative_index(
+    mock_args, mock_build, mock_run, monkeypatch
+):
     """Test that a negative task index is also rejected on the legacy 1-to-1 path.
 
     Without the check this builds a nonsensical '-001.yaml' config file name.
     """
-    os.environ["CLOUD_RUN_TASK_INDEX"] = "-2"
-    try:
-        args = cli_tools.get_parsed_args()
-        with pytest.raises(ValueError) as e_info:
-            main.config_runner(args)
+    monkeypatch.setenv("CLOUD_RUN_TASK_INDEX", "-2")
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        main.config_runner(args)
 
-        assert "Task index -2 cannot be negative" in str(e_info.value)
-        assert mock_run.call_count == 0
-    finally:
-        del os.environ["CLOUD_RUN_TASK_INDEX"]
+    assert "Task index -2 cannot be negative" in str(e_info.value)
+    assert mock_run.call_count == 0
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -666,24 +649,20 @@ def test_config_runner_legacy_negative_index(mock_args, mock_build, mock_run):
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_dynamic_chunking_invalid_count(
-    mock_args, mock_build, mock_run, caplog
+    mock_args, mock_build, mock_run, caplog, monkeypatch
 ):
     """Test that an invalid task count is ignored in favour of the legacy 1-to-1 mapping."""
     caplog.set_level(logging.WARNING)
-    os.environ["JOB_COMPLETION_INDEX"] = "2"
-    os.environ["JOB_COMPLETION_COUNT"] = "not-a-number"
-    try:
-        args = cli_tools.get_parsed_args()
-        caplog.clear()
-        main.config_runner(args)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "2")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "not-a-number")
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
 
-        assert "Ignoring invalid task count 'not-a-number'" in caplog.text
-        # Legacy behaviour, one file matching the index, config_dir folded into the path.
-        assert mock_run.call_args.args[0].config_dir is None
-        assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
-    finally:
-        del os.environ["JOB_COMPLETION_INDEX"]
-        del os.environ["JOB_COMPLETION_COUNT"]
+    assert "Ignoring invalid task count 'not-a-number'" in caplog.text
+    # Legacy behaviour, one file matching the index, config_dir folded into the path.
+    assert mock_run.call_args.args[0].config_dir is None
+    assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
 
 
 @mock.patch("data_validation.__main__.run_validation")
