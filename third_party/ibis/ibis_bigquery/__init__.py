@@ -28,7 +28,9 @@ from ibis.backends.bigquery import (
     SCOPES,
 )
 from ibis.backends.bigquery.client import parse_project_and_dataset
+import third_party.ibis.ibis_addon.operations  # noqa: F401
 import third_party.ibis.ibis_bigquery.datatypes  # noqa: F401
+import third_party.ibis.ibis_bigquery.registry  # noqa: F401
 
 if TYPE_CHECKING:
     import google.cloud.bigquery_storage_v1

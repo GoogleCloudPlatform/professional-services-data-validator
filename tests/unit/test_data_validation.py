@@ -960,3 +960,26 @@ def test_add_random_row_filter_composite_pk(module_under_test, monkeypatch):
     assert source_filter.left == ["k1", "k2"]
     # Target client (MSSQL) has dvt_tuple_in_supported = False, falling back to disjunctive OR-of-ANDs filter (ibis.or_)
     assert target_filter.expr == ibis.or_
+
+
+def test_prepare_pk_filter_values_oracle_case_insensitivity(module_under_test):
+    """Verify _prepare_pk_filter_values case-folds column name when looking up Oracle padded char types."""
+    oracle_client = mock.MagicMock()
+    oracle_client.name = "oracle"
+    oracle_client.is_char_type_padded.return_value = True
+
+    raw_data_types = {
+        "course_id": ("CHAR", "CHAR", 10, 10, 10, 0, True),
+    }
+
+    values = ["ALG001", "ALG002"]
+    # Pass uppercase column name
+    result = module_under_test.DataValidation._prepare_pk_filter_values(
+        values=values,
+        col_type=dt.string,
+        client=oracle_client,
+        raw_data_types=raw_data_types,
+        col_name="COURSE_ID",
+        is_binary=False,
+    )
+    assert result == ["ALG001    ", "ALG002    "]

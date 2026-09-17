@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
 import json
 import logging
 import warnings
@@ -128,6 +129,53 @@ class DataValidation(object):
         # Call Result Handler to Manage Results
         return self.result_handler.execute(result_df)
 
+    @staticmethod
+    def _prepare_pk_filter_values(
+        values,
+        col_type,
+        client,
+        raw_data_types: dict,
+        col_name: str,
+        is_binary: bool,
+    ):
+        """Format and coerce sampled PK values for query filtering across backends."""
+        if is_binary:
+            return [
+                ibis.literal(_).cast("binary") if not pandas.isna(_) else _
+                for _ in values
+            ]
+        elif col_type.is_decimal():
+            # Ensure sampled primary key values are preserved as decimal.Decimal
+            # (e.g. converting ints, floats, or numeric strings returned by drivers)
+            # without float precision loss or scientific notation formatting issues in filters.
+            return [
+                (
+                    _
+                    if isinstance(_, decimal.Decimal)
+                    else (
+                        decimal.Decimal(str(_))
+                        if not pandas.isna(_) and isinstance(_, (int, float, str))
+                        else _
+                    )
+                )
+                for _ in values
+            ]
+        elif (
+            col_type.is_string()
+            and client.name == "oracle"
+            and ValidationBuilder.is_padded_char(client, raw_data_types, col_name)
+        ):
+            char_length = raw_data_types[col_name.casefold()][2]
+            return [
+                (
+                    key_value.ljust(char_length)
+                    if isinstance(key_value, str)
+                    else key_value
+                )
+                for key_value in values
+            ]
+        return values
+
     def _add_random_row_filter(self):
         """Add random row filters to the validation builder."""
         if not self.config_manager.primary_keys:
@@ -191,42 +239,26 @@ class DataValidation(object):
         if len(source_pk_columns) == 1:
             source_pk_column = source_pk_columns[0]
             target_pk_column = target_pk_columns[0]
-            source_values = target_values = list(random_rows[source_pk_column])
-            if source_pk_column in binary_cols:
-                # For binary ids we have a list of hex strings for our IN list.
-                # Each of these needs to be cast back to binary.
-                target_values = source_values = [
-                    ibis.literal(_).cast("binary") for _ in source_values
-                ]
-            elif query[source_pk_column].type().is_string():
-                if (
-                    self.config_manager.source_client.name == "oracle"
-                    and ValidationBuilder.is_padded_char(
-                        self.config_manager.source_client,
-                        self.config_manager.get_source_raw_data_types(),
-                        source_pk_column,
-                    )
-                ):
-                    char_length = self.config_manager.get_source_raw_data_types()[
-                        source_pk_column
-                    ][2]
-                    source_values = [
-                        key_value.ljust(char_length) for key_value in source_values
-                    ]
-                if (
-                    self.config_manager.target_client.name == "oracle"
-                    and ValidationBuilder.is_padded_char(
-                        self.config_manager.target_client,
-                        self.config_manager.get_target_raw_data_types(),
-                        target_pk_column,
-                    )
-                ):
-                    char_length = self.config_manager.get_target_raw_data_types()[
-                        target_pk_column
-                    ][2]
-                    target_values = [
-                        key_value.ljust(char_length) for key_value in source_values
-                    ]
+            raw_values = list(random_rows[source_pk_column])
+            is_bin = source_pk_column in binary_cols
+            col_type = query[source_pk_column].type()
+
+            source_values = self._prepare_pk_filter_values(
+                raw_values,
+                col_type,
+                self.config_manager.source_client,
+                self.config_manager.get_source_raw_data_types(),
+                source_pk_column,
+                is_bin,
+            )
+            target_values = self._prepare_pk_filter_values(
+                raw_values,
+                col_type,
+                self.config_manager.target_client,
+                self.config_manager.get_target_raw_data_types(),
+                target_pk_column,
+                is_bin,
+            )
 
             filter_field = {
                 consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
@@ -243,54 +275,25 @@ class DataValidation(object):
             target_df = source_df.rename(columns=col_map)
 
             for src_col, tgt_col in zip(source_pk_columns, target_pk_columns):
-                if src_col in binary_cols:
-                    source_df[src_col] = [
-                        ibis.literal(_).cast("binary") if not pandas.isna(_) else _
-                        for _ in source_df[src_col]
-                    ]
-                    target_df[tgt_col] = [
-                        ibis.literal(_).cast("binary") if not pandas.isna(_) else _
-                        for _ in target_df[tgt_col]
-                    ]
-                else:
-                    if (
-                        self.config_manager.source_client.name == "oracle"
-                        and ValidationBuilder.is_padded_char(
-                            self.config_manager.source_client,
-                            self.config_manager.get_source_raw_data_types(),
-                            src_col,
-                        )
-                    ):
-                        char_length = self.config_manager.get_source_raw_data_types()[
-                            src_col
-                        ][2]
-                        source_df[src_col] = [
-                            (
-                                key_val.ljust(char_length)
-                                if isinstance(key_val, str)
-                                else key_val
-                            )
-                            for key_val in source_df[src_col]
-                        ]
-                    if (
-                        self.config_manager.target_client.name == "oracle"
-                        and ValidationBuilder.is_padded_char(
-                            self.config_manager.target_client,
-                            self.config_manager.get_target_raw_data_types(),
-                            tgt_col,
-                        )
-                    ):
-                        char_length = self.config_manager.get_target_raw_data_types()[
-                            tgt_col
-                        ][2]
-                        target_df[tgt_col] = [
-                            (
-                                key_val.ljust(char_length)
-                                if isinstance(key_val, str)
-                                else key_val
-                            )
-                            for key_val in target_df[tgt_col]
-                        ]
+                is_bin = src_col in binary_cols
+                col_type = query[src_col].type()
+
+                source_df[src_col] = self._prepare_pk_filter_values(
+                    source_df[src_col],
+                    col_type,
+                    self.config_manager.source_client,
+                    self.config_manager.get_source_raw_data_types(),
+                    src_col,
+                    is_bin,
+                )
+                target_df[tgt_col] = self._prepare_pk_filter_values(
+                    target_df[tgt_col],
+                    col_type,
+                    self.config_manager.target_client,
+                    self.config_manager.get_target_raw_data_types(),
+                    tgt_col,
+                    is_bin,
+                )
 
             source_filter = FilterField.composite_isin(
                 self.config_manager.source_client,
@@ -393,7 +396,7 @@ class DataValidation(object):
 
         else:
             warnings.warn(
-                "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
+                "WARNING: No Primary Keys Supplied in Row Validation", UserWarning
             )
             return None
 
