@@ -412,6 +412,22 @@ def _get_kube_completions_task_count():
     return job_count
 
 
+def _list_validation_files(config_dir: str) -> list:
+    """Return the sorted validation YAML file names found in config_dir.
+
+    An empty directory is treated as an error rather than as zero work to do. This
+    matters most for Cloud Storage, where a misspelt prefix such as
+    gs://my-bucket/typo-dir/ is not an error in itself, it simply matches no objects.
+    Without this check DVT would report a successful run having validated nothing.
+    """
+    config_file_names = sorted(cli_tools.list_validations(config_dir=config_dir))
+    if not config_file_names:
+        raise ValueError(
+            f"No validation YAML files found in config directory: {config_dir}"
+        )
+    return config_file_names
+
+
 def _run_config_files(args, config_file_names: list):
     """Run the validations held in each of config_file_names, in sequence.
 
@@ -486,9 +502,7 @@ def config_runner(args):
                         f"Task index {job_index} is not valid for a job of {job_count} tasks."
                     )
 
-                all_files = sorted(
-                    cli_tools.list_validations(config_dir=args.config_dir)
-                )
+                all_files = _list_validation_files(args.config_dir)
                 # Deal the config files out to the tasks round-robin using an
                 # extended slice, [start:stop:step], where stop is omitted. This
                 # task starts at its own index and then takes every job_count'th
@@ -528,7 +542,7 @@ def config_runner(args):
                 logging.warning(
                     "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
                 )
-            config_file_names = cli_tools.list_validations(config_dir=args.config_dir)
+            config_file_names = _list_validation_files(args.config_dir)
             _run_config_files(args, config_file_names)
     else:
         if args.kube_completions:

@@ -539,6 +539,64 @@ def test_config_runner_dynamic_chunking_no_files(
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=[],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking_empty_config_dir(
+    mock_args, mock_list, mock_build, mock_run
+):
+    """Test that an empty config directory is an error and not a successful no-op.
+
+    A misspelt GCS prefix simply matches no objects rather than raising an error,
+    therefore each task has to fail rather than report a clean run of no validations.
+    """
+    os.environ["CLOUD_RUN_TASK_INDEX"] = "0"
+    os.environ["CLOUD_RUN_TASK_COUNT"] = "4"
+    try:
+        args = cli_tools.get_parsed_args()
+        with pytest.raises(ValueError) as e_info:
+            main.config_runner(args)
+
+        assert "No validation YAML files found in config directory" in str(e_info.value)
+        assert mock_run.call_count == 0
+    finally:
+        del os.environ["CLOUD_RUN_TASK_INDEX"]
+        del os.environ["CLOUD_RUN_TASK_COUNT"]
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=[],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_4),
+)
+def test_config_runner_empty_config_dir(mock_args, mock_list, mock_build, mock_run):
+    """Test that an empty config directory is also an error outside of completions mode."""
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        main.config_runner(args)
+
+    assert "No validation YAML files found in config directory" in str(e_info.value)
+    assert mock_run.call_count == 0
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
