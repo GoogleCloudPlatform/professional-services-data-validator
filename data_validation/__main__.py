@@ -488,6 +488,9 @@ def config_runner(args):
                 if "JOB_COMPLETION_INDEX" in os.environ.keys()
                 else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
             )
+            # A negative index should never happen but we defend against it just in case.
+            if job_index < 0:
+                raise ValueError(f"Task index {job_index} cannot be negative.")
 
             # Check if total task count is available for dynamic chunking
             job_count = _get_kube_completions_task_count()

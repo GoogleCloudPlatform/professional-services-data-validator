@@ -597,6 +597,67 @@ def test_config_runner_empty_config_dir(mock_args, mock_list, mock_build, mock_r
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["a.yaml", "b.yaml", "c.yaml"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking_negative_index(
+    mock_args, mock_list, mock_build, mock_run
+):
+    """Test that a negative task index is rejected rather than treated as a slice offset.
+
+    all_files[-1::3] would otherwise return the last file, re-running work already
+    assigned to another task.
+    """
+    os.environ["JOB_COMPLETION_INDEX"] = "-1"
+    os.environ["JOB_COMPLETION_COUNT"] = "3"
+    try:
+        args = cli_tools.get_parsed_args()
+        with pytest.raises(ValueError) as e_info:
+            main.config_runner(args)
+
+        assert "Task index -1 cannot be negative" in str(e_info.value)
+        assert mock_run.call_count == 0
+    finally:
+        del os.environ["JOB_COMPLETION_INDEX"]
+        del os.environ["JOB_COMPLETION_COUNT"]
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_legacy_negative_index(mock_args, mock_build, mock_run):
+    """Test that a negative task index is also rejected on the legacy 1-to-1 path.
+
+    Without the check this builds a nonsensical '-001.yaml' config file name.
+    """
+    os.environ["CLOUD_RUN_TASK_INDEX"] = "-2"
+    try:
+        args = cli_tools.get_parsed_args()
+        with pytest.raises(ValueError) as e_info:
+            main.config_runner(args)
+
+        assert "Task index -2 cannot be negative" in str(e_info.value)
+        assert mock_run.call_count == 0
+    finally:
+        del os.environ["CLOUD_RUN_TASK_INDEX"]
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
