@@ -44,6 +44,7 @@ LINT_PACKAGES = ["flake8", "black==26.5.1"]
 UNIT_PACKAGES = [
     "pyfakefs",
     "freezegun",
+    "oracledb",
     "teradatasql",
     "snowflake-connector-python",
     "snowflake-sqlalchemy",
