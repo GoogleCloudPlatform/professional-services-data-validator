@@ -449,6 +449,7 @@ def _run_config_files(args, config_file_names: list):
                 "Error '%s' occurred while running config file %s. Skipping it for now.",
                 str(e),
                 file,
+                exc_info=True,
             )
     if errors:
         raise exceptions.ValidationException(

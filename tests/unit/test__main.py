@@ -450,6 +450,10 @@ def test_config_runner_dynamic_chunking_failures(
 
         # Assert error is logged for b.yaml
         assert "Error 'Boom!' occurred while running config file b.yaml." in caplog.text
+        # The exception is trapped, so the log entry has to carry the stack trace,
+        # otherwise it is lost for good and cannot be diagnosed from container logs.
+        assert caplog.records[0].exc_info is not None
+        assert "Traceback (most recent call last)" in caplog.text
         # But both b.yaml and e.yaml should still be processed
         assert mock_run.call_count == 2
         assert e_info.value.args[0] == "Some of the validations raised an exception"
