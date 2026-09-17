@@ -665,6 +665,58 @@ def test_config_runner_dynamic_chunking_invalid_count(
     assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
 
 
+@pytest.mark.parametrize("invalid_count", ["0", "-1"])
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    side_effect=lambda *a, **kw: argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking_non_positive_count(
+    mock_args, mock_build, mock_run, caplog, monkeypatch, invalid_count
+):
+    """Test that a zero or negative task count logs a warning and falls back to legacy mode."""
+    caplog.set_level(logging.WARNING)
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "2")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", invalid_count)
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
+
+    assert (
+        f"Ignoring invalid task count {invalid_count}, falling back to one config file per task."
+        in caplog.text
+    )
+    assert mock_run.call_args.args[0].config_dir is None
+    assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking_index_out_of_bounds(
+    mock_args, mock_build, mock_run, monkeypatch
+):
+    """Test that job_index >= job_count raises ValueError."""
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "3")
+    monkeypatch.setenv("JOB_COMPLETION_COUNT", "3")
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        main.config_runner(args)
+
+    assert "Task index 3 is not valid for a job of 3 tasks." in str(e_info.value)
+    assert mock_run.call_count == 0
+
+
 @mock.patch("data_validation.__main__.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
