@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "8.9.2"
+version = "8.9.3"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -90,6 +90,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.9",

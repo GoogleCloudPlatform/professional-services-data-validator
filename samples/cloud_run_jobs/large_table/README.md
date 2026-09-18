@@ -2,7 +2,7 @@
 
 This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations.
 
-In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
+In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#generate-partitions-for-large-row-validations). The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
 
 ## Build a Docker Image
 

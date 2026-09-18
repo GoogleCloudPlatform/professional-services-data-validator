@@ -2,6 +2,19 @@
 
 ## Untagged
 
+## [8.9.3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.2...v8.9.3) (2026-08-27)
+
+
+### Bug Fixes
+
+* clean up Teradata connection parameters ([#1820](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1820)) ([ee92c7d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee92c7de793b20df477769ca57bb2b6f035e3dee))
+* Exclude Oracle system schemas from list_databases ([#1812](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1812)) ([dd0955f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dd0955f30c0ce891dd62102f92bbaa1255508129))
+
+
+### Documentation
+
+* Fix documented Oracle NCLOB sample ([#1815](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1815)) ([54ce3ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/54ce3ca7a4c0b9dc72740daed6b4e83c6bb15361))
+
 ## [8.9.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.1...v8.9.2) (2026-08-12)
 
 

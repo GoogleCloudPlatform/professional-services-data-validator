@@ -18,11 +18,11 @@ from data_validation.util import dvt_config_string_to_dict
 
 
 def teradata_connect(
-    host: str = "localhost",
+    host: str = None,
     user_name: str = None,
     password: str = None,
-    port: int = 1025,
-    logmech: str = "TD2",
+    port: int = None,
+    logmech: str = None,
     use_no_lock_tables: str = "False",
     json_params: str = None,
 ):
