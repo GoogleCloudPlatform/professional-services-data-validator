@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import copy
-import json
 import logging
 import os
 import sys
@@ -28,13 +27,13 @@ from data_validation import (
     exceptions,
     gcs_helper,
     raw_query,
-    state_manager,
     util,
 )
 from data_validation.config_manager import ConfigManager
-from data_validation.data_validation import DataValidation
+from data_validation.config_runner import config_runner
 from data_validation.find_tables import find_tables_using_string_matching
 from data_validation.partition_builder import PartitionBuilder
+from data_validation.validation_runner import run_validations
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -54,28 +53,6 @@ LOG_LEVEL_MAP = {
 CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
     "Saving custom-query validations to directory configs is not supported."
 )
-
-
-def _get_arg_config_file(args):
-    """Return String YAML config file path."""
-    if not args.config_file:
-        raise ValueError("YAML Config File was not supplied.")
-    elif not args.config_file.endswith(".yaml"):
-        raise ValueError(
-            f"Invalid YAML config name: {args.config_file}. Provide YAML file extension."
-        )
-    return args.config_file
-
-
-def _get_arg_config_file_json(args):
-    """Return String JSON config file path."""
-    if not args.config_file_json:
-        raise ValueError("JSON Config File was not supplied.")
-    elif not args.config_file_json.endswith(".json"):
-        raise ValueError(
-            f"Invalid JSON config name: {args.config_file_json}. Provide JSON file extension."
-        )
-    return args.config_file_json
 
 
 def get_aggregate_config(args, config_manager: ConfigManager):
@@ -379,213 +356,6 @@ def build_config_managers_from_args(
     return util.timed_call("Build config", _build_configs)
 
 
-def _get_kube_completions_task_count():
-    """Return the total number of parallel tasks in this job, or None if unknown.
-
-    Kubernetes injects JOB_COMPLETION_INDEX into indexed Jobs but does not inject a
-    matching count, therefore JOB_COMPLETION_COUNT has to be set by the user in the
-    Job manifest. Cloud Run sets both CLOUD_RUN_TASK_INDEX and CLOUD_RUN_TASK_COUNT
-    automatically.
-    """
-    job_count_str = os.environ.get("JOB_COMPLETION_COUNT") or os.environ.get(
-        "CLOUD_RUN_TASK_COUNT"
-    )
-    if not job_count_str:
-        return None
-
-    try:
-        job_count = int(job_count_str)
-    except ValueError:
-        logging.warning(
-            "Ignoring invalid task count '%s', falling back to one config file per task.",
-            job_count_str,
-        )
-        return None
-
-    if job_count <= 0:
-        logging.warning(
-            "Ignoring invalid task count %d, falling back to one config file per task.",
-            job_count,
-        )
-        return None
-
-    return job_count
-
-
-def _list_validation_files(config_dir: str) -> list:
-    """Return the sorted validation YAML file names found in config_dir.
-
-    An empty directory is treated as an error rather than as zero work to do. This
-    matters most for Cloud Storage, where a misspelt prefix such as
-    gs://my-bucket/typo-dir/ is not an error in itself, it simply matches no objects.
-    Without this check DVT would report a successful run having validated nothing.
-    """
-    config_file_names = sorted(cli_tools.list_validations(config_dir=config_dir))
-    if not config_file_names:
-        raise ValueError(
-            f"No validation YAML files found in config directory: {config_dir}"
-        )
-    return config_file_names
-
-
-def _run_config_files(args, config_file_names: list):
-    """Run the validations held in each of config_file_names, in sequence.
-
-    A failure in one file does not prevent the remaining files from running, instead all
-    failures are logged and a single exception is raised once they have all been attempted.
-    """
-    errors = False
-    for file in config_file_names:
-        try:
-            logging.info(
-                "Currently running the validation for YAML file: %s",
-                file,
-            )
-            config_managers = build_config_managers_from_yaml(args, file)
-            run_validations(args, config_managers)
-        except Exception as e:
-            errors = True
-            logging.error(
-                "Error '%s' occurred while running config file %s. Skipping it for now.",
-                str(e),
-                file,
-                exc_info=True,
-            )
-    if errors:
-        raise exceptions.ValidationException(
-            "Some of the validations raised an exception"
-        )
-
-
-def config_runner(args):
-    """Config Runner is where the decision is made to run validations from one or more files.
-    One file can produce multiple validations - for example when more than one set of tables are being
-    validated between the source and target. If multiple files are to be run, it is possible to run
-    them concurrently in a Kubernetes / Cloud Run environment.
-    If the user wants that, they need to specify a -kc or --kube-completions which tells DVT that it
-    is one of a number of parallel tasks, identified by the index number provided in the
-    JOB_COMPLETION_INDEX (for Kubernetes) or CLOUD_RUN_TASK_INDEX (for Cloud Run) environment
-    variable. This environment variable is set by the Kubernetes/Cloud Run container orchestrator.
-
-    How the config files are shared out between the tasks depends on whether the total number of
-    tasks is known:
-
-    1) If JOB_COMPLETION_COUNT (for Kubernetes) or CLOUD_RUN_TASK_COUNT (for Cloud Run) is set then
-       all config files in the directory are sorted by name and dealt out to the tasks round-robin,
-       i.e. this task runs config files [job_index::job_count]. This scales to directories holding
-       any number of config files, named in any way, regardless of how many tasks are running.
-    2) Otherwise DVT falls back to the legacy behaviour of assuming the config files are numbered
-       sequentially, say from '0000.yaml' to '0012.yaml' (for 13 validations), and this task runs
-       only the file corresponding to its own index.
-    """
-    if args.config_dir:
-        if args.kube_completions and (
-            ("JOB_COMPLETION_INDEX" in os.environ.keys())
-            or ("CLOUD_RUN_TASK_INDEX" in os.environ.keys())
-        ):
-            # Running in Kubernetes in Job completions - only run the yaml files for this index
-            job_index = (
-                int(os.environ.get("JOB_COMPLETION_INDEX"))
-                if "JOB_COMPLETION_INDEX" in os.environ.keys()
-                else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
-            )
-            # A negative index should never happen but we defend against it just in case.
-            if job_index < 0:
-                raise ValueError(f"Task index {job_index} cannot be negative.")
-
-            # Check if total task count is available for dynamic chunking
-            job_count = _get_kube_completions_task_count()
-
-            if job_count:
-                # --- Dynamic Round-Robin Chunking ---
-                logging.info(
-                    "Running in parallel completions mode with dynamic chunking."
-                )
-                if job_index >= job_count:
-                    raise ValueError(
-                        f"Task index {job_index} is not valid for a job of {job_count} tasks."
-                    )
-
-                all_files = _list_validation_files(args.config_dir)
-                # Deal the config files out to the tasks round-robin using an
-                # extended slice, [start:stop:step], where stop is omitted. This
-                # task starts at its own index and then takes every job_count'th
-                # file.
-                # Every file is therefore run by exactly one task and the tasks
-                # differ in size by at most one file.
-                my_files = all_files[job_index::job_count]
-                logging.info(
-                    "Task %d of %d. Assigned %d of %d files.",
-                    job_index,
-                    job_count,
-                    len(my_files),
-                    len(all_files),
-                )
-                if not my_files:
-                    logging.warning(
-                        "Task %d has no config files to run, consider reducing the number of tasks.",
-                        job_index,
-                    )
-
-                _run_config_files(args, my_files)
-            else:
-                # --- Legacy 1-to-1 Fallback ---
-                config_file_path = (
-                    f"{args.config_dir}{job_index:04d}.yaml"
-                    if args.config_dir.endswith("/")
-                    else f"{args.config_dir}/{job_index:04d}.yaml"
-                )
-                setattr(args, "config_dir", None)
-                setattr(args, "config_file", config_file_path)
-                config_managers = build_config_managers_from_yaml(
-                    args, config_file_path
-                )
-                run_validations(args, config_managers)
-        else:
-            if args.kube_completions:
-                logging.warning(
-                    "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
-                )
-            config_file_names = _list_validation_files(args.config_dir)
-            _run_config_files(args, config_file_names)
-    else:
-        if args.kube_completions:
-            logging.warning(
-                "--kube-completions or -kc specified, which requires a config directory, however a specific config file is provided."
-            )
-        config_file_path = _get_arg_config_file(args)
-        config_managers = build_config_managers_from_yaml(args, config_file_path)
-        run_validations(args, config_managers)
-
-
-def build_config_managers_from_yaml(args, config_file_path):
-    """Returns List[ConfigManager] instances ready to be executed."""
-    if args.config_dir:
-        yaml_configs = cli_tools.get_validation(config_file_path, args.config_dir)
-    else:
-        yaml_configs = cli_tools.get_validation(config_file_path)
-
-    mgr = state_manager.StateManager()
-    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
-    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET])
-
-    source_client = clients.get_data_client(source_conn)
-    target_client = clients.get_data_client(target_conn)
-
-    config_managers = []
-    for config in yaml_configs[consts.YAML_VALIDATIONS]:
-        config[consts.CONFIG_SOURCE_CONN] = source_conn
-        config[consts.CONFIG_TARGET_CONN] = target_conn
-        config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[consts.YAML_RESULT_HANDLER]
-        config_manager = ConfigManager(
-            config, source_client, target_client, verbose=args.verbose
-        )
-        config_manager.config[consts.CONFIG_FILE] = config_file_path
-        config_managers.append(config_manager)
-
-    return config_managers
-
-
 def convert_config_to_yaml(args, config_managers: list):
     """Return dict objects formatted for yaml validations.
 
@@ -624,76 +394,6 @@ def convert_config_to_json(config_managers: list) -> dict:
     return json_config
 
 
-def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
-    """Run a single validation.
-
-    Args:
-        config_manager (ConfigManager): Validation config manager instance.
-        dry_run (bool): Print source and target SQL to stdout in lieu of validation.
-        verbose (bool): Validation setting to log queries run.
-    """
-    # Only use cached connection for SQLAlchemy backends that manage reconnects for us.
-    source_client = (
-        config_manager.source_client
-        if clients.is_sqlalchemy_backend(config_manager.source_client)
-        else None
-    )
-    target_client = (
-        config_manager.target_client
-        if clients.is_sqlalchemy_backend(config_manager.target_client)
-        else None
-    )
-    # Though trims string based primary key value has been deprecated, some yaml files may still have that property set.
-    if config_manager.trim_string_pks():
-        logging.warning(
-            "Trim String Primary Keys has been deprecated, validation results may vary"
-        )
-    try:
-        with DataValidation(
-            config_manager.config,
-            validation_builder=None,
-            result_handler=None,
-            verbose=verbose,
-            cached_source_client=source_client,
-            cached_target_client=target_client,
-        ) as validator:
-
-            if dry_run:
-                print(
-                    json.dumps(
-                        {
-                            "source_query": util.ibis_table_to_sql(
-                                validator.validation_builder.get_source_query(),
-                                source_client,
-                            ),
-                            "target_query": util.ibis_table_to_sql(
-                                validator.validation_builder.get_target_query(),
-                                target_client,
-                            ),
-                        },
-                        indent=4,
-                    )
-                )
-            else:
-                validator.execute()
-    except Exception as e:
-        if config_manager.full_source_table:
-            raise exceptions.ValidationException(
-                f"Validation failed for table '{config_manager.full_source_table}': {e}"
-            ) from e
-        raise
-
-
-def run_validations(args, config_managers):
-    """Run and manage a series of validations.
-
-    Args:
-        config_managers (list[ConfigManager]): List of config manager instances.
-    """
-    for config_manager in config_managers:
-        run_validation(config_manager, dry_run=args.dry_run, verbose=args.verbose)
-
-
 def store_yaml_config_file(args, config_managers):
     """Build a YAML config file from the supplied configs.
 
@@ -701,7 +401,7 @@ def store_yaml_config_file(args, config_managers):
         config_managers (list[ConfigManager]): List of config manager instances.
     """
     yaml_configs = convert_config_to_yaml(args, config_managers)
-    config_file_path = _get_arg_config_file(args)
+    config_file_path = cli_tools.get_arg_config_file(args)
     cli_tools.store_validation(config_file_path, yaml_configs)
 
 
@@ -712,7 +412,7 @@ def store_json_config_file(args, config_managers):
         config_managers (list[ConfigManager]): List of config manager instances.
     """
     json_config = convert_config_to_json(config_managers)
-    config_file_path = _get_arg_config_file_json(args)
+    config_file_path = cli_tools.get_arg_config_file_json(args)
     cli_tools.store_validation(config_file_path, json_config)
 
 
@@ -838,7 +538,7 @@ def run_validation_configs(args):
         cli_tools.print_validations_in_dir(config_dir=config_dir)
     elif args.validation_config_cmd == "get":
         # Get and print yaml file config.
-        yaml = cli_tools.get_validation(_get_arg_config_file(args))
+        yaml = cli_tools.get_validation(cli_tools.get_arg_config_file(args))
         dump(yaml, sys.stdout)
     else:
         raise ValueError(f"Configs argument '{args.validate_cmd}' is not supported")
