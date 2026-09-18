@@ -67,7 +67,9 @@ To run all validations stored in a directory, use:
 ```bash
 data-validation configs run --config-dir <path_to_directory>
 ```
-*   **Non-Recursive Behavior**: `configs run` lists and executes `.yaml` files **only** in the immediate directory. It does not traverse subdirectories.
+*   **Non-Recursive Behavior**: `configs run` lists and executes `.yaml` files **only** in the immediate directory (sorted alphabetically by filename). It does not traverse subdirectories.
+*   **Empty Directory Validation**: If no `.yaml` files exist in the target directory (for example, due to a misspelled Cloud Storage prefix), DVT raises a `ValueError` rather than silently reporting a successful no-op run.
+*   **Continue-on-Error Execution**: Files are executed sequentially. If a validation file raises an exception, the error (with stack trace) is logged and execution continues through the remaining files; a `ValidationException` is raised once all files have been attempted.
 *   **Executing Partitioned Validations**: Because `generate-table-partitions` nests files under `<config_dir>/<schema>.<table_name>/`, you **must target the specific table subdirectory** to run them:
     ```bash
     data-validation configs run --config-dir my_partitions/dbo.customers/
@@ -75,18 +77,24 @@ data-validation configs run --config-dir <path_to_directory>
 *   **YAML Exclusivity**: CLI execution via `configs run` only supports YAML files. Any `.json` files in the directory are ignored (as `list_validations` filters strictly for `.yaml` extensions).
 
 ### B. Distributed Orchestration (`--kube-completions`)
-For large-scale migrations, partitioned validations can be executed concurrently in containerized environments like Kubernetes (Jobs) or Cloud Run (Jobs).
+For large-scale migrations, validations stored in a directory (either flat table-per-file directories or partitioned subdirectories) can be executed concurrently in containerized environments like Kubernetes (Indexed Jobs) or Cloud Run (Jobs).
 
 When executing with `--kube-completions` (or `-kc`):
 ```bash
-data-validation configs run --config-dir <path_to_table_subdir> --kube-completions
+data-validation configs run --config-dir <path_to_directory> --kube-completions
 ```
-1.  DVT detects the orchestrator-supplied environment variable:
+1.  DVT detects the orchestrator-supplied task index environment variable:
     *   `JOB_COMPLETION_INDEX` (Kubernetes)
     *   `CLOUD_RUN_TASK_INDEX` (Cloud Run)
-2.  It extracts the integer index (e.g., `3`).
-3.  It maps this index to the corresponding sequentially named file in the directory (e.g., `0003.yaml`).
-4.  It executes **only** that single file, allowing the orchestrator to scale workers horizontally, each processing one chunk of the table.
+2.  How the `.yaml` files in `--config-dir` are distributed across tasks depends on whether the total task count (`JOB_COMPLETION_COUNT` for Kubernetes, or `CLOUD_RUN_TASK_COUNT` which Cloud Run injects automatically) is available:
+    *   **Dynamic Round-Robin Chunking (when `JOB_COMPLETION_COUNT` or `CLOUD_RUN_TASK_COUNT` is set)**:
+        1. All `.yaml` files in the directory are sorted by filename (`all_files`).
+        2. The current task is assigned the slice `all_files[job_index::job_count]` (starting at `job_index` and taking every `job_count`-th file).
+        3. The task executes its assigned subset of files sequentially. This works with **any** directory of YAML files regardless of naming convention (both `dbo.customers.yaml` and `0000.yaml`), and the number of tasks does not need to equal the number of YAML files.
+    *   **Legacy 1-to-1 Sequential Mapping Fallback (when neither task-count variable is set)**:
+        1. Occurs in Kubernetes Indexed Jobs if `JOB_COMPLETION_COUNT` is omitted from the Job manifest.
+        2. DVT maps `job_index` (e.g., `3`) to the sequentially named file `<job_index:04d>.yaml` (e.g., `0003.yaml`) and executes only that file.
+        3. If `.yaml` files exist in `--config-dir` but `<job_index:04d>.yaml` is not present among them, DVT raises a `ValueError` prompting the user to set `JOB_COMPLETION_COUNT` in the Job manifest.
 
 ---
 
@@ -108,4 +116,4 @@ To maintain backward compatibility, several inconsistencies currently exist in D
         *   If `--configs-per-file` is **strictly greater than 1**: DVT groups up to `N` table validations per file and switches to **sequential naming** (`0000.yaml`, `0001.yaml`...) directly under the flat target directory.
     *   *Behavior for Partitions (`generate-table-partitions`)*:
         *   `--configs-per-file` acts as a direct replacement for `--parts-per-file` (with the latter kept as a deprecated alias). It always uses sequential naming inside the nested subdirectory, matching current behavior.
-    *   *Orchestration Benefit*: This enables standard validations across many tables to be batched sequentially in a flat directory, allowing the use of `--kube-completions` for standard migrations (e.g., running 10 parallel Kubernetes workers to validate 100 tables, 10 tables per worker).
+    *   *Orchestration Benefit*: While `--kube-completions` now supports dynamic round-robin distribution of individual table YAML files across workers when `CLOUD_RUN_TASK_COUNT` or `JOB_COMPLETION_COUNT` is set, packing multiple table validations into a single YAML file reduces per-file client initialization overhead and also enables legacy 1-to-1 indexed execution without setting `JOB_COMPLETION_COUNT`.

@@ -598,7 +598,14 @@ We recommend first generating partitions with the `generate-table-partitions` co
 
 When running DVT in a distributed fashion, both the `--kube-completions` and `--config-dir` flags are required. The `--kube-completions` flag specifies that the validation is being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (i.e. a `--config-file` is provided instead), a warning is issued.
 
-The `--config-dir` flag will specify the directory with the YAML files to be executed in parallel. If you used `generate-table-partitions` to generate the YAMLs, this would be the directory where the partition files numbered `0000.yaml` to `<partition_num - 1>.yaml` are stored i.e (`gs://my_config_dir/source_schema.source_table/`). When creating your Cloud Run Job, set the number of tasks equal to the number of table partitions so the task index matches the YAML file to be validated. When executed, each Cloud Run task will validate a partition in parallel.
+The `--config-dir` flag will specify the directory with the YAML files to be executed in parallel. How the YAML files are shared out between the tasks depends on whether DVT can determine the total number of tasks in the job:
+
+*   **Round-robin chunking**: if the total task count is available, DVT sorts every YAML file in the config directory by name and deals them out to the tasks round-robin, i.e. task `i` of `n` tasks runs files `[i::n]`. Each task runs its files sequentially in the same container. This means the number of tasks is independent of the number of YAML files, so you can validate hundreds of tables, named after their schema and table (e.g. `hr.employees.yaml`), with however many parallel tasks you want to pay for.
+    *   Cloud Run sets `CLOUD_RUN_TASK_COUNT` automatically, so nothing extra is required.
+    *   Kubernetes only injects `JOB_COMPLETION_INDEX`, so you must set `JOB_COMPLETION_COUNT` yourself in the Job manifest to match `spec.completions`.
+*   **One file per task**: if no task count is available, DVT assumes the YAML files are numbered sequentially and each task runs only the file matching its own index. If you used `generate-table-partitions` to generate the YAMLs, this would be the directory where the partition files numbered `0000.yaml` to `<partition_num - 1>.yaml` are stored, e.g. `gs://my_config_dir/source_schema.source_table/`. In this mode you must set the number of tasks equal to the number of YAML files so that each task index matches a file.
+
+Note that the two modes behave identically for a directory of `generate-table-partitions` output when the number of tasks equals the number of partitions.
 
 
 ### Validation Reports

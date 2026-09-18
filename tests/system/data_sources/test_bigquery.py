@@ -24,11 +24,13 @@ from data_validation import __main__ as main
 from data_validation import (
     cli_tools,
     clients,
+    config_runner,
     consts,
     data_validation,
     exceptions,
     find_tables,
     gcs_helper,
+    validation_runner,
 )
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
@@ -510,11 +512,11 @@ def test_cli_store_yaml_then_run_gcs(mock_conn):
 
     # Run generated config using 'configs run' command
     run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS_GCS)
-    config_file_path = main._get_arg_config_file(run_config_args)
-    config_managers = main.build_config_managers_from_yaml(
+    config_file_path = cli_tools.get_arg_config_file(run_config_args)
+    config_managers = config_runner.build_config_managers_from_yaml(
         run_config_args, config_file_path
     )
-    main.run_validations(run_config_args, config_managers)
+    validation_runner.run_validations(run_config_args, config_managers)
 
 
 @mock.patch(
@@ -540,11 +542,11 @@ def test_cli_store_yaml_then_run_local(mock_conn):
 
     # Run generated config using 'configs run' command
     run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS_LOCAL)
-    config_file_path = main._get_arg_config_file(run_config_args)
-    config_managers = main.build_config_managers_from_yaml(
+    config_file_path = cli_tools.get_arg_config_file(run_config_args)
+    config_managers = config_runner.build_config_managers_from_yaml(
         run_config_args, config_file_path
     )
-    main.run_validations(run_config_args, config_managers)
+    validation_runner.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
 
@@ -595,7 +597,7 @@ def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
             f"gs://{TEST_BUCKET}/system_test/test_dir",
         ]
     )
-    main.config_runner(run_config_args)
+    config_runner.config_runner(run_config_args)
 
     # Clean up
     bucket = gcs_helper.get_gcs_bucket(bucket_name)
@@ -648,7 +650,7 @@ def test_cli_store_yaml_then_run_directory_local(mock_conn):
             "./tmp_test_dir_dvt/",
         ]
     )
-    main.config_runner(run_config_args)
+    config_runner.config_runner(run_config_args)
 
     # Clean up
     os.remove(yaml_file_name1)
@@ -1215,7 +1217,7 @@ def test_bigquery_dry_run(mock_conn, capsys):
     )
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
-    main.run_validation(config_managers[0], dry_run=True)
+    validation_runner.run_validation(config_managers[0], dry_run=True)
     out, err = capsys.readouterr()
     assert err == ""
     dry_run = json.loads(out)

@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import argparse
-import logging
-import os
 from unittest import mock
 import pytest
 
@@ -33,48 +31,6 @@ CLI_ARGS = {
     "config_file": "example_test.yaml",
     "verbose": True,
 }
-
-CONFIG_RUNNER_ARGS_1 = {
-    "verbose": False,
-    "log_level": "INFO",
-    "command": "configs",
-    "validation_config_cmd": "run",
-    "dry_run": False,
-    "config_file": "gs://pso-project/resources/test/unit/test__main/3validations/first.yaml",
-    "config_dir": None,
-    "kube_completions": True,
-}
-CONFIG_RUNNER_ARGS_2 = {
-    "verbose": False,
-    "log_level": "INFO",
-    "dry_run": False,
-    "command": "configs",
-    "validation_config_cmd": "run",
-    "kube_completions": True,
-    "config_dir": "/tmp/test/unit/test__main/3validations",
-}
-CONFIG_RUNNER_ARGS_3 = {
-    "verbose": False,
-    "log_level": "INFO",
-    "dry_run": False,
-    "command": "configs",
-    "kube_completions": True,
-    "validation_config_cmd": "run",
-    "config_dir": "gs://pso-project/resources/test/unit/test__main/4partitions",
-}
-CONFIG_RUNNER_ARGS_4 = {
-    "verbose": False,
-    "log_level": "INFO",
-    "dry_run": False,
-    "command": "configs",
-    "kube_completions": False,
-    "validation_config_cmd": "run",
-    "config_dir": "/tmp/test/unit/test__main/4partitions",
-}
-
-CONFIG_RUNNER_EXCEPTION_TEXT = (
-    "Error '{}' occurred while running config file {}. Skipping it for now."
-)
 
 VALIDATE_COLUMN_CONFIG = {
     "verbose": False,
@@ -238,139 +194,12 @@ class MockIbisClient(object):
 def test_configure_arg_parser(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
-    file_path = main._get_arg_config_file(args)
+    file_path = cli_tools.get_arg_config_file(args)
 
     assert file_path == "example_test.yaml"
 
 
-@mock.patch("data_validation.__main__.run_validations")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
-    return_value=["config dict from one file"],
-)
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_1),
-)
-def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
-    """config_runner, runs the validations, so we have to mock run_validations and examine the arguments
-    passed to it. Build Config Managers reads the yaml files and builds the validation configs,
-    which also includes creating a connection to the database. That is beyond a unit test, so mock
-    build_config_managers_from_yaml.
-    First test - run validation on a single file - and provide the -kc argument
-    Expected result
-    1. One config manager created
-    2. Warning about inappropriate use of -kc
-    Other test cases can be developed.
-    """
-    caplog.set_level(logging.WARNING)
-    args = cli_tools.get_parsed_args()
-    caplog.clear()
-    main.config_runner(args)
-    # assert warning is seen
-    assert caplog.messages == [
-        "--kube-completions or -kc specified, which requires a config directory, however a specific config file is provided."
-    ]
-    # assert that only one config manager object is present
-    assert len(mock_run.call_args.args[1]) == 1
-
-
-@mock.patch("data_validation.__main__.run_validations")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
-    return_value=["config dict from one file"],
-)
-@mock.patch(
-    "data_validation.cli_tools.list_validations",
-    return_value=["first.yaml", "second.yaml", "third.yaml"],
-)
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
-)
-def test_config_runner_2(mock_args, mock_list, mock_build, mock_run, caplog):
-    """Second test - run validation on a directory - and provide the -kc argument,
-    but not running in a Kubernetes Completion Configuration. Expected result
-    1. Multiple (3) config manager created for validation
-    2. Warning about inappropriate use of -kc"""
-    caplog.set_level(logging.WARNING)
-    args = cli_tools.get_parsed_args()
-    caplog.clear()
-    main.config_runner(args)
-    # assert warning is seen
-    assert caplog.messages == [
-        "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
-    ]
-    # assert that validation is called thrice, once for each file
-    assert mock_run.call_count == 3
-
-
-@mock.patch("data_validation.__main__.run_validations")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
-    return_value=["config dict from one file"],
-)
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
-)
-def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
-    """Second test - run validation on a directory - and provide the -kc argument,
-    have system believe it is running in a Kubernetes Completion Environment. Expected result
-    1. No warnings
-    2. run validation called as though config file is provided (config_dir is None)
-    3. run validation config file name corresponds to value of JOB_COMPLETION_INDEX
-    4. One config manager created for validation
-    """
-    caplog.set_level(logging.WARNING)
-    os.environ["JOB_COMPLETION_INDEX"] = "2"
-    args = cli_tools.get_parsed_args()
-    caplog.clear()
-    main.config_runner(args)
-    # assert no warnings
-    assert caplog.messages == []
-    # assert that only one config manager and one validation corresponding to JOB_COMPLETION_INDEX is set.
-    assert mock_run.call_args.args[0].config_dir is None
-    assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
-    assert len(mock_run.call_args.args[1]) == 1
-
-
-@mock.patch("data_validation.__main__.run_validations")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
-    return_value=["config dict from one file"],
-)
-@mock.patch(
-    "data_validation.cli_tools.list_validations",
-    return_value=["0000.yaml", "0001.yaml", "0002.yaml", "0003.yaml"],
-)
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_4),
-)
-def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
-    """Third test - run validation on a directory with failures in one validation,
-        Running in a non Kube completions environment. Expected Result:
-    1. All 4 files are validated, even though one of them raises an exception.
-    2. Exception from one validation is trapped, file skipped and raised at the end.
-    """
-    mock_run.side_effect = [10, ValueError("Boom!"), 12, 10]
-    caplog.set_level(logging.WARNING)
-    args = cli_tools.get_parsed_args()
-    caplog.clear()
-    with pytest.raises(exceptions.ValidationException) as e_info:
-        main.config_runner(args)
-    # assert that exception message was output for the failed validation
-    # validation is called four times, once for each file
-    # After all four files were validated, an exception was raised back to main to return status
-    assert caplog.messages[0] == CONFIG_RUNNER_EXCEPTION_TEXT.format(
-        "Boom!", "0001.yaml"
-    )
-    assert mock_run.call_count == 4
-    assert e_info.value.args[0] == "Some of the validations raised an exception"
-
-
-@mock.patch("data_validation.__main__.run_validation")
+@mock.patch("data_validation.validation_runner.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
     return_value=[
@@ -387,60 +216,37 @@ def test_successful_column_validation_with_mocked_run_validation(
     mock_args, mock_build, mock_run
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_build.assert_called_once()
+    mock_run.assert_called_once()
 
 
-@mock.patch("data_validation.__main__.run_validation")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_args",
-    return_value=[
-        config_manager.ConfigManager(
-            BROKEN_VALIDATE_COLUMN_CONFIG_MISSING_COMMAND,
-            MockIbisClient(),
-            MockIbisClient(),
-            verbose=False,
-        )
-    ],
-)
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**BROKEN_VALIDATE_COLUMN_CONFIG_MISSING_COMMAND),
 )
-def test_throws_for_malformed_input_config_missing_command(
-    mock_args, mock_build, mock_run
-):
+def test_throws_for_malformed_input_config_missing_command(mock_args):
     with pytest.raises(Exception) as e_info:
         main.main()
+    mock_args.assert_called_once()
     assert e_info.value.args[0] == "'Namespace' object has no attribute 'command'"
 
 
-@mock.patch("data_validation.__main__.run_validation")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_args",
-    return_value=[
-        config_manager.ConfigManager(
-            BROKEN_VALIDATE_COLUMN_CONFIG_INCORRECT_COMMAND,
-            MockIbisClient(),
-            MockIbisClient(),
-            verbose=False,
-        )
-    ],
-)
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**BROKEN_VALIDATE_COLUMN_CONFIG_INCORRECT_COMMAND),
 )
-def test_throws_for_malformed_input_config_incorrect_command(
-    mock_args, mock_build, mock_run
-):
+def test_throws_for_malformed_input_config_incorrect_command(mock_args):
     with pytest.raises(ValueError) as e_info:
         main.main()
+    mock_args.assert_called_once()
     assert (
         e_info.value.args[0]
         == "Positional Argument 'incorrectcommand' is not supported"
     )
 
 
-@mock.patch("data_validation.__main__.run_validation")
+@mock.patch("data_validation.validation_runner.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
     return_value=[
@@ -457,11 +263,14 @@ def test_successful_row_validation_with_mocked_run_validation(
     mock_args, mock_build, mock_run
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_build.assert_called_once()
+    mock_run.assert_called_once()
 
 
-@mock.patch("data_validation.__main__.run_validation")
+@mock.patch("data_validation.validation_runner.run_validation")
 @mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
+    "data_validation.config_runner.build_config_managers_from_yaml",
     return_value=[
         config_manager.ConfigManager(
             VALIDATE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
@@ -476,6 +285,9 @@ def test_successful_validation_config_with_mocked_run_validation(
     mock_args, mock_build, mock_run
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_build.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch(
@@ -483,8 +295,10 @@ def test_successful_validation_config_with_mocked_run_validation(
     return_value=argparse.Namespace(**CONNECTION_LIST_ARGS),
 )
 @mock.patch("data_validation.cli_tools.list_connections")
-def test_successful_connection_list_with_mocked_list_connections(mock_args, mock_run):
+def test_successful_connection_list_with_mocked_list_connections(mock_run, mock_args):
     main.main()
+    mock_args.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch("data_validation.clients.get_data_client")
@@ -494,6 +308,8 @@ def test_successful_connection_list_with_mocked_list_connections(mock_args, mock
 )
 def test_successful_connection_add_with_mocked_list_connections(mock_args, mock_run):
     main.main()
+    mock_args.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch(
@@ -502,33 +318,34 @@ def test_successful_connection_add_with_mocked_list_connections(mock_args, mock_
 )
 @mock.patch("data_validation.cli_tools.describe_connection")
 def test_successful_connection_describe_with_mocked_describe_connection(
-    mock_args, mock_describe
+    mock_describe, mock_args
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_describe.assert_called_once()
 
 
-@mock.patch("data_validation.clients.get_data_client")
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONNECTION_DELETE_ARGS),
 )
 @mock.patch("data_validation.cli_tools.delete_connection")
 def test_successful_connection_delete_with_mocked_delete_connection(
-    mock_args, mock_run, mock_client
+    mock_run, mock_args
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_run.assert_called_once()
 
 
-@mock.patch("data_validation.clients.get_data_client")
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**BROKEN_CONNECTION_CONFIG_INCORRECT_COMMAND),
 )
-def test_throws_for_malformed_input_connection_config_incorrect_command(
-    mock_args, mock_run
-):
+def test_throws_for_malformed_input_connection_config_incorrect_command(mock_args):
     with pytest.raises(ValueError) as e_info:
         main.main()
+    mock_args.assert_called_once()
     assert (
         e_info.value.args[0]
         == "Connections Argument 'incorrectconnectioncommand' is not supported"
@@ -542,9 +359,11 @@ def test_throws_for_malformed_input_connection_config_incorrect_command(
 )
 def test_successful_find_tables_with_mock(mock_args, mock_run):
     main.main()
+    mock_args.assert_called_once()
+    mock_run.assert_called_once()
 
 
-@mock.patch("data_validation.__main__.run_validation")
+@mock.patch("data_validation.validation_runner.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
     return_value=[
@@ -565,6 +384,9 @@ def test_successful_schema_validation_with_mocked_run_validation(
 ):
     """Test schema validation with mocked dependencies."""
     main.main()
+    mock_args.assert_called_once()
+    mock_build.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch("data_validation.clients.get_data_client")
@@ -574,6 +396,8 @@ def test_successful_schema_validation_with_mocked_run_validation(
 )
 def test_successful_query_with_mocked_get_data_client(mock_args, mock_get_data_client):
     main.main()
+    mock_args.assert_called_once()
+    mock_get_data_client.assert_called_once()
 
 
 @mock.patch("data_validation.__main__.PartitionBuilder")
@@ -596,6 +420,9 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
     mock_args, mock_build, mock_run
 ):
     main.main()
+    mock_args.assert_called_once()
+    mock_build.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch("data_validation.app.app.run")
@@ -605,6 +432,8 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
 )
 def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()
+    mock_args.assert_called_once()
+    mock_run.assert_called_once()
 
 
 @mock.patch("data_validation.cli_tools.store_validation")
@@ -678,27 +507,6 @@ def test_store_config_dir_custom_query_raises():
         main.store_config_dir(args, [config_mgr], is_json=False)
 
     assert main.CUSTOM_QUERY_DIR_SUPPORT_ERROR in str(exc_info.value)
-
-
-@mock.patch("data_validation.__main__.DataValidation")
-def test_run_validation_exception_handling(mock_data_validation):
-    """Test that exceptions in run_validation are wrapped with table names."""
-    mock_validator = mock.Mock()
-    mock_validator.execute.side_effect = ValueError("Some execution error")
-    mock_data_validation.return_value.__enter__.return_value = mock_validator
-
-    mock_config_manager = mock.Mock()
-    mock_config_manager.full_source_table = "test_schema.test_table"
-    mock_config_manager.config = {}
-
-    with pytest.raises(exceptions.ValidationException) as exc_info:
-        main.run_validation(mock_config_manager)
-
-    assert (
-        "Validation failed for table 'test_schema.test_table': Some execution error"
-        in str(exc_info.value)
-    )
-    assert isinstance(exc_info.value.__cause__, ValueError)
 
 
 @mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
