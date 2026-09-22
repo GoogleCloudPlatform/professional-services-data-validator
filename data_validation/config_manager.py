@@ -77,7 +77,7 @@ class ConfigManager(object):
         when pre-built clients or connection dicts are already supplied to
         ConfigManager.
         """
-        if not self._state_manager:
+        if self._state_manager is None:
             self._state_manager = state_manager.StateManager()
         return self._state_manager
 
