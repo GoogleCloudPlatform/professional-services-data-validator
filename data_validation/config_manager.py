@@ -51,7 +51,7 @@ class ConfigManager(object):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
         """
-        self._state_manager = state_manager.StateManager()
+        self._state_manager = None
         self._config = config
 
         self.source_client = source_client or clients.get_data_client(
@@ -70,6 +70,18 @@ class ConfigManager(object):
         self._target_raw_data_types = None
 
     @property
+    def state_manager(self) -> state_manager.StateManager:
+        """Return StateManager instance, initializing lazily on first use.
+
+        Lazy initialization avoids unnecessary per-table filesystem or GCS setup
+        when pre-built clients or connection dicts are already supplied to
+        ConfigManager.
+        """
+        if not self._state_manager:
+            self._state_manager = state_manager.StateManager()
+        return self._state_manager
+
+    @property
     def config(self):
         """Return config object."""
         return self._config
@@ -81,7 +93,7 @@ class ConfigManager(object):
                 self._source_conn = self._config.get(consts.CONFIG_SOURCE_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
-                self._source_conn = self._state_manager.get_connection_config(conn_name)
+                self._source_conn = self.state_manager.get_connection_config(conn_name)
 
         return self._source_conn
 
@@ -92,7 +104,7 @@ class ConfigManager(object):
                 self._target_conn = self._config.get(consts.CONFIG_TARGET_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_TARGET_CONN_NAME)
-                self._target_conn = self._state_manager.get_connection_config(conn_name)
+                self._target_conn = self.state_manager.get_connection_config(conn_name)
 
         return self._target_conn
 

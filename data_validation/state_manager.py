@@ -135,8 +135,9 @@ class StateManager(object):
         if self.file_system == FileSystem.GCS:
             self.setup_gcs()
         else:
-            if not os.path.exists(self._get_connections_directory()):
-                os.makedirs(self._get_connections_directory())
+            # Use exist_ok=True to avoid a FileExistsError race condition if multiple
+            # threads initialize a StateManager concurrently when the directory does not yet exist.
+            os.makedirs(self._get_connections_directory(), exist_ok=True)
 
     def setup_gcs(self):
         try:
