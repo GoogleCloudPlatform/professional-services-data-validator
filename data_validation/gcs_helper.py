@@ -24,8 +24,13 @@ WRITE_SUCCESS_STRING = "Success! Config output written to"
 DELETE_SUCCESS_STRING = "Successfully deleted"
 
 
-@functools.lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=1)
 def _get_storage_client() -> storage.Client:
+    """Return a cached Cloud Storage client instance.
+
+    Reuses the client and its HTTP connection pool across GCS operations
+    to minimize instantiation latency.
+    """
     return storage.Client(client_info=client_info.get_http_client_info())
 
 

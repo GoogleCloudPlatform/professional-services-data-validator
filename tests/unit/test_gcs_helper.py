@@ -19,13 +19,6 @@ import pytest
 from data_validation import gcs_helper
 
 
-@pytest.fixture(autouse=True)
-def clear_storage_client_cache():
-    gcs_helper._get_storage_client.cache_clear()
-    yield
-    gcs_helper._get_storage_client.cache_clear()
-
-
 @mock.patch("data_validation.gcs_helper.storage.Client")
 def test_get_gcs_bucket_caches_storage_client(mock_storage_client):
     """Verify storage.Client is created only once across multiple get_gcs_bucket calls."""

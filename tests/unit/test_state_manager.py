@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from unittest import mock
-from data_validation import consts, gcs_helper, state_manager
+from data_validation import consts, state_manager
 import yaml
 
 TEST_CONN_NAME = "example"
@@ -90,12 +90,8 @@ def test_get_connections_directory_gcs(monkeypatch, fs):
 @mock.patch("data_validation.gcs_helper.storage.Client")
 def test_multiple_gcs_state_managers_reuse_storage_client(mock_storage_client):
     """Verify creating multiple StateManagers with a gs:// path creates only one storage.Client."""
-    gcs_helper._get_storage_client.cache_clear()
-    try:
-        for _ in range(10):
-            state_manager.StateManager("gs://my-bucket/connections/")
+    for _ in range(10):
+        state_manager.StateManager("gs://my-bucket/connections/")
 
-        assert mock_storage_client.call_count == 1
-        assert mock_storage_client.return_value.bucket.call_count == 10
-    finally:
-        gcs_helper._get_storage_client.cache_clear()
+    assert mock_storage_client.call_count == 1
+    assert mock_storage_client.return_value.bucket.call_count == 10
