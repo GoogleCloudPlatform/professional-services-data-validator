@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [8.9.4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.3...v8.9.4) (2026-09-23)
+
+
+### Documentation
+
+* explain Oracle DBMS_RANDOM access ([#1798](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1798)) ([ae359b6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ae359b635aebb0d280eb30a1f249db97101c7e2e))
+
 ## [8.9.3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.2...v8.9.3) (2026-08-27)
 
 
