@@ -156,3 +156,7 @@ class Backend(BigQueryBackend):
 
     def dvt_list_tables(self, like=None, database=None):
         return self.list_tables(like=like, database=database)
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return True

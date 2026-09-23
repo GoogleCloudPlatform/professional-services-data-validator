@@ -219,6 +219,32 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 );
 COMMIT;
 
+DROP TABLE pso_data_validator.dvt_decimals;
+CREATE TABLE pso_data_validator.dvt_decimals
+(   id                NUMBER(10) NOT NULL PRIMARY KEY
+,   col_dec_16_8      NUMBER(16,8)
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(13,123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(18,-99999999.99999999);
+COMMIT;
+
 DROP TABLE pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
 (   id                NUMBER(38) NOT NULL PRIMARY KEY
@@ -959,3 +985,97 @@ COMMENT ON TABLE pso_data_validator."dvt_case_lower" IS 'Oracle table with lower
 INSERT INTO pso_data_validator."dvt_case_lower"
 SELECT * FROM pso_data_validator."DvtCaseCamel";
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk
+(   key1       number(5) NOT NULL
+,   key2       varchar2(10) NOT NULL
+,   key3       char(2) NOT NULL
+,   val        varchar2(50)
+,   PRIMARY KEY (key1, key2, key3)
+);
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Oracle table for testing composite primary key validations.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk
+(   key1       number(10) NOT NULL
+,   key2       number(10) NOT NULL
+,   key3       number(10) NOT NULL
+,   val        number(10)
+,   PRIMARY KEY (key1, key2, key3)
+) COMPRESS BASIC;
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Oracle table for volume testing composite primary key validations.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    MOD(ROWNUM - 1, 10) + 1,
+    MOD(TRUNC((ROWNUM - 1) / 10), 10) + 1,
+    ROWNUM,
+    ROWNUM * 10
+FROM DUAL
+CONNECT BY ROWNUM <= 10000;
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_lobs;
+CREATE TABLE pso_data_validator.dvt_lobs
+(   id              NUMBER(5) NOT NULL PRIMARY KEY
+,   col_blob        BLOB
+,   col_clob        CLOB
+,   col_nclob       NCLOB
+,   col_blob_fail   BLOB
+,   col_clob_fail   CLOB
+,   col_nclob_fail  NCLOB
+);
+COMMENT ON TABLE pso_data_validator.dvt_lobs IS 'Oracle to PostgreSQL LOB integration test table, tests documented sample';
+
+DECLARE
+  v_clob1 CLOB := '';
+  v_clob2 CLOB := '';
+  v_chunk1 VARCHAR2(4000) := RPAD('A', 4000, 'A');
+  v_chunk2 VARCHAR2(4000) := RPAD('B', 4000, 'B');
+  v_blob1 BLOB;
+  v_blob2 BLOB;
+  v_raw1 RAW(2000) := HEXTORAW(RPAD('41', 4000, '41'));
+  v_raw2 RAW(2000) := HEXTORAW(RPAD('42', 4000, '42'));
+BEGIN
+  DBMS_LOB.CREATETEMPORARY(v_blob1, TRUE);
+  DBMS_LOB.CREATETEMPORARY(v_blob2, TRUE);
+
+  -- 125 chunks * 4000 chars = 500,000 characters (~500KB)
+  FOR i IN 1..125 LOOP
+    v_clob1 := v_clob1 || v_chunk1;
+    v_clob2 := v_clob2 || v_chunk2;
+  END LOOP;
+
+  -- 250 chunks * 2000 bytes = 500,000 bytes (~500KB)
+  FOR i IN 1..250 LOOP
+    DBMS_LOB.APPEND(v_blob1, v_raw1);
+    DBMS_LOB.APPEND(v_blob2, v_raw2);
+  END LOOP;
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (1, v_blob1, v_clob1, TO_NCLOB(v_clob1), v_blob1, v_clob1, TO_NCLOB(v_clob1));
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (2, v_blob2, v_clob2, TO_NCLOB(v_clob2), v_blob2, v_clob2, TO_NCLOB(v_clob2));
+
+  INSERT INTO pso_data_validator.dvt_lobs
+  (id, col_blob, col_clob, col_nclob, col_blob_fail, col_clob_fail, col_nclob_fail)
+  VALUES (3, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  COMMIT;
+END;
+/
+

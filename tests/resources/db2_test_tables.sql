@@ -116,6 +116,30 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_null_not_null
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, DB2 is assumed to be a DVT source (not target).';
 
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_decimals
+(   id                INTEGER NOT NULL PRIMARY KEY
+,   col_dec_16_8      DECIMAL(16,8)
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals IS 'Decimals integration test table';
+INSERT INTO pso_data_validator.dvt_decimals VALUES(1,NULL);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(2,0);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(3,1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(4,-1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(5,0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(6,-0.1);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(7,0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(8,-0.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(9,0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(10,-0.00000001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(11,0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(12,-0.00010001);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(13,123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(14,-123.01);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(15,12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(16,-12345678.12345678);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(17,99999999.99999999);
+INSERT INTO pso_data_validator.dvt_decimals VALUES(18,-99999999.99999999);
+
 -- In Db2 the maximum precision for a DECIMAL data type is 31 digits.
 -- The renders some columns in this table incompatible with the table in other systems.
 CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_large_decimals
@@ -258,3 +282,58 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_generated_cols2
 ,   col_int                     INTEGER);
 COMMENT ON TABLE pso_data_validator.dvt_db2_generated_cols2 IS 'Test table to prove generated columns are ignored.';
 INSERT INTO pso_data_validator.dvt_db2_generated_cols2 VALUES (1,1);
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_composite_pk
+(   key1  INTEGER NOT NULL
+,   key2  VARCHAR(10) NOT NULL
+,   key3  CHAR(2) NOT NULL
+,   val   VARCHAR(50)
+,   PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Test table for composite primary keys.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk
+(   key1       INTEGER NOT NULL
+,   key2       INTEGER NOT NULL
+,   key3       INTEGER NOT NULL
+,   val        INTEGER
+,   PRIMARY KEY (key1, key2, key3)
+);
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Db2 table for volume testing composite primary key validations.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk (key1, key2, key3, val)
+WITH
+  t0 AS (
+    SELECT 0 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 1 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 2 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 3 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 4 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 5 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 6 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 7 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 8 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 9 AS n FROM SYSIBM.SYSDUMMY1
+  ),
+  Tally AS (
+    SELECT a.n + b.n*10 + c.n*100 + d.n*1000 + 1 AS x
+    FROM t0 a CROSS JOIN t0 b CROSS JOIN t0 c CROSS JOIN t0 d
+  )
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD((x - 1) / 10, 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM Tally;
+COMMIT;

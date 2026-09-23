@@ -1448,8 +1448,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
                 tables_map, schema_required=source_schema_required
             )
             table_dict = {
-                "schema_name": schema,
-                "table_name": table,
+                consts.CONFIG_SCHEMA_NAME: schema,
+                consts.CONFIG_TABLE_NAME: table,
             }
         elif len(tables_map) == 2:
             src_schema, src_table = split_table(
@@ -1457,8 +1457,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
             )
 
             table_dict = {
-                "schema_name": src_schema,
-                "table_name": src_table,
+                consts.CONFIG_SCHEMA_NAME: src_schema,
+                consts.CONFIG_TABLE_NAME: src_table,
             }
 
             targ_schema, targ_table = split_table(
@@ -1466,8 +1466,8 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
             )
 
             if targ_schema:
-                table_dict["target_schema_name"] = targ_schema
-            table_dict["target_table_name"] = targ_table
+                table_dict[consts.CONFIG_TARGET_SCHEMA_NAME] = targ_schema
+            table_dict[consts.CONFIG_TARGET_TABLE_NAME] = targ_table
 
         else:
             raise ValueError(
@@ -1704,7 +1704,7 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             "config_type": config_type,
             consts.CONFIG_SOURCE_CONN_NAME: args.source_conn,
             consts.CONFIG_TARGET_CONN_NAME: args.target_conn,
-            "table_obj": table_obj,
+            consts.CONFIG_PRE_BUILD_TABLE_OBJ: table_obj,
             consts.CONFIG_LABELS: labels,
             consts.CONFIG_THRESHOLD: threshold,
             consts.CONFIG_FORMAT: format,

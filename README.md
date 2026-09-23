@@ -21,33 +21,33 @@ DVT supports the following validations:
 
 DVT supports the following connection types:
 
-*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
-*   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
-*   [Db2 LUW](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2_luw)
-*   [Db2 z/OS](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2_zos)
-*   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
-*   [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
-*   [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
-*   [MSSQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
-*   [MySQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
-*   [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
-*   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
-*   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
-*   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
-*   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
-*   [Sybase ASE](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#sybase)
-*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
+*   [AlloyDB](docs/connections.md#alloydb)
+*   [BigQuery](docs/connections.md#google-bigquery)
+*   [Db2 LUW](docs/connections.md#db2_luw)
+*   [Db2 z/OS](docs/connections.md#db2_zos)
+*   [FileSystem](docs/connections.md#filesystem)
+*   [Hive](docs/connections.md#hive)
+*   [Impala](docs/connections.md#impala)
+*   [MSSQL](docs/connections.md#mssql-server)
+*   [MySQL](docs/connections.md#mysql)
+*   [Oracle](docs/connections.md#oracle)
+*   [Postgres](docs/connections.md#postgres)
+*   [Redshift](docs/connections.md#redshift)
+*   [Spanner](docs/connections.md#google-spanner)
+*   [Snowflake](docs/connections.md#snowflake)
+*   [Sybase ASE](docs/connections.md#sybase)
+*   [Teradata](docs/connections.md#teradata)
 
-The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
+The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
 
 ### Disclaimer
 This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly
-(see [CONTRIBUTING.md](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
+(see [CONTRIBUTING.md](CONTRIBUTING.md) for details).
 
 ## Installation
 
-The [Installation](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md) page describes the prerequisites and
+The [Installation](docs/installation.md) page describes the prerequisites and
 setup steps needed to install and use the Data Validation Tool.
 
 ## Usage
@@ -63,7 +63,7 @@ updating the configuration.
 
 Before running validations, DVT requires setting up a source and target connection.
 These connections can be stored locally or in a GCS directory. To create connections,
-please review the [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
+please review the [Connections](docs/connections.md) page.
 
 ### Running Validations
 
@@ -156,7 +156,7 @@ data-validation
 The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
 use [YAML configs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
+The [Examples](docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
 
 #### Row Validations
 
@@ -230,7 +230,7 @@ data-validation
   [--format or -fmt FORMAT]
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--use-random-row or -rr]
-                        Finds a set of random rows of the first primary key supplied.
+                        Finds a set of random rows for validation. See *Random Row Validation* section
   [--random-row-batch-size or -rbs]
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
@@ -428,7 +428,7 @@ data-validation
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+The [Examples](docs/examples.md)
 page provides few examples of how this tool can be used to run custom query validations.
 
 
@@ -496,7 +496,7 @@ data-validation
   [--format or -fmt FORMAT]
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--use-random-row or -rr]
-                        Finds a set of random rows of the first primary key supplied.
+                        Finds a set of random rows for validation. See *Random Row Validation* section
   [--random-row-batch-size or -rbs]
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
@@ -505,7 +505,7 @@ data-validation
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+The [Examples](docs/examples.md)
 page provides few examples of how this tool can be used to run custom query row validations.
 
 #### Dry Run Validation
@@ -537,11 +537,14 @@ For example, this flag can be used as follows:
     "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
 }
 ```
+#### Random Row Validation
+Data Validation Tool supports validating a subset of random rows across two tables. We recommend that this feature be used for fewer than 10,000 rows with a single primary key and fewer than 1,000 rows with composite primary keys. Please review the [Random Row Validation](docs/random_row_validation.md) page for more details.
+
 #### Running DVT at on-prem
 On-premises environments can have limited access to GCP services. DVT supports using BigQuery for storing validation results, GCS for storage and
 the Secret Manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
 APIs (i.e. bigquery.googleapis.com) may not always be accessible due to firewall restrictions. Work with your network
-adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner) and [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](docs/connections.md#google-spanner) and [BigQuery](docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
 
 ### Running DVT with YAML Configuration Files
 
@@ -583,12 +586,12 @@ data-validation configs get
 ```
 
 View the complete YAML file for a Grouped Column validation on the
-[Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
+[Examples](docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
 
 ### Scaling DVT
 
-You can scale DVT for large validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
+You can scale DVT for large validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](docs/internal/distributed_jobs.md) for a detailed overview.
 
 
 We recommend first generating partitions with the `generate-table-partitions` command for your large datasets (tables or queries). Then, use Cloud Run or GKE to distribute the validation of each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
@@ -600,7 +603,7 @@ The `--config-dir` flag will specify the directory with the YAML files to be exe
 
 ### Validation Reports
 
-The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](terraform/results_schema.json).
 
 
 To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
@@ -726,7 +729,7 @@ validations:
 ```
 
 If you are aggregating columns with large values, you can CAST() before aggregation
-with calculated fields as shown in [this example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation).
+with calculated fields as shown in [this example](docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation).
 
 ### Filters
 
@@ -779,7 +782,7 @@ Comparison field validations (`--comp-fields column`) involve an value compariso
 column values. These values will be compared via a JOIN on their corresponding primary
 key and will be evaluated for an exact match.
 
-See hash and comparison field validations in the [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#run-a-row-hash-validation-for-all-rows) page.
+See hash and comparison field validations in the [Examples](docs/examples.md#run-a-row-hash-validation-for-all-rows) page.
 
 ### Calculated Fields
 
@@ -831,13 +834,13 @@ calculated fields to generate the query. You can also use calculated fields
 in column level validations to generate the length of a string, or cast
 a INT field to BIGINT for aggregations.
 
-See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
+See the [Examples page](docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
 cast to NUMERIC.
 
 #### Custom Calculated Fields
 
 DVT supports certain functions required for row hash validation natively (i.e. CAST() and CONCAT()),
-which are listed in the CalculatedField() class methods in the [QueryBuilder](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/query_builder/query_builder.py).
+which are listed in the CalculatedField() class methods in the [QueryBuilder](data_validation/query_builder/query_builder.py).
 
 You can also specify custom functions (i.e. replace() or truncate()) from the Ibis expression
 [API reference](https://ibis-project.org/reference/expressions/generic/). Keep in mind these will run
@@ -859,9 +862,9 @@ required, if any, with the 'params' block as shown below:
 ```
 
 The above block references the [TemporalValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
-See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
+See the [Examples page](docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
 for a sample YAML with a custom calculated field.
 
 ## Contributing
 
-Contributions are welcome. See the [Contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details.
+Contributions are welcome. See the [Contributing guide](CONTRIBUTING.md) for details.

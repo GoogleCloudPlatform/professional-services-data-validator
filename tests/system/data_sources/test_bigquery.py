@@ -26,6 +26,7 @@ from data_validation import (
     clients,
     consts,
     data_validation,
+    exceptions,
     find_tables,
     gcs_helper,
 )
@@ -1347,7 +1348,7 @@ def test_row_validation_core_types_auto_pks(mock_conn):
     Expects:
       ValueError: --primary-keys argument is required for this validation
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(exceptions.BuildConfigException):
         row_validation_test(
             tc="mock-conn",
             hash="col_int8,col_int16",

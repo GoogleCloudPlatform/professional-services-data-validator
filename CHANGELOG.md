@@ -2,6 +2,34 @@
 
 ## Untagged
 
+## [8.9.3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.2...v8.9.3) (2026-08-27)
+
+
+### Bug Fixes
+
+* clean up Teradata connection parameters ([#1820](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1820)) ([ee92c7d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee92c7de793b20df477769ca57bb2b6f035e3dee))
+* Exclude Oracle system schemas from list_databases ([#1812](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1812)) ([dd0955f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dd0955f30c0ce891dd62102f92bbaa1255508129))
+
+
+### Documentation
+
+* Fix documented Oracle NCLOB sample ([#1815](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1815)) ([54ce3ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/54ce3ca7a4c0b9dc72740daed6b4e83c6bb15361))
+
+## [8.9.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.1...v8.9.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* Cast binary values to hex in combiner before reporting them to screen ([#1811](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1811)) ([03e031e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/03e031e228b29f0e6a3bd2bd25b074144b81eeea))
+
+## [8.9.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.0...v8.9.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* Add support for random row sampling on composite primary keys ([#1803](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1803)) ([d6d16da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d6d16dab92a798db8aaedd067bd95dbd5d9078ee))
+* Fix SQL Server decimal format bug ([#1806](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1806)) ([62eacd1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62eacd19f65fa9658e5111bae37e060fd83a4970))
+
 ## [8.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.2...v8.9.0) (2026-07-31)
 
 

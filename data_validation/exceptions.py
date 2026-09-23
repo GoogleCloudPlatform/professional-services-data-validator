@@ -17,6 +17,10 @@ class DataClientConnectionFailure(Exception):
     pass
 
 
+class BuildConfigException(Exception):
+    pass
+
+
 class ValidationException(Exception):
     pass
 

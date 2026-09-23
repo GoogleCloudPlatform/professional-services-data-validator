@@ -432,6 +432,21 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     )
 
 
+@pytest.mark.slow
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
+    )
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,

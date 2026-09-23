@@ -108,26 +108,26 @@ def test_mysql_count_invalid_host():
 # Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
-        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
 ]
 
@@ -290,6 +290,23 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_view_core_types_vw():
     """MySQL to MySQL view dvt_core_types_vw column validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
@@ -367,6 +384,20 @@ def test_row_validation_core_types_to_bigquery():
         tc="bq-conn",
         # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 
@@ -587,6 +618,42 @@ def test_row_validation_many_columns():
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_composite_pk_to_bigquery():
+    """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=5,
+        filter_status=None,
+    )
+    assert len(df) == 5
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_bigquery():
+    """Test composite primary key high volume row sampling validation."""
+    df = row_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_vol_composite_pk",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=5000,
+    )
+    assert len(df) == 0
 
 
 @mock.patch(

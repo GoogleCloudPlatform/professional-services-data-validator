@@ -171,52 +171,52 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
 ]
 
 # For some reason integers from subqueries are converted to decimals
 QUERY_PARTITION_FILTER = [
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
     [
-        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
-        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
-        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
+        "(quarter_id != 1111) AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "(quarter_id != 1111) AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "(quarter_id != 1111) AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
 ]
 
@@ -510,6 +510,23 @@ def test_column_validation_binary_to_bigquery():
         count_cols="binary_id",
         min_cols="binary_id",
         sum_cols="binary_id",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
     )
 
 
@@ -824,6 +841,44 @@ def test_row_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_composite_pk_to_postgres():
+    """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_composite_pk",
+        tc="pg-conn",
+        comp_fields="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=5,
+        filter_status=None,
+    )
+    assert len(df) == 5
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_postgres():
+    """Test composite primary key high volume row sampling validation.
+
+    This test covers both Oracle and PostgreSQL."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_vol_composite_pk",
+        tc="pg-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=10000,
+    )
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_num_38 when issue-1454 is complete.
     # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
@@ -848,6 +903,20 @@ def test_row_validation_comp_fields_oracle_to_postgres():
         tables="pso_data_validator.dvt_ora2pg_types",
         tc="pg-conn",
         comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 
@@ -935,11 +1004,7 @@ def test_varchar_pk_row_validation_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_random_row option below when issue-1445 is actioned.
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_datetime_id",
-        use_random_row=False,
-    )
+    id_column_row_validation_test("pso_data_validator.dvt_datetime_id")
 
 
 @mock.patch(
@@ -1253,6 +1318,138 @@ def test_custom_query_row_validation_oracle_to_postgres():
         target_query=f"select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
         hash="*",
     )
+
+
+def _check_oracle_dbms_crypto(conn: str = "mock-conn") -> None:
+    """Skip test if DBMS_CRYPTO is not installed or executing user lacks EXECUTE privilege."""
+    try:
+        raw_query_rows(
+            "SELECT DBMS_CRYPTO.HASH(UTL_RAW.CAST_TO_RAW('test'), 4) FROM dual",
+            conn=conn,
+        )
+    except Exception as exc:
+        if "invalid identifier" in str(exc):
+            pytest.skip(
+                f"Skipping Oracle LOB validation test because DBMS_CRYPTO is not accessible: {exc}"
+            )
+        else:
+            raise
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_blob_to_postgres():
+    """Oracle to PostgreSQL BLOB row validation using DBMS_CRYPTO per samples/oracle/lob_validations.md"""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, CASE WHEN DBMS_LOB.GETLENGTH(col_blob) = 0 OR col_blob IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_blob, 4)) END AS col_blob "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, encode(sha256(col_blob), 'hex') AS col_blob "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_blob",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_clob_to_postgres():
+    """Oracle to PostgreSQL CLOB/NCLOB row validation using DBMS_CRYPTO per samples/oracle/lob_validations.md"""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_clob) = 0 OR col_clob IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_clob, 4)) END AS col_clob, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_nclob) = 0 OR col_nclob IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(TO_CLOB(col_nclob), 4)) END AS col_nclob "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, "
+        "encode(sha256(convert_to(col_clob, 'UTF8')), 'hex') AS col_clob, "
+        "encode(sha256(convert_to(col_nclob, 'UTF8')), 'hex') AS col_nclob "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_clob,col_nclob",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_blob_fail_to_postgres():
+    """Oracle to PostgreSQL BLOB row validation mismatch failure test."""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, CASE WHEN DBMS_LOB.GETLENGTH(col_blob_fail) = 0 OR col_blob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_blob_fail, 4)) END AS col_blob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, encode(sha256(col_blob_fail), 'hex') AS col_blob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    df = custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_blob_fail",
+        assert_df_not_empty=True,
+    )
+    assert len(df) == 2
+    assert (df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_clob_fail_to_postgres():
+    """Oracle to PostgreSQL CLOB/NCLOB row validation mismatch failure test."""
+    _check_oracle_dbms_crypto()
+    source_query = (
+        "SELECT id, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_clob_fail) = 0 OR col_clob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_clob_fail, 4)) END AS col_clob_fail, "
+        "CASE WHEN DBMS_LOB.GETLENGTH(col_nclob_fail) = 0 OR col_nclob_fail IS NULL "
+        "THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(TO_CLOB(col_nclob_fail), 4)) END AS col_nclob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    target_query = (
+        "SELECT id, "
+        "encode(sha256(convert_to(col_clob_fail, 'UTF8')), 'hex') AS col_clob_fail, "
+        "encode(sha256(convert_to(col_nclob_fail, 'UTF8')), 'hex') AS col_nclob_fail "
+        "FROM pso_data_validator.dvt_lobs"
+    )
+    df = custom_query_validation_test(
+        validation_type="row",
+        tc="pg-conn",
+        source_query=source_query,
+        target_query=target_query,
+        comp_fields="col_clob_fail,col_nclob_fail",
+        assert_df_not_empty=True,
+    )
+    assert len(df) == 4
+    assert (df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL).all()
 
 
 @mock.patch(

@@ -15,12 +15,13 @@
 from collections.abc import Sized
 from datetime import date
 import dateutil.parser
-import numpy as np
 import pandas as pd
 
+from ibis.backends.pandas.dispatch import execute_node
 import ibis.backends.pandas.execution.constants as pandas_constants
 import ibis.backends.pandas.execution.generic as gp
 import ibis.expr.datatypes as dt
+import ibis.expr.operations as ops
 import ibis.formats.pandas as fp
 
 
@@ -109,3 +110,16 @@ def dvt_convert_Date(s, dtype, pandas_type):
 
 
 fp.PandasData.convert_Date = dvt_convert_Date
+
+
+@execute_node.register(ops.Cast, pd.Series, dt.String)
+def execute_cast_series_string(op, data, type, **kwargs):
+    """Cast a Pandas Series to string, representing binary data as hex.
+
+    This specializes the cast operation from dt.Binary to dt.String to prevent
+    UnicodeDecodeError crashes in Pandas when the binary data contains bytes
+    that are not valid UTF-8.
+    """
+    if op.arg.dtype.is_binary():
+        return data.map(lambda x: x.hex() if isinstance(x, (bytes, bytearray)) else x)
+    return data.astype(pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE[type])

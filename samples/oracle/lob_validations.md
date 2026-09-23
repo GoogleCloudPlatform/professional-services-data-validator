@@ -1,4 +1,4 @@
-# Data Validation of Oracle BLOB
+# Data Validation of Oracle LOBs (BLOB, CLOB, NCLOB)
 
 For row hash validations DVT uses the standard hash function available in each SQL engine. For Oracle that is called `STANDARD_HASH()`. Unfortunately that function is incompatible with Oracle BLOB columns:
 
@@ -110,3 +110,15 @@ data-validation validate custom-query row \
  --comparison-fields=col_clob \
  --format=text
 ```
+
+For `NCLOB` columns, Oracle stores data using the national character set (typically `AL16UTF16`). To ensure the hash matches UTF-8 targets like PostgreSQL or BigQuery, wrap the column with `TO_CLOB()` in the `--source-query`:
+```sh
+data-validation validate custom-query row \
+ -sc ora_conn -tc pg_conn \
+ --source-query="SELECT id,CASE WHEN DBMS_LOB.GETLENGTH(col_nclob) = 0 OR col_nclob IS NULL THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(TO_CLOB(col_nclob),4)) END col_nclob FROM dvt_test.tab_nclob" \
+ --target-query="SELECT id,encode(sha256(convert_to(col_nclob,'UTF8')),'hex') AS col_nclob FROM dvt_test.tab_nclob" \
+ --primary-keys=id \
+ --comparison-fields=col_nclob \
+ --format=text
+```
+

@@ -121,3 +121,26 @@ VALUES
 (1,'str\nstr','Contains: new line'), (2,'str\n','Trailing: new line'),
 (3,'str\rstr','Contains: carriage return'), (4,'str\r','Trailing: carriage return'),
 (5,'str\tstr','Contains: tab'), (6,'str\t','Trailing: tab');
+
+INSERT INTO dvt_composite_pk
+(key1, key2, key3, val)
+VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+INSERT INTO dvt_vol_composite_pk
+(key1, key2, key3, val)
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD(DIV(x - 1, 10), 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;

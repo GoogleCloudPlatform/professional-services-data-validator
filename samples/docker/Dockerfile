@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12.1-slim
+FROM python:3.12-slim
 
 # App version is passed as a build argument.
 # If not provided, the latest version will be installed.

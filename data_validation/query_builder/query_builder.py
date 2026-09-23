@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import logging
 import ibis
-from data_validation import consts
+import pandas
+from data_validation import clients, consts
+from data_validation.util import list_to_sublists
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 
@@ -164,6 +167,10 @@ class FilterField(object):
         )
 
     @staticmethod
+    def is_null(field_name):
+        return FilterField(ibis.expr.types.ColumnExpr.isnull, left_field=field_name)
+
+    @staticmethod
     def isin(field_name, values):
         # Build Left and Right Objects
         return FilterField(
@@ -183,18 +190,130 @@ class FilterField(object):
     def or_(field_list: list):
         return FilterField(ibis.or_, left=field_list)
 
+    @staticmethod
+    def and_(field_list: list):
+        return FilterField(ibis.and_, left=field_list)
+
+    @staticmethod
+    def tuple_in(columns: list, tuples_list: list, backend_name: str) -> "FilterField":
+        """Build a native Tuple/Struct IN expression for supported engines."""
+        return FilterField(
+            "tuple_in", left=columns, right=tuples_list, left_field=backend_name
+        )
+
+    @staticmethod
+    def composite_isin(
+        client,
+        columns: list,
+        values_df: pandas.DataFrame,
+    ) -> "FilterField":
+        """Build a hybrid composite key filter: native Tuple/Struct IN for supported engines,
+        falling back to OR-of-ANDs for SQL Server, Spanner, Teradata, BigQuery, etc.
+        """
+        max_batch_size = clients.get_max_in_list_size(client) or 1000
+
+        if clients.dvt_tuple_in_supported(client):
+            tuples_list = [tuple(x) for x in values_df[columns].to_numpy()]
+            if len(tuples_list) > max_batch_size:
+                sub_batches = [
+                    FilterField.tuple_in(columns, sublist, client.name)
+                    for sublist in list_to_sublists(tuples_list, max_batch_size)
+                ]
+                return FilterField.or_(sub_batches)
+            else:
+                return FilterField.tuple_in(columns, tuples_list, client.name)
+
+        row_filters = []
+        for row in values_df[columns].itertuples(index=False):
+            eq_filters = []
+            for col_name, val in zip(columns, row):
+                if pandas.isna(val):
+                    eq_filters.append(FilterField.is_null(col_name))
+                else:
+                    eq_filters.append(FilterField.equal_to(col_name, val))
+            row_filters.append(FilterField.and_(eq_filters))
+
+        if not row_filters:
+            return None
+
+        if len(row_filters) > max_batch_size:
+            sub_batches = [
+                FilterField.or_(sublist)
+                for sublist in list_to_sublists(row_filters, max_batch_size)
+            ]
+            return FilterField.or_(sub_batches)
+        else:
+            return FilterField.or_(row_filters)
+
+    @staticmethod
+    def _format_date_literal(v, backend_name: str) -> str:
+        if backend_name == "oracle":
+            if isinstance(v, (datetime.datetime, pandas.Timestamp)):
+                dt_str = v.strftime("%Y-%m-%d %H:%M:%S.%f")
+                return f"TO_TIMESTAMP('{dt_str}', 'YYYY-MM-DD HH24:MI:SS.FF6')"
+            else:
+                dt_str = v.strftime("%Y-%m-%d")
+                return f"TO_DATE('{dt_str}', 'YYYY-MM-DD')"
+        else:
+            return f"'{str(v)}'"
+
+    def _compile_tuple_in(self, ibis_table):
+        cols_str = f"({', '.join(self.left)})"
+        formatted_tuples = []
+        for t in self.right:
+            vals = []
+            for v in t:
+                if isinstance(v, str):
+                    escaped = v.replace("'", "''")
+                    vals.append(f"'{escaped}'")
+                elif pandas.isna(v):
+                    vals.append("NULL")
+                elif isinstance(
+                    v, (datetime.date, datetime.datetime, pandas.Timestamp)
+                ):
+                    backend_name = getattr(self, "left_field", "")
+                    vals.append(FilterField._format_date_literal(v, backend_name))
+                else:
+                    vals.append(str(v))
+            formatted_tuples.append(f"({', '.join(vals)})")
+        tuples_str = ", ".join(formatted_tuples)
+        raw_sql = f"{cols_str} IN ({tuples_str})"
+        return operations.compile_raw_sql(ibis_table, raw_sql)
+
     def compile(self, ibis_table):
         if self.expr is None:
             return operations.compile_raw_sql(ibis_table, self.left)
 
-        if self.left_field:
+        if self.left_field and self.expr != "tuple_in":
             self.left = ibis_table[self.left_field]
 
         if self.right_field:
             self.right = ibis_table[self.right_field]
 
-        if self.expr == ibis.or_:
-            return self.expr(*[_.compile(ibis_table) for _ in self.left])
+        if self.expr in (ibis.or_, ibis.and_):
+
+            def _build_balanced(exprs, expr_func):
+                """
+                Constructs a balanced binary tree of Ibis expressions instead of a linear list.
+                Ibis (via sqlglot) can hit Python's recursion depth limit when parsing/compiling
+                deep, linear ASTs (e.g. `expr1 | expr2 | ... | exprN` for N > 50).
+                A balanced tree reduces the AST depth from O(N) to O(log N), preventing RecursionErrors
+                during query compilation for large random row sample sizes.
+                """
+                if not exprs:
+                    return None
+                if len(exprs) == 1:
+                    return exprs[0]
+                mid = len(exprs) // 2
+                return expr_func(
+                    _build_balanced(exprs[:mid], expr_func),
+                    _build_balanced(exprs[mid:], expr_func),
+                )
+
+            compiled_left = [_.compile(ibis_table) for _ in self.left]
+            return _build_balanced(compiled_left, self.expr)
+        elif self.expr == "tuple_in":
+            return self._compile_tuple_in(ibis_table)
         else:
             return self.expr(self.left, self.right)
 
