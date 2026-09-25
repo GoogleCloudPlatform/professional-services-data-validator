@@ -79,7 +79,7 @@ def test_raw_column_metadata_core_types(mock_begin, module_under_test):
 
     mock_dialect = mock.Mock()
     mock_preparer = mock.Mock()
-    mock_preparer.quote.side_effect = lambda val, *args: f'"{val}"'
+    mock_preparer.quote.side_effect = lambda val: f'"{val}"'
     mock_dialect.identifier_preparer = mock_preparer
     backend.con = mock.Mock(dialect=mock_dialect)
 
