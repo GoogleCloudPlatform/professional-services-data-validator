@@ -2,7 +2,7 @@
 
 This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs) to validate many tables concurrently. This example uses column validation which is the most likely validation type to run in this scenario.
 
-In this sample, you will first generate DVT configuration files in a Cloud Storage directory. Because Cloud Run automatically sets `CLOUD_RUN_TASK_COUNT`, DVT deals the YAML files out to the tasks round-robin, so files can be named after their tables and the number of tasks does not need to equal the number of YAML files.
+In this sample, you will first generate DVT configuration files in a Cloud Storage directory. DVT sorts the YAML files in the directory by name and assigns each file to the Cloud Run Task with the matching task index, so files can be named after their contents rather than numbered sequentially.
 
 ## Build a Docker Image
 
@@ -32,7 +32,7 @@ The `PSO_DV_CONN_HOME` environment variable indicates that you want your connect
 
 ## Generate Table YAMLs in GCS
 
-To run jobs via Cloud Run Jobs we first generate YAML files for each table in a GCS directory. Because Cloud Run automatically injects `CLOUD_RUN_TASK_COUNT`, DVT sorts all YAML files in the directory by name and distributes them across tasks round-robin.
+To run jobs via Cloud Run Jobs we first generate YAML files for each table in a GCS directory. DVT sorts all YAML files in the directory by name and each task runs the YAML file corresponding to its task index.
 
 ### Static Table List
 
@@ -61,7 +61,7 @@ gs://example-dvt-bucket/dvt_configs/pso_data_validator/dvt_large_decimals.yaml
 
 ### Dynamic Table List
 
-This example uses the `data-validation find-tables` command to generate a dynamic list of all tables in a schema and batches the tables into 4 YAML files. The advantage of batching multiple tables per configuration file is reduced startup overhead per validation; alternatively, you can generate one YAML per table and let dynamic round-robin chunking assign multiple single-table YAMLs to each Cloud Run task.
+This example uses the `data-validation find-tables` command to generate a dynamic list of all tables in a schema and batches the tables into 4 YAML files. The advantage of batching multiple tables per configuration file is reduced overhead from starting many Cloud Run Jobs, we can benefit from concurrent processing while also letting DVT process multiple tables serially.
 
 ```shell
 GCS_YAML_PATH=gs://<GCS-YAML-PATH>
@@ -85,7 +85,7 @@ done
 
 ## Run Concurrent Validation
 
-The Cloud Run command below will work through the YAML files across 2 parallel tasks (`--tasks 2 --parallelism 2`). With dynamic round-robin chunking, `--tasks` does not need to equal the number of YAML files—each task will run its assigned subset of files sequentially. Change `--tasks` and `--parallelism` to reflect your desired concurrency.
+The Cloud Run command below will work through the 4 YAML files in 2 parallel streams. `--tasks 4` should be changed to match however many input YAML files you have. `--parallelism 2` should be changed to reflect the desired concurrency.
 
 ```shell
 PROJECT_ID=<PROJECT-ID>
@@ -98,7 +98,7 @@ JOB_NAME="dvt-$(date +'%Y%m%d%H%M%S')"
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${REGION} --network=${NETWORK} \
   --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/dvt \
-  --tasks 2 --max-retries 2 --parallelism 2 \
+  --tasks 4 --max-retries 2 --parallelism 2 \
   --task-timeout=900s --execute-now \
   --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
   --args="configs,run,-kc,-cdir=${GCS_YAML_PATH}"

@@ -537,7 +537,7 @@ def run_validation_configs(args):
         config_dir = args.config_dir or "./"
         cli_tools.print_validations_in_dir(config_dir=config_dir)
     elif args.validation_config_cmd == "get":
-        # Get and print yaml file config.
+        # Get and print YAML file config.
         yaml = cli_tools.get_validation(cli_tools.get_arg_config_file(args))
         dump(yaml, sys.stdout)
     else:

@@ -44,14 +44,14 @@ def _get_kube_completions_task_count():
         job_count = int(job_count_str)
     except ValueError:
         logging.warning(
-            "Ignoring invalid task count '%s', falling back to one config file per task.",
+            "Ignoring invalid task count '%s'.",
             job_count_str,
         )
         return None
 
     if job_count <= 0:
         logging.warning(
-            "Ignoring invalid task count %d, falling back to one config file per task.",
+            "Ignoring invalid task count %d.",
             job_count,
         )
         return None
@@ -114,23 +114,16 @@ def config_runner(args):
     JOB_COMPLETION_INDEX (for Kubernetes) or CLOUD_RUN_TASK_INDEX (for Cloud Run) environment
     variable. This environment variable is set by the Kubernetes/Cloud Run container orchestrator.
 
-    How the config files are shared out between the tasks depends on whether the total number of
-    tasks is known:
-
-    1) If JOB_COMPLETION_COUNT (for Kubernetes) or CLOUD_RUN_TASK_COUNT (for Cloud Run) is set then
-       all config files in the directory are sorted by name and dealt out to the tasks round-robin,
-       i.e. this task runs config files [job_index::job_count]. This scales to directories holding
-       any number of config files, named in any way, regardless of how many tasks are running.
-    2) Otherwise DVT falls back to the legacy behaviour of assuming the config files are numbered
-       sequentially, say from '0000.yaml' to '0012.yaml' (for 13 validations), and this task runs
-       only the file corresponding to its own index.
+    All validation YAML files in the config directory are sorted by name and this task runs the
+    file corresponding to its index in the sorted list. The number of tasks/completions should
+    match the number of validation YAML files in the directory.
     """
     if args.config_dir:
         if args.kube_completions and (
             ("JOB_COMPLETION_INDEX" in os.environ.keys())
             or ("CLOUD_RUN_TASK_INDEX" in os.environ.keys())
         ):
-            # Running in Kubernetes in Job completions - only run the yaml files for this index
+            # Running in Kubernetes / Cloud Run Job completions - only run the YAML file for this index
             job_index = (
                 int(os.environ.get("JOB_COMPLETION_INDEX"))
                 if "JOB_COMPLETION_INDEX" in os.environ.keys()
@@ -140,62 +133,50 @@ def config_runner(args):
             if job_index < 0:
                 raise ValueError(f"Task index {job_index} cannot be negative.")
 
-            # Check if total task count is available for dynamic chunking
+            all_files = _list_validation_files(args.config_dir)
+            num_files = len(all_files)
+
             job_count = _get_kube_completions_task_count()
-
-            if job_count:
-                # --- Dynamic Round-Robin Chunking ---
-                logging.info(
-                    "Running in parallel completions mode with dynamic chunking."
+            if job_count is None:
+                logging.warning(
+                    "JOB_COMPLETION_COUNT is not set. It should be set to the number "
+                    "of validation files in the directory (%d).",
+                    num_files,
                 )
-                if job_index >= job_count:
-                    raise ValueError(
-                        f"Task index {job_index} is not valid for a job of {job_count} tasks."
-                    )
-
-                all_files = _list_validation_files(args.config_dir)
-                # Deal the config files out to the tasks round-robin using an
-                # extended slice, [start:stop:step], where stop is omitted. This
-                # task starts at its own index and then takes every job_count'th
-                # file.
-                # Every file is therefore run by exactly one task and the tasks
-                # differ in size by at most one file.
-                my_files = all_files[job_index::job_count]
-                logging.info(
-                    "Task %d of %d. Assigned %d of %d files.",
-                    job_index,
+            elif job_count < num_files:
+                logging.warning(
+                    "Task count (%d) is less than the number of validation files in "
+                    "the directory (%d). The validation is likely to be partial as "
+                    "not all the validations in the directory will be executed.",
                     job_count,
-                    len(my_files),
-                    len(all_files),
+                    num_files,
                 )
-                if not my_files:
-                    logging.warning(
-                        "Task %d has no config files to run, consider reducing the number of tasks.",
-                        job_index,
-                    )
 
-                _run_config_files(args, my_files)
-            else:
-                # Fallback if running in Kubernetes and the user did not set JOB_COMPLETION_COUNT in the Job manifest
-                config_file_name = f"{job_index:04d}.yaml"
+            if job_index < num_files:
+                config_file_name = all_files[job_index]
                 config_file_path = (
                     f"{args.config_dir}{config_file_name}"
                     if args.config_dir.endswith("/")
                     else f"{args.config_dir}/{config_file_name}"
                 )
-                # Detect if the user inadvertently forgot to set JOB_COMPLETION_COUNT
-                all_files = _list_validation_files(args.config_dir)
-                if config_file_name not in all_files:
-                    raise ValueError(
-                        f"Validation YAML files exist: {args.config_dir}. "
-                        "Please set JOB_COMPLETION_COUNT in the Job manifest to run validations in parallel"
-                    )
+                logging.info(
+                    "Running validation for index %d: YAML file %s",
+                    job_index,
+                    config_file_name,
+                )
                 setattr(args, "config_dir", None)
                 setattr(args, "config_file", config_file_path)
                 config_managers = build_config_managers_from_yaml(
                     args, config_file_path
                 )
                 run_validations(args, config_managers)
+            else:
+                logging.error(
+                    "No validation file found for index %d (directory contains %d "
+                    "validation files). Too many jobs/tasks have been instantiated.",
+                    job_index,
+                    num_files,
+                )
         else:
             if args.kube_completions:
                 logging.warning(
