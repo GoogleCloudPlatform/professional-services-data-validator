@@ -1264,6 +1264,28 @@ def get_connection(connection_name):
     return mgr.get_connection_config(connection_name)
 
 
+def get_arg_config_file(args):
+    """Return String YAML config file path."""
+    if not args.config_file:
+        raise ValueError("YAML Config File was not supplied.")
+    elif not args.config_file.endswith(".yaml"):
+        raise ValueError(
+            f"Invalid YAML config name: {args.config_file}. Provide YAML file extension."
+        )
+    return args.config_file
+
+
+def get_arg_config_file_json(args):
+    """Return String JSON config file path."""
+    if not args.config_file_json:
+        raise ValueError("JSON Config File was not supplied.")
+    elif not args.config_file_json.endswith(".json"):
+        raise ValueError(
+            f"Invalid JSON config name: {args.config_file_json}. Provide JSON file extension."
+        )
+    return args.config_file_json
+
+
 def store_validation(validation_file_name, config, include_log=True):
     """Store the validation config under the given name."""
     validation_path = gcs_helper.get_validation_path(validation_file_name)

@@ -2,9 +2,7 @@
 
 This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs) to validate many tables concurrently. This example uses column validation which is the most likely validation type to run in this scenario.
 
-In this sample, you will first generate DVT configuration files. Cloud Run Jobs can then distribute each table's YAML configuration as a Cloud Run Task concurrently.
-
-Note: This sample subverts logic used to [scale out row validation for a large table](../large_table/README.md). It can be streamlined once [issue 1205](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1205) has been actioned.
+In this sample, you will first generate DVT configuration files in a Cloud Storage directory. DVT sorts the YAML files in the directory by name and assigns each file to the Cloud Run Task with the matching task index, so files can be named after their contents rather than numbered sequentially.
 
 ## Build a Docker Image
 
@@ -34,34 +32,31 @@ The `PSO_DV_CONN_HOME` environment variable indicates that you want your connect
 
 ## Generate Table YAMLs in GCS
 
-To run jobs via Cloud Run Jobs we first need to generate YAML files for each table. Unfortunately the YAML files (currently, see issue 1205 note above) have a strict naming convention of `nnnn.yaml`, starting from "0000".
+To run jobs via Cloud Run Jobs we first generate YAML files for each table in a GCS directory. DVT sorts all YAML files in the directory by name and each task runs the YAML file corresponding to its task index.
 
 ### Static Table List
 
-This example uses a static list of 4 tables from the integration test `pso_data_validator` schema and creates a single YAML file for each table:
+This example uses a static list of 4 tables from the integration test `pso_data_validator` schema and creates a single YAML file named after each table:
 
 ```shell
 GCS_YAML_PATH=gs://<GCS-YAML-PATH>
 SCHEMA=pso_data_validator
-N=0
 for TABLE in dvt_core_types dvt_large_decimals dvt_binary dvt_char_id; do
-  YAML_FILE="$(printf "%04d\n" ${N}).yaml"
   data-validation validate column -sc ora -tc pg \
   --tables-list ${SCHEMA}.${TABLE} \
   --count="*" --min="*" --max="*" --sum="*" \
   --filter-status=fail \
-  --config-file=${GCS_YAML_PATH}/${SCHEMA}/${YAML_FILE}
-  ((N++))
+  --config-file=${GCS_YAML_PATH}/${SCHEMA}/${TABLE}.yaml
 done
 ```
 
 Example output configuration files:
 ```shell
 $ gcloud storage ls ${GCS_YAML_PATH}/${SCHEMA}
-gs://example-dvt-bucket/dvt_configs/pso_data_validator/0000.yaml
-gs://example-dvt-bucket/dvt_configs/pso_data_validator/0001.yaml
-gs://example-dvt-bucket/dvt_configs/pso_data_validator/0002.yaml
-gs://example-dvt-bucket/dvt_configs/pso_data_validator/0003.yaml
+gs://example-dvt-bucket/dvt_configs/pso_data_validator/dvt_binary.yaml
+gs://example-dvt-bucket/dvt_configs/pso_data_validator/dvt_char_id.yaml
+gs://example-dvt-bucket/dvt_configs/pso_data_validator/dvt_core_types.yaml
+gs://example-dvt-bucket/dvt_configs/pso_data_validator/dvt_large_decimals.yaml
 ```
 
 ### Dynamic Table List
@@ -78,7 +73,7 @@ data-validation find-tables -sc ora -tc pg \
  |jq "[_nwise((length/${NUM_CONFIG_FILES})|ceil)]" > ${SCHEMA}.json
 
 for N in $(seq 0 $((NUM_CONFIG_FILES - 1))); do
-  YAML_FILE="$(printf "%04d\n" ${N}).yaml"
+  YAML_FILE="batch_${N}.yaml"
   INPUT_TABLES=$(cat ${SCHEMA}.json|jq ".[${N}]")
   data-validation validate column -sc ora -tc pg \
   --tables-list="${INPUT_TABLES}" \
