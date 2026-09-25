@@ -91,7 +91,7 @@ data-validation configs run --config-dir <path_to_directory> --kube-completions
     *   If `JOB_COMPLETION_COUNT` (and `CLOUD_RUN_TASK_COUNT`) is not set, DVT logs a warning stating it should be set to the number of validation files in the directory.
     *   If `CLOUD_RUN_TASK_COUNT` or `JOB_COMPLETION_COUNT` is less than the number of validation files in the directory, DVT logs a warning that the validation is likely to be partial.
 4.  If `job_index < len(all_files)`, DVT selects `all_files[job_index]` and executes **only** that single file. This works with any directory of YAML files regardless of naming convention (both `dbo.customers.yaml` and `0000.yaml`).
-5.  If `job_index >= len(all_files)`, DVT logs an error indicating that no validation file exists for the index because too many jobs/tasks were instantiated.
+5.  If `job_index >= len(all_files)`, DVT raises a `ValueError` indicating that no validation file exists for the index because too many jobs/tasks were instantiated.
 
 ---
 

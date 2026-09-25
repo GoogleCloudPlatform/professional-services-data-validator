@@ -375,23 +375,21 @@ def test_config_runner_partial_validation_warning(
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
 def test_config_runner_index_out_of_bounds_error(
-    mock_args, mock_list, mock_build, mock_run, caplog, monkeypatch
+    mock_args, mock_list, mock_build, mock_run, monkeypatch
 ):
-    """Test that when the job/task index has no corresponding file, an error is logged
+    """Test that when the job/task index has no corresponding file, a ValueError is raised
     stating too many jobs/tasks have been instantiated and no validation is run.
     """
-    caplog.set_level(logging.WARNING)
     monkeypatch.setenv("JOB_COMPLETION_INDEX", "4")
     monkeypatch.setenv("JOB_COMPLETION_COUNT", "5")
     args = cli_tools.get_parsed_args()
-    caplog.clear()
-    config_runner.config_runner(args)
+    with pytest.raises(ValueError) as e_info:
+        config_runner.config_runner(args)
 
-    assert caplog.records[0].levelname == "ERROR"
-    assert caplog.messages == [
+    assert str(e_info.value) == (
         "No validation file found for index 4 (directory contains 3 "
         "validation files). Too many jobs/tasks have been instantiated."
-    ]
+    )
     assert mock_run.call_count == 0
 
 
@@ -472,6 +470,26 @@ def test_config_runner_negative_index(
         config_runner.config_runner(args)
 
     assert f"Task index {neg_value} cannot be negative" in str(e_info.value)
+    assert mock_run.call_count == 0
+
+
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch(
+    "data_validation.config_runner.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_invalid_index(mock_args, mock_build, mock_run, monkeypatch):
+    """Test that a non-numeric task index raises ValueError."""
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "not-an-int")
+    args = cli_tools.get_parsed_args()
+    with pytest.raises(ValueError) as e_info:
+        config_runner.config_runner(args)
+
+    assert "Invalid job index: not-an-int" in str(e_info.value)
     assert mock_run.call_count == 0
 
 

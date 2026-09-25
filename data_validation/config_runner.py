@@ -14,6 +14,7 @@
 
 import logging
 import os
+from typing import Optional
 
 from data_validation import (
     cli_tools,
@@ -104,6 +105,28 @@ def _run_config_files(args, config_file_names: list):
         )
 
 
+def _get_job_index() -> Optional[int]:
+    """Return the job index from the environment variables.
+
+    Returns:
+        The job index as an integer, or None if not found.
+    """
+    raw_index = os.environ.get("JOB_COMPLETION_INDEX") or os.environ.get(
+        "CLOUD_RUN_TASK_INDEX"
+    )
+    if raw_index:
+        try:
+            job_index = int(raw_index)
+        except ValueError:
+            raise ValueError(f"Invalid job index: {raw_index}")
+        # A negative index should never happen but we defend against it just in case.
+        if job_index < 0:
+            raise ValueError(f"Task index {job_index} cannot be negative.")
+        return job_index
+    else:
+        return None
+
+
 def config_runner(args):
     """Config Runner is where the decision is made to run validations from one or more files.
     One file can produce multiple validations - for example when more than one set of tables are being
@@ -119,19 +142,8 @@ def config_runner(args):
     match the number of validation YAML files in the directory.
     """
     if args.config_dir:
-        if args.kube_completions and (
-            ("JOB_COMPLETION_INDEX" in os.environ.keys())
-            or ("CLOUD_RUN_TASK_INDEX" in os.environ.keys())
-        ):
+        if args.kube_completions and (job_index := _get_job_index()) is not None:
             # Running in Kubernetes / Cloud Run Job completions - only run the YAML file for this index
-            job_index = (
-                int(os.environ.get("JOB_COMPLETION_INDEX"))
-                if "JOB_COMPLETION_INDEX" in os.environ.keys()
-                else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
-            )
-            # A negative index should never happen but we defend against it just in case.
-            if job_index < 0:
-                raise ValueError(f"Task index {job_index} cannot be negative.")
 
             all_files = _list_validation_files(args.config_dir)
             num_files = len(all_files)
@@ -152,32 +164,29 @@ def config_runner(args):
                     num_files,
                 )
 
-            if job_index < num_files:
-                config_file_name = all_files[job_index]
-                config_file_path = (
-                    f"{args.config_dir}{config_file_name}"
-                    if args.config_dir.endswith("/")
-                    else f"{args.config_dir}/{config_file_name}"
+            if job_index >= num_files:
+                raise ValueError(
+                    f"No validation file found for index {job_index} (directory contains "
+                    f"{num_files} validation files). Too many jobs/tasks have been instantiated."
                 )
-                logging.info(
-                    "Running validation for index %d: YAML file %s",
-                    job_index,
-                    config_file_name,
-                )
-                setattr(args, "config_dir", None)
-                setattr(args, "config_file", config_file_path)
-                config_managers = build_config_managers_from_yaml(
-                    args, config_file_path
-                )
-                run_validations(args, config_managers)
-            else:
-                logging.error(
-                    "No validation file found for index %d (directory contains %d "
-                    "validation files). Too many jobs/tasks have been instantiated.",
-                    job_index,
-                    num_files,
-                )
+
+            config_file_name = all_files[job_index]
+            config_file_path = (
+                f"{args.config_dir}{config_file_name}"
+                if args.config_dir.endswith("/")
+                else f"{args.config_dir}/{config_file_name}"
+            )
+            logging.info(
+                "Running validation for index %d: YAML file %s",
+                job_index,
+                config_file_name,
+            )
+            setattr(args, "config_dir", None)
+            setattr(args, "config_file", config_file_path)
+            config_managers = build_config_managers_from_yaml(args, config_file_path)
+            run_validations(args, config_managers)
         else:
+            # Sequentially process all validation YAML files in the directory
             if args.kube_completions:
                 logging.warning(
                     "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
