@@ -32,11 +32,11 @@ OTHER_SCHEMA_TABLE_OBJ = {
     consts.CONFIG_TABLE_NAME: "other_table",
 }
 SOURCE_TABLE_MAP = {
-    "schema_table": SCHEMA_TABLE_OBJ,
+    "schema.table": SCHEMA_TABLE_OBJ,
 }
 TARGET_TABLE_MAP = {
-    "schema_table": SCHEMA_TABLE_OBJ,
-    "schema_other_table": OTHER_SCHEMA_TABLE_OBJ,
+    "schema.table": SCHEMA_TABLE_OBJ,
+    "schema.other_table": OTHER_SCHEMA_TABLE_OBJ,
 }
 RESULT_TABLE_CONFIGS = [
     {
@@ -58,10 +58,36 @@ def module_under_test():
 def test__compare_match_tables(module_under_test):
     """Test matching tables from source and target."""
     table_configs = module_under_test._compare_match_tables(
-        SOURCE_TABLE_MAP, TARGET_TABLE_MAP
+        SOURCE_TABLE_MAP, TARGET_TABLE_MAP, score_cutoff=1
     )
 
     assert table_configs == RESULT_TABLE_CONFIGS
+
+
+def test__compare_match_tables_score_cutoff(module_under_test):
+    """Test exact (score_cutoff=1) vs fuzzy (score_cutoff=0.8) table matching."""
+    fuzzy_target_map = {
+        "schema.table_v2": {
+            consts.CONFIG_SCHEMA_NAME: "schema",
+            consts.CONFIG_TABLE_NAME: "table_v2",
+        }
+    }
+    assert (
+        module_under_test._compare_match_tables(
+            SOURCE_TABLE_MAP, fuzzy_target_map, score_cutoff=1
+        )
+        == []
+    )
+    assert module_under_test._compare_match_tables(
+        SOURCE_TABLE_MAP, fuzzy_target_map, score_cutoff=0.8
+    ) == [
+        {
+            "schema_name": "schema",
+            "table_name": "table",
+            "target_schema_name": "schema",
+            "target_table_name": "table_v2",
+        }
+    ]
 
 
 @pytest.mark.parametrize(
@@ -108,6 +134,54 @@ def test__compare_match_tables(module_under_test):
             {},
             [],
         ),
+        # Test case-insensitive matching (e.g. uppercase source to lowercase target) preserves original casing.
+        (
+            {
+                "hr.employees": {
+                    consts.CONFIG_SCHEMA_NAME: "HR",
+                    consts.CONFIG_TABLE_NAME: "EMPLOYEES",
+                }
+            },
+            {
+                "hr.employees": {
+                    consts.CONFIG_SCHEMA_NAME: "hr",
+                    consts.CONFIG_TABLE_NAME: "employees",
+                }
+            },
+            {},
+            [
+                {
+                    "schema_name": "HR",
+                    "table_name": "EMPLOYEES",
+                    "target_schema_name": "hr",
+                    "target_table_name": "employees",
+                }
+            ],
+        ),
+        # Test case-insensitive matching with schema mapping preserves original casing.
+        (
+            {
+                "prod_hr.employees": {
+                    consts.CONFIG_SCHEMA_NAME: "PROD_HR",
+                    consts.CONFIG_TABLE_NAME: "EMPLOYEES",
+                }
+            },
+            {
+                "dwh_hr.employees": {
+                    consts.CONFIG_SCHEMA_NAME: "dwh_hr",
+                    consts.CONFIG_TABLE_NAME: "Employees",
+                }
+            },
+            {"PROD_HR": "DWH_HR"},
+            [
+                {
+                    "schema_name": "PROD_HR",
+                    "table_name": "EMPLOYEES",
+                    "target_schema_name": "dwh_hr",
+                    "target_table_name": "Employees",
+                }
+            ],
+        ),
     ],
 )
 def test_compare_match_tables_with_mapping(
@@ -115,7 +189,7 @@ def test_compare_match_tables_with_mapping(
 ):
     """Test matching tables from source and target with schema mapping."""
     table_configs = module_under_test._compare_match_tables(
-        source_table_map, target_table_map, schema_map=schema_map
+        source_table_map, target_table_map, score_cutoff=1, schema_map=schema_map
     )
 
     assert table_configs == expected
@@ -265,31 +339,52 @@ def test__get_table_map_from_obj_list_mixed_case(
     assert table_configs == expected_result
 
 
+@pytest.mark.parametrize(
+    "allowed_schemas,include_views,score_cutoff,expected_schemas,expected_cutoff,expected_map",
+    [
+        ("s1,s2=t2", False, 0.8, ["s1", "s2"], 0.8, {"s2": "t2"}),
+        (None, False, None, [], 1, {}),
+        ("s1", True, None, ["s1"], 1, {}),
+    ],
+)
 @mock.patch("data_validation.find_tables.get_mapped_table_configs")
 @mock.patch("data_validation.clients.get_data_client")
 @mock.patch("data_validation.state_manager.StateManager.get_connection_config")
 def test_find_tables_using_string_matching_parsing(
-    mock_get_conn_config, mock_get_client, mock_get_configs, module_under_test
+    mock_get_conn_config,
+    mock_get_client,
+    mock_get_configs,
+    module_under_test,
+    allowed_schemas,
+    include_views,
+    score_cutoff,
+    expected_schemas,
+    expected_cutoff,
+    expected_map,
 ):
     """Test parsing logic in find_tables_using_string_matching."""
     mock_args = mock.MagicMock()
     mock_args.source_conn = "source"
     mock_args.target_conn = "target"
-    mock_args.allowed_schemas = "s1,s2=t2"
-    mock_args.include_views = False
-    mock_args.score_cutoff = 0.8
+    mock_args.allowed_schemas = allowed_schemas
+    mock_args.include_views = include_views
+    mock_args.score_cutoff = score_cutoff
 
     mock_get_conn_config.return_value = {}
     mock_get_client.return_value = mock.MagicMock()
-    mock_get_configs.return_value = []
+    mock_get_configs.return_value = RESULT_TABLE_CONFIGS
 
-    module_under_test.find_tables_using_string_matching(mock_args)
+    result = module_under_test.find_tables_using_string_matching(mock_args)
 
     mock_get_configs.assert_called_once_with(
         mock.ANY,
         mock.ANY,
-        allowed_schemas=["s1", "s2"],
-        include_views=False,
-        score_cutoff=0.8,
-        schema_map={"s2": "t2"},
+        allowed_schemas=expected_schemas,
+        include_views=include_views,
+        score_cutoff=expected_cutoff,
+        schema_map=expected_map,
+    )
+    assert (
+        result
+        == '[{"schema_name": "schema", "table_name": "table", "target_schema_name": "schema", "target_table_name": "table"}]'
     )
