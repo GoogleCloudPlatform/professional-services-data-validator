@@ -22,6 +22,7 @@ from data_validation import (
     consts,
     jellyfish_distance,
     state_manager,
+    util,
 )
 
 if TYPE_CHECKING:
@@ -109,16 +110,18 @@ def get_mapped_table_configs(
     schema_map: dict = None,
 ) -> list:
     """Get table list from each client and match them together into a single list of dicts."""
-    source_table_map = _get_table_map(
-        source_client, allowed_schemas=allowed_schemas, include_views=include_views
-    )
-    target_table_map = _get_table_map(target_client, include_views=include_views)
-    return _compare_match_tables(
-        source_table_map,
-        target_table_map,
-        score_cutoff=score_cutoff,
-        schema_map=schema_map,
-    )
+    def _local_get_mapped_table_configs():
+        source_table_map = _get_table_map(
+            source_client, allowed_schemas=allowed_schemas, include_views=include_views
+        )
+        target_table_map = _get_table_map(target_client, include_views=include_views)
+        return _compare_match_tables(
+            source_table_map,
+            target_table_map,
+            score_cutoff=score_cutoff,
+            schema_map=schema_map,
+        )
+    return util.timed_call("Find tables", _local_get_mapped_table_configs)
 
 
 def find_tables_using_string_matching(args) -> str:
