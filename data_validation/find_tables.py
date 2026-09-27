@@ -91,12 +91,55 @@ def _get_table_map_from_obj_list(table_objs: list) -> dict:
     return table_map
 
 
+def _filter_schemas(
+    schemas: list, allowed_schemas: list = None, score_cutoff: float = 1
+) -> list:
+    """Filter database schemas using casefolded and fuzzy string matching."""
+    if not allowed_schemas:
+        return None
+
+    schema_map = {s: s for s in schemas if s}
+    for schema_key in [_ for _ in schema_map if _ != _.casefold()]:
+        if schema_key.casefold() not in schema_map:
+            schema_map[schema_key.casefold()] = schema_map.pop(schema_key)
+
+    matched_schemas = []
+    for allowed_schema in allowed_schemas:
+        lookup_schema = (
+            allowed_schema
+            if allowed_schema in schema_map
+            else allowed_schema.casefold()
+        )
+        matched_key = jellyfish_distance.extract_closest_match(
+            lookup_schema,
+            schema_map.keys(),
+            score_cutoff=score_cutoff,
+        )
+        if matched_key is not None and schema_map[matched_key] not in matched_schemas:
+            matched_schemas.append(schema_map[matched_key])
+
+    return matched_schemas
+
+
 def _get_table_map(
-    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
+    client: "ibis.backends.base.BaseBackend",
+    allowed_schemas=None,
+    include_views=False,
+    score_cutoff: float = 1,
 ) -> dict:
     """Return dict with searchable keys for table matching."""
+    if allowed_schemas:
+        allowed_schemas = _filter_schemas(
+            clients.list_databases(client),
+            allowed_schemas,
+            score_cutoff=score_cutoff,
+        )
+    else:
+        allowed_schemas = None
     table_objs = clients.get_all_tables(
-        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
+        client,
+        allowed_schemas=allowed_schemas,
+        tables_only=(not include_views),
     )
     return _get_table_map_from_obj_list(table_objs)
 
@@ -110,17 +153,29 @@ def get_mapped_table_configs(
     schema_map: dict = None,
 ) -> list:
     """Get table list from each client and match them together into a single list of dicts."""
+
     def _local_get_mapped_table_configs():
         source_table_map = _get_table_map(
             source_client, allowed_schemas=allowed_schemas, include_views=include_views
         )
-        target_table_map = _get_table_map(target_client, include_views=include_views)
+        target_allowed_schemas = (
+            [(schema_map or {}).get(s, s) for s in allowed_schemas]
+            if allowed_schemas
+            else None
+        )
+        target_table_map = _get_table_map(
+            target_client,
+            allowed_schemas=target_allowed_schemas,
+            include_views=include_views,
+            score_cutoff=score_cutoff,
+        )
         return _compare_match_tables(
             source_table_map,
             target_table_map,
             score_cutoff=score_cutoff,
             schema_map=schema_map,
         )
+
     return util.timed_call("Find tables", _local_get_mapped_table_configs)
 
 

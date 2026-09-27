@@ -280,10 +280,16 @@ def test_compare_match_tables_with_mapping(
 def test_expand_tables_of_asterisk(
     module_under_test, tables_list: list, expected_result: list
 ):
-    with mock.patch(
-        "data_validation.clients.get_all_tables",
-        return_value=S1_TABLES,
-    ) as _:
+    with (
+        mock.patch(
+            "data_validation.clients.list_databases",
+            return_value=["s1"],
+        ),
+        mock.patch(
+            "data_validation.clients.get_all_tables",
+            return_value=S1_TABLES,
+        ),
+    ):
         result = module_under_test.expand_tables_of_asterisk(
             tables_list, mock.Mock(), mock.Mock()
         )
@@ -388,3 +394,129 @@ def test_find_tables_using_string_matching_parsing(
         result
         == '[{"schema_name": "schema", "table_name": "table", "target_schema_name": "schema", "target_table_name": "table"}]'
     )
+
+
+def _make_mock_client(schema_tables: dict):
+    client = mock.MagicMock()
+    client.name = "bigquery"
+    client.list_databases.return_value = list(schema_tables.keys())
+    client.dvt_list_tables.side_effect = lambda database=None: schema_tables[database]
+    return client
+
+
+@pytest.mark.parametrize(
+    "allowed_schemas,schema_map,score_cutoff,expected_target_schemas_queried,expected_configs",
+    [
+        # Exact match on single schema: unrelated target schemas (other_ds1, other_ds2) are not queried.
+        (
+            ["pso_data_validator"],
+            None,
+            1,
+            ["pso_data_validator"],
+            [
+                {
+                    "schema_name": "pso_data_validator",
+                    "table_name": "t1",
+                    "target_schema_name": "pso_data_validator",
+                    "target_table_name": "t1",
+                }
+            ],
+        ),
+        # Case-insensitive match between source (HR) and target (hr) at score_cutoff=1.
+        (
+            ["HR"],
+            None,
+            1,
+            ["hr"],
+            [
+                {
+                    "schema_name": "HR",
+                    "table_name": "employees",
+                    "target_schema_name": "hr",
+                    "target_table_name": "employees",
+                }
+            ],
+        ),
+        # Schema map translates source schema (prod) to target schema (dwh_prod).
+        (
+            ["prod"],
+            {"prod": "dwh_prod"},
+            1,
+            ["dwh_prod"],
+            [
+                {
+                    "schema_name": "prod",
+                    "table_name": "orders",
+                    "target_schema_name": "dwh_prod",
+                    "target_table_name": "orders",
+                }
+            ],
+        ),
+        # Fuzzy match (score_cutoff=0.8) matches target schema fuzzy_schema_v2 from source fuzzy_schema.
+        (
+            ["fuzzy_schema"],
+            None,
+            0.8,
+            ["fuzzy_schema_v2"],
+            [
+                {
+                    "schema_name": "fuzzy_schema",
+                    "table_name": "items",
+                    "target_schema_name": "fuzzy_schema_v2",
+                    "target_table_name": "items",
+                }
+            ],
+        ),
+        # Non-existent target schema at score_cutoff=1 queries no target schemas.
+        (
+            ["fuzzy_schema"],
+            None,
+            1,
+            [],
+            [],
+        ),
+    ],
+)
+def test_get_mapped_table_configs_target_schema_filtering(
+    module_under_test,
+    allowed_schemas,
+    schema_map,
+    score_cutoff,
+    expected_target_schemas_queried,
+    expected_configs,
+):
+    """Test that get_mapped_table_configs only lists tables in matched target schemas."""
+    source_client = _make_mock_client(
+        {
+            "pso_data_validator": ["t1"],
+            "HR": ["employees"],
+            "prod": ["orders"],
+            "fuzzy_schema": ["items"],
+            "unrelated_src": ["x"],
+        }
+    )
+    target_client = _make_mock_client(
+        {
+            "other_ds1": ["a", "b"],
+            "other_ds2": ["c", "d"],
+            "pso_data_validator": ["t1"],
+            "hr": ["employees"],
+            "dwh_prod": ["orders"],
+            "fuzzy_schema_v2": ["items"],
+        }
+    )
+
+    configs = module_under_test.get_mapped_table_configs(
+        source_client,
+        target_client,
+        allowed_schemas=allowed_schemas,
+        include_views=False,
+        score_cutoff=score_cutoff,
+        schema_map=schema_map,
+    )
+
+    assert configs == expected_configs
+    queried_target_schemas = [
+        call.kwargs["database"] for call in target_client.dvt_list_tables.call_args_list
+    ]
+    assert queried_target_schemas == expected_target_schemas_queried

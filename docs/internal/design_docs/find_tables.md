@@ -38,10 +38,10 @@ flowchart TD
     A2 -->|"allowed_schemas=[schema],<br/>include_views=False, score_cutoff=1"| B
 
     B --> C1["Source: _get_table_map(source_client,<br/>allowed_schemas=allowed_schemas,<br/>include_views=include_views)"]
-    B --> C2["Target: _get_table_map(target_client,<br/>allowed_schemas=None,<br/>include_views=include_views)"]
+    B --> C2["Target: _get_table_map(target_client,<br/>allowed_schemas=target_allowed_schemas,<br/>include_views=include_views,<br/>score_cutoff=score_cutoff)"]
 
-    C1 --> D1["clients.get_all_tables(source_client)<br/>1. list_databases(source_client)<br/>2. Filter by allowed_schemas<br/>3. list_tables per allowed schema"]
-    C2 --> D2["clients.get_all_tables(target_client)<br/>1. list_databases(target_client)<br/>2. No schema filter applied<br/>3. list_tables for ALL schemas"]
+    C1 --> D1["1. _filter_schemas(list_databases(source_client),<br/>allowed_schemas, score_cutoff=1)<br/>2. clients.get_all_tables(source_client)<br/>3. list_tables per matched schema"]
+    C2 --> D2["1. _filter_schemas(list_databases(target_client),<br/>target_allowed_schemas, score_cutoff)<br/>2. clients.get_all_tables(target_client)<br/>3. list_tables per matched schema"]
 
     D1 --> E1["_get_table_map_from_obj_list<br/>Build source_table_map (casefolded keys)"]
     D2 --> E2["_get_table_map_from_obj_list<br/>Build target_table_map (casefolded keys)"]
@@ -83,7 +83,7 @@ flowchart TD
 
 ---
 
-### B. Database & Table Discovery (`clients.get_all_tables`)
+### B. Database & Table Discovery (`find_tables._get_table_map` & `clients.get_all_tables`)
 
 `get_mapped_table_configs` wraps the table discovery and matching logic in `util.timed_call("Find tables", ...)` (which logs `DEBUG: Find tables elapsed: ...s`) and calls `_get_table_map` for both `source_client` and `target_client`:
 
@@ -91,21 +91,28 @@ flowchart TD
 source_table_map = _get_table_map(
     source_client, allowed_schemas=allowed_schemas, include_views=include_views
 )
-target_table_map = _get_table_map(target_client, include_views=include_views)
+target_allowed_schemas = (
+    [(schema_map or {}).get(s, s) for s in allowed_schemas]
+    if allowed_schemas
+    else None
+)
+target_table_map = _get_table_map(
+    target_client,
+    allowed_schemas=target_allowed_schemas,
+    include_views=include_views,
+    score_cutoff=score_cutoff,
+)
 ```
 
-`_get_table_map` delegates metadata retrieval to `clients.get_all_tables(client, allowed_schemas=allowed_schemas, tables_only=(not include_views))`:
+`_get_table_map` resolves any schema filter via `_filter_schemas` and delegates table listing to `clients.get_all_tables(client, allowed_schemas=allowed_schemas, tables_only=(not include_views))`:
 
-1.  **List Databases / Schemas (`clients.list_databases`)**:
-    *   Calls `client.list_databases()` to retrieve all schemas/datasets visible to the connection.
-2.  **Filter by `allowed_schemas`**:
-    *   Iterates over each `schema_name` in `schemas`:
-        ```python
-        if allowed_schemas and schema_name not in allowed_schemas:
-            continue
-        ```
-    *   Note: This check is only performed when `allowed_schemas` is truthy (`None` or `[]` means all schemas are scanned) and uses an exact, **case-sensitive** string comparison.
-3.  **List Tables per Schema (`clients.list_tables`)**:
+1.  **Filter by `allowed_schemas` (`find_tables._filter_schemas`)**:
+    *   If `allowed_schemas` is empty or `None`, `allowed_schemas` is set to `None`, and `clients.get_all_tables` calls `clients.list_databases(client)` to scan all schemas visible to the connection.
+    *   Otherwise, `_get_table_map` calls `clients.list_databases(client)` and passes the database schemas to `_filter_schemas(schemas, allowed_schemas, score_cutoff=score_cutoff)`.
+    *   `_filter_schemas` builds a collision-safe casefolded lookup map of the database's schemas and matches each schema in `allowed_schemas` (casefolded unless an exact-case key exists) using `jellyfish_distance.extract_closest_match(..., score_cutoff=score_cutoff)`.
+    *   For `source_client`, `score_cutoff=1` (case-insensitive exact match); for `target_client`, the caller's `score_cutoff` is used after translating `allowed_schemas` via `schema_map`.
+    *   The resulting list of matched schema names (or `[]` if none matched) is passed to `clients.get_all_tables`, which iterates directly over `allowed_schemas` without calling `list_databases(client)` a second time.
+2.  **List Tables per Schema (`clients.list_tables`)**:
     *   Selects the listing method on the Ibis backend:
         *   If `tables_only=True` and the client defines `dvt_list_tables`, uses `client.dvt_list_tables`.
             *   For SQLAlchemy backends (`postgres`, `mysql`, `oracle`, `mssql`, `db2`, `db2_zos`, `snowflake`, `sybase`, `redshift`), `BaseAlchemyBackend.dvt_list_tables` uses `self.inspector.get_table_names(schema=database)`, which excludes views (unless overridden by a custom backend).
@@ -177,16 +184,7 @@ target_table_map = _get_table_map(target_client, include_views=include_views)
 
 ## 3. Current Limitations & Performance Bottlenecks
 
-The current implementation has several behaviors that impact performance and usability (see [Issue #1839](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1839)):
+The current implementation has the following remaining behavior to be aware of:
 
-1.  **Target Connection Always Lists All Schemas (`target_client` Unfiltered)**:
-    *   In `get_mapped_table_configs`, `allowed_schemas` is passed to `_get_table_map(source_client, ...)`, but **never** to `_get_table_map(target_client, ...)`.
-    *   As a result, even when a user restricts discovery to a single schema (e.g., `-tbls="pso_data_validator.*"` or `find-tables --allowed-schemas pso_data_validator`), DVT enumerates **every dataset/schema and lists tables in every schema** in the target connection.
-    *   In environments like BigQuery projects with many datasets or enterprise databases with hundreds of schemas, this causes dozens of unnecessary metadata API calls, long startup times, potential permission warnings on unrelated schemas, and a much larger `target_keys` list during `O(|source| * |target|)` string matching.
-2.  **Case-Sensitive `allowed_schemas` Filtering in `clients.get_all_tables`**:
-    *   `clients.get_all_tables` checks `if allowed_schemas and schema_name not in allowed_schemas:` using exact case-sensitive matching, whereas `_compare_match_tables` compares `lookup_key` and `target_key` using `.casefold()`.
-    *   If target schemas are filtered in `clients.get_all_tables`, case differences between source and target schema names (e.g., Oracle `PSO_DATA_VALIDATOR` vs. BigQuery/Postgres `pso_data_validator` when no explicit `=` mapping is provided) would fail a case-sensitive `in` check unless `allowed_schemas` filtering in `get_all_tables` is made case-insensitive or handled accordingly.
-3.  **Fuzzy Matching (`score_cutoff < 1`) vs. Target Schema Filtering**:
-    *   In `find-tables`, if a user specifies `--score-cutoff 0.8` and `--allowed-schemas src_schema` (without `=target_schema`), Jaro similarity is computed over the full `"schema.table"` string, which technically allows matching a table in a similarly named target schema (e.g., `src_schema_v2.table`). Restricting target schemas when `allowed_schemas` is specified should consider whether `score_cutoff < 1` has different expectations or if `--allowed-schemas` is always intended to bound target schemas to the (mapped) schema names.
-4.  **Redundant `redshift` / `snowflake` `list_tables` Calls Across Schemas**:
+1.  **Redundant `redshift` / `snowflake` `list_tables` Calls Across Schemas**:
     *   In `clients.list_tables`, if `client.name in ["redshift", "snowflake", "pandas"]`, `fn()` is called without `database=schema_name`, inside a loop over `schemas = list_databases(client)`. When `allowed_schemas` is not set, this calls `fn()` repeatedly for every schema in the database.
