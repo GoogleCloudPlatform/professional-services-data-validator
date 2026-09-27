@@ -117,6 +117,7 @@ def test_list_databases(mock_inspect, module_under_test):
     mock_inspect_result = mock.Mock()
     mock_inspect_result.get_schema_names.return_value = [
         "SYS",
+        "AUDSYS",
         "SYSTEM",
         "DBSNMP",
         "C##DS",
@@ -130,9 +131,9 @@ def test_list_databases(mock_inspect, module_under_test):
 
     schemas = backend.list_databases()
 
-    # SYS and C##DS should be filtered out.
-    # SYSTEM, DBSNMP, and DVT_TEST should remain.
-    assert sorted(schemas) == sorted(["SYSTEM", "DBSNMP", "DVT_TEST"])
+    # SYS and AUDSYS should be filtered out.
+    # SYSTEM, DBSNMP, C##DS, and DVT_TEST should remain.
+    assert sorted(schemas) == sorted(["SYSTEM", "DBSNMP", "C##DS", "DVT_TEST"])
     mock_inspect.assert_called_with(backend.con)
 
 
@@ -143,6 +144,7 @@ def test_list_databases_with_like(mock_inspect, module_under_test):
     mock_inspect_result = mock.Mock()
     mock_inspect_result.get_schema_names.return_value = [
         "SYS",
+        "AUDSYS",
         "SYSTEM",
         "DBSNMP",
         "C##DS",
