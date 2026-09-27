@@ -284,7 +284,7 @@ class Backend(BaseAlchemyBackend):
             )
             dialect = self.con.dialect
             preparer = dialect.identifier_preparer
-            source = f"{preparer.quote(database, None)}.{preparer.quote(matched_table, None)}"
+            source = f"{preparer.quote(database)}.{preparer.quote(matched_table)}"
         elif query:
             source = f"({query})"
 
