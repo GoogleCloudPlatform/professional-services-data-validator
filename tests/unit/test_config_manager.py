@@ -629,3 +629,97 @@ def test_config_manager_is_uuid(
     )
 
     assert config_manager._is_uuid(source_type, target_type) == expected_result
+
+
+@pytest.mark.parametrize(
+    "source_name,target_name,check_client,expect_source_called,expect_target_called,expected_result",
+    [
+        ("bigquery", "postgres", "mssql", False, False, False),
+        ("mssql", "bigquery", "mssql", True, False, True),
+        ("bigquery", "mssql", "mssql", False, True, True),
+        ("mssql", "mssql", "mssql", True, True, False),
+    ],
+)
+def test_is_raw_data_type_short_circuits_by_client_name(
+    module_under_test,
+    source_name,
+    target_name,
+    check_client,
+    expect_source_called,
+    expect_target_called,
+    expected_result,
+):
+    """Ensure _is_raw_data_type only queries raw column metadata when the client name matches."""
+    source_client = MockIbisClient()
+    source_client.name = source_name
+    target_client = MockIbisClient()
+    target_client.name = target_name
+
+    config_manager = module_under_test.ConfigManager(
+        copy.copy(SAMPLE_CONFIG), source_client, target_client, verbose=False
+    )
+    raw_types = {"col_a": ("image", None, None, None, None, None)}
+    with mock.patch.object(
+        config_manager,
+        "get_source_raw_data_types",
+        return_value=raw_types if expected_result else {},
+    ) as mock_src_raw, mock.patch.object(
+        config_manager,
+        "get_target_raw_data_types",
+        return_value=raw_types if expected_result else {},
+    ) as mock_tgt_raw:
+        res = config_manager._is_raw_data_type(
+            check_client, "col_a", "col_a", ["image"]
+        )
+        assert res == expected_result
+        assert mock_src_raw.called == expect_source_called
+        assert mock_tgt_raw.called == expect_target_called
+
+
+def test_build_config_aggregates_uses_cached_base_ibis_tables(module_under_test):
+    """Ensure build_config_column_aggregates reuses cached base Ibis tables without compiling calculated tables."""
+    config_manager = module_under_test.ConfigManager(
+        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    with mock.patch.object(
+        config_manager, "get_source_ibis_calculated_table"
+    ) as mock_src_calc, mock.patch.object(
+        config_manager, "get_target_ibis_calculated_table"
+    ) as mock_tgt_calc, mock.patch(
+        "data_validation.clients.get_ibis_table",
+        side_effect=lambda *args, **kwargs: MockIbisTable(),
+    ) as mock_get_table:
+        config_manager.build_config_column_aggregates("count", None, False, None)
+        config_manager.build_config_column_aggregates("sum", ["a"], False, [])
+        config_manager.build_config_column_aggregates("min", ["c"], False, [])
+        config_manager.build_config_column_aggregates("max", ["c"], False, [])
+
+        assert not mock_src_calc.called
+        assert not mock_tgt_calc.called
+        # Once for source, once for target across all 4 aggregate calls
+        assert mock_get_table.call_count == 2
+
+
+def test_build_config_aggregates_custom_query_uses_cached_query_tables(
+    module_under_test,
+):
+    """Ensure build_config_column_aggregates reuses cached query Ibis tables for custom-query validations."""
+    config = copy.copy(CUSTOM_QUERY_INLINE_VALIDATION_CONFIG)
+    config[consts.CONFIG_SOURCE_QUERY] = "SELECT a, b, c, d FROM tbl"
+    config[consts.CONFIG_TARGET_QUERY] = "SELECT a, b, c, d FROM tbl"
+    config_manager = module_under_test.ConfigManager(
+        config, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    with mock.patch(
+        "data_validation.clients.get_ibis_query",
+        side_effect=lambda *args, **kwargs: MockIbisTable(),
+    ) as mock_get_query:
+        agg_sum = config_manager.build_config_column_aggregates("sum", ["a"], False, [])
+        agg_min = config_manager.build_config_column_aggregates("min", ["c"], False, [])
+
+        assert len(agg_sum) == 1
+        assert agg_sum[0] == AGGREGATE_CONFIG_A
+        assert len(agg_min) == 1
+        assert agg_min[0] == AGGREGATE_CONFIG_C
+        # Once for source query, once for target query across both calls
+        assert mock_get_query.call_count == 2

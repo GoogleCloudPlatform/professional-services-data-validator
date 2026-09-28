@@ -420,6 +420,8 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
+            if self.validation_type == consts.CUSTOM_QUERY:
+                return self.get_source_ibis_table_from_query()
             self._source_ibis_table = clients.get_ibis_table(
                 self.source_client, self.source_schema, self.source_table
             )
@@ -450,6 +452,8 @@ class ConfigManager(object):
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
+            if self.validation_type == consts.CUSTOM_QUERY:
+                return self.get_target_ibis_table_from_query()
             self._target_ibis_table = clients.get_ibis_table(
                 self.target_client, self.target_schema, self.target_table
             )
@@ -751,8 +755,16 @@ class ConfigManager(object):
         type_list: List[str],
     ) -> bool:
         """Returns True when either source or target column is of a client & type."""
-        raw_source_types = self.get_source_raw_data_types()
-        raw_target_types = self.get_target_raw_data_types()
+        raw_source_types = (
+            self.get_source_raw_data_types()
+            if self.source_client.name == client_name
+            else None
+        )
+        raw_target_types = (
+            self.get_target_raw_data_types()
+            if self.target_client.name == client_name
+            else None
+        )
         # Raw data type map uses casefold column name as the key.
         return bool(
             (
@@ -1106,8 +1118,8 @@ class ConfigManager(object):
             return False
 
         aggregate_configs = []
-        source_table = self.get_source_ibis_calculated_table()
-        target_table = self.get_target_ibis_calculated_table()
+        source_table = self.get_source_ibis_table()
+        target_table = self.get_target_ibis_table()
 
         logging.debug(
             f"Building aggregates for validation of {self.source_schema}.{self.source_table} "

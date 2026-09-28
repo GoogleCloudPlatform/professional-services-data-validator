@@ -1243,3 +1243,104 @@ def test_custom_query_with_config_dir_errors():
         cli_tools._check_custom_query_args(
             parser, parser.parse_args(base_args + ["--config-dir-json", "dir_path"])
         )
+
+
+@pytest.mark.parametrize(
+    "cli_args,expect_base_cols_called",
+    [
+        (
+            [
+                "validate",
+                "column",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--sum=*",
+            ],
+            False,
+        ),
+        (
+            [
+                "validate",
+                "schema",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+            ],
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--comparison-fields=col1,col2",
+            ],
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--hash=col1,col2",
+            ],
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--hash=*",
+            ],
+            True,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--concat=col1,col2",
+                "--exclude-columns",
+            ],
+            True,
+        ),
+    ],
+)
+@mock.patch(
+    "data_validation.cli_tools._get_pre_build_configs_base_columns",
+    return_value=["id", "col1", "col2", "col3"],
+)
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.state_manager.StateManager.get_connection_config")
+def test_get_pre_build_configs_lazy_base_columns(
+    mock_get_conn,
+    mock_get_client,
+    mock_base_cols,
+    cli_args,
+    expect_base_cols_called,
+):
+    """Ensure _get_pre_build_configs_base_columns is only called when row hash/concat uses '*' or --exclude-columns."""
+    mock_client = mock.MagicMock()
+    mock_client._source_type = "BigQuery"
+    mock_client.name = "bigquery"
+    mock_get_client.return_value = mock_client
+
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(cli_args)
+    cli_tools.get_pre_build_configs(args, None)
+
+    assert mock_base_cols.called == expect_base_cols_called
