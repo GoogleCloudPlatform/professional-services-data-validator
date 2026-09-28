@@ -421,10 +421,11 @@ class ConfigManager(object):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
             if self.validation_type == consts.CUSTOM_QUERY:
-                return self.get_source_ibis_table_from_query()
-            self._source_ibis_table = clients.get_ibis_table(
-                self.source_client, self.source_schema, self.source_table
-            )
+                self._source_ibis_table = self.get_source_ibis_table_from_query()
+            else:
+                self._source_ibis_table = clients.get_ibis_table(
+                    self.source_client, self.source_schema, self.source_table
+                )
         return self._source_ibis_table
 
     def get_source_ibis_table_from_query(self):
@@ -438,10 +439,7 @@ class ConfigManager(object):
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         depth: Int the depth of subquery requested"""
-        if self.validation_type == consts.CUSTOM_QUERY:
-            table = self.get_source_ibis_table_from_query()
-        else:
-            table = self.get_source_ibis_table()
+        table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -453,10 +451,11 @@ class ConfigManager(object):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
             if self.validation_type == consts.CUSTOM_QUERY:
-                return self.get_target_ibis_table_from_query()
-            self._target_ibis_table = clients.get_ibis_table(
-                self.target_client, self.target_schema, self.target_table
-            )
+                self._target_ibis_table = self.get_target_ibis_table_from_query()
+            else:
+                self._target_ibis_table = clients.get_ibis_table(
+                    self.target_client, self.target_schema, self.target_table
+                )
         return self._target_ibis_table
 
     def get_target_ibis_table_from_query(self):
@@ -470,10 +469,7 @@ class ConfigManager(object):
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        if self.validation_type == consts.CUSTOM_QUERY:
-            table = self.get_target_ibis_table_from_query()
-        else:
-            table = self.get_target_ibis_table()
+        table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.target_builder.compile_calculated_fields(table, n=depth)
