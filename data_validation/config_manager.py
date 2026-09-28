@@ -459,7 +459,7 @@ class ConfigManager(object):
         return self._target_ibis_table
 
     def get_target_ibis_table_from_query(self):
-        """Return IbisTable from source."""
+        """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
             self._target_ibis_table = clients.get_ibis_query(
                 self.target_client, self.target_query
