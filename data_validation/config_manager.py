@@ -751,31 +751,22 @@ class ConfigManager(object):
         type_list: List[str],
     ) -> bool:
         """Returns True when either source or target column is of a client & type."""
-        raw_source_types = (
-            self.get_source_raw_data_types()
-            if self.source_client.name == client_name
-            else None
-        )
-        raw_target_types = (
-            self.get_target_raw_data_types()
-            if self.target_client.name == client_name
-            else None
-        )
         # Raw data type map uses casefold column name as the key.
-        return bool(
-            (
-                self.source_client.name == client_name
-                and raw_source_types
-                and raw_source_types.get(source_column_name.casefold(), [None])[0]
-                in type_list
-            )
-            or (
-                self.target_client.name == client_name
-                and raw_target_types
-                and raw_target_types.get(target_column_name.casefold(), [None])[0]
-                in type_list
-            )
-        )
+        if self.source_client.name == client_name:
+            raw_source_types = self.get_source_raw_data_types()
+            if raw_source_types:
+                raw_info = raw_source_types.get(source_column_name.casefold())
+                if raw_info and raw_info[0] in type_list:
+                    return True
+
+        if self.target_client.name == client_name:
+            raw_target_types = self.get_target_raw_data_types()
+            if raw_target_types:
+                raw_info = raw_target_types.get(target_column_name.casefold())
+                if raw_info and raw_info[0] in type_list:
+                    return True
+
+        return False
 
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
