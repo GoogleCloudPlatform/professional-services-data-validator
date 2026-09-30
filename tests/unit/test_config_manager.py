@@ -629,3 +629,27 @@ def test_config_manager_is_uuid(
     )
 
     assert config_manager._is_uuid(source_type, target_type) == expected_result
+
+
+@mock.patch("data_validation.state_manager.StateManager")
+def test_config_manager_lazy_state_manager(mock_state_manager, module_under_test):
+    """Verify ConfigManager does not instantiate StateManager when clients are provided,
+    and lazily instantiates it only when resolving connection names."""
+    config = {
+        consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
+        consts.CONFIG_SOURCE_CONN_NAME: "src_conn",
+        consts.CONFIG_TARGET_CONN_NAME: "tgt_conn",
+    }
+    mgr = module_under_test.ConfigManager(
+        config,
+        source_client=MockIbisClient(),
+        target_client=MockIbisClient(),
+    )
+
+    # StateManager should not be instantiated during __init__ when clients are supplied
+    mock_state_manager.assert_not_called()
+
+    # Accessing get_source_connection() and get_target_connection() lazily initializes one StateManager
+    mgr.get_source_connection()
+    mgr.get_target_connection()
+    assert mock_state_manager.call_count == 1
