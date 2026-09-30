@@ -130,6 +130,30 @@ def test_get_bigquery_client_sets_user_agent():
     assert "google-pso-tool/data-validator" in user_agent
 
 
+def test_get_google_bqstorage_client_insecure_channel_builds_a_plaintext_transport():
+    """--storage-api-insecure-channel: a local BigQuery emulator serves its Storage API gRPC
+    port without TLS, so the client must be built from an insecure channel/transport rather than
+    the normal credentials/client_options path (which always negotiates a secure channel).
+    """
+    with mock.patch("grpc.insecure_channel") as mock_insecure_channel, mock.patch(
+        "google.cloud.bigquery_storage_v1.services.big_query_read.transports.BigQueryReadGrpcTransport"
+    ) as mock_transport, mock.patch(
+        "google.cloud.bigquery_storage_v1.BigQueryReadClient"
+    ) as mock_read_client:
+        clients._get_google_bqstorage_client(
+            api_endpoint="localhost:9060", insecure_channel=True
+        )
+
+    mock_insecure_channel.assert_called_once_with("localhost:9060")
+    mock_transport.assert_called_once_with(channel=mock_insecure_channel.return_value)
+    mock_read_client.assert_called_once_with(transport=mock_transport.return_value)
+
+
+def test_get_google_bqstorage_client_insecure_channel_requires_an_api_endpoint():
+    with pytest.raises(ValueError):
+        clients._get_google_bqstorage_client(insecure_channel=True)
+
+
 def test_get_ibis_table_splits_bigquery_project_and_dataset():
     client = RecordingBigQueryClient()
 

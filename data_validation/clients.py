@@ -146,14 +146,30 @@ def _get_google_bqstorage_client(
     credentials=None,
     api_endpoint: Optional[str] = None,
     quota_project_id: Optional[str] = None,
+    insecure_channel: bool = False,
 ):
+    from google.cloud import bigquery_storage_v1 as bigquery_storage
+
+    if insecure_channel:
+        # Talks to a plaintext (no TLS) BigQuery Storage API endpoint - e.g. a local BigQuery
+        # emulator, which serves its gRPC Storage API port without TLS at all, so the client's
+        # normal default (a secure channel, regardless of anonymous credentials) fails the SSL
+        # handshake outright. There is no `client_options`/`credentials` combination that avoids
+        # this; only a channel/transport built without TLS does.
+        import grpc
+        from google.cloud.bigquery_storage_v1.services.big_query_read import transports
+
+        if not api_endpoint:
+            raise ValueError("api_endpoint is required when insecure_channel is set")
+        channel = grpc.insecure_channel(api_endpoint)
+        transport = transports.BigQueryReadGrpcTransport(channel=channel)
+        return bigquery_storage.BigQueryReadClient(transport=transport)
+
     options = None
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
         )
-    from google.cloud import bigquery_storage_v1 as bigquery_storage
-
     return bigquery_storage.BigQueryReadClient(
         credentials=credentials,
         client_options=options,
@@ -166,6 +182,7 @@ def get_bigquery_client(
     credentials=None,
     api_endpoint: Optional[str] = None,
     storage_api_endpoint: Optional[str] = None,
+    storage_api_insecure_channel: bool = False,
     client_project_id: Optional[str] = None,  # to be deprecated in the future
     billing_project_id: Optional[str] = None,
 ):
@@ -186,6 +203,7 @@ def get_bigquery_client(
             credentials=credentials,
             api_endpoint=storage_api_endpoint,
             quota_project_id=billing_project_id,
+            insecure_channel=storage_api_insecure_channel,
         )
 
     return bigquery_connect(
