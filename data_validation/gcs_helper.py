@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 import logging
 import os
 from typing import List
@@ -21,6 +22,16 @@ from data_validation import client_info
 
 WRITE_SUCCESS_STRING = "Success! Config output written to"
 DELETE_SUCCESS_STRING = "Successfully deleted"
+
+
+@functools.lru_cache(maxsize=1)
+def _get_storage_client() -> storage.Client:
+    """Return a cached Cloud Storage client instance.
+
+    Reuses the client and its HTTP connection pool across GCS operations
+    to minimize instantiation latency.
+    """
+    return storage.Client(client_info=client_info.get_http_client_info())
 
 
 def _is_gcs_path(file_path: str) -> bool:
@@ -37,10 +48,8 @@ def get_validation_path(name: str) -> str:
 def get_gcs_bucket(gcs_file_path: str) -> storage.Bucket:
     """Returns storage.Bucket given GCS file path with prefix."""
     bucket_name = gcs_file_path[5:].split("/")[0]
-    info = client_info.get_http_client_info()
-    storage_client = storage.Client(client_info=info)
     try:
-        return storage_client.bucket(bucket_name)
+        return _get_storage_client().bucket(bucket_name)
     except ValueError as e:
         raise ValueError("GCS Path Failure {} -> {}".format(gcs_file_path, e))
 

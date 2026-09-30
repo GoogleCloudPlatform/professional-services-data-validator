@@ -26,12 +26,14 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import (
     cli_tools,
+    config_runner,
     consts,
     data_validation,
     find_tables,
     gcs_helper,
     raw_query,
     state_manager,
+    validation_runner,
 )
 from data_validation.partition_builder import PartitionBuilder
 
@@ -226,7 +228,7 @@ def exclude_columns_test(
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     config_managers = main.build_config_managers_from_args(args)
-    main.run_validation(config_managers[0], dry_run=True)
+    validation_runner.run_validation(config_managers[0], dry_run=True)
     out, err = capsys.readouterr()
     assert err == ""
     dry_run = json.loads(out)
@@ -724,7 +726,7 @@ def generate_and_run_table_partitions_test(
     args = parser.parse_args(cli_arg_list)
     # It is not trivial to access the results Dataframe due to how config_runner() is structured.
     # Here we just ensure the command completes without throwing an exception.
-    main.config_runner(args)
+    config_runner.config_runner(args)
 
 
 def custom_query_validation_test(
