@@ -723,3 +723,27 @@ def test_build_config_aggregates_custom_query_uses_cached_query_tables(
         assert agg_min[0] == AGGREGATE_CONFIG_C
         # Once for source query, once for target query across both calls
         assert mock_get_query.call_count == 2
+
+
+@mock.patch("data_validation.state_manager.StateManager")
+def test_config_manager_lazy_state_manager(mock_state_manager, module_under_test):
+    """Verify ConfigManager does not instantiate StateManager when clients are provided,
+    and lazily instantiates it only when resolving connection names."""
+    config = {
+        consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
+        consts.CONFIG_SOURCE_CONN_NAME: "src_conn",
+        consts.CONFIG_TARGET_CONN_NAME: "tgt_conn",
+    }
+    mgr = module_under_test.ConfigManager(
+        config,
+        source_client=MockIbisClient(),
+        target_client=MockIbisClient(),
+    )
+
+    # StateManager should not be instantiated during __init__ when clients are supplied
+    mock_state_manager.assert_not_called()
+
+    # Accessing get_source_connection() and get_target_connection() lazily initializes one StateManager
+    mgr.get_source_connection()
+    mgr.get_target_connection()
+    assert mock_state_manager.call_count == 1
