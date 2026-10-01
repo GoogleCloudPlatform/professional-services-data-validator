@@ -270,3 +270,33 @@ def test_postgres_decimal_string_cast_compiles_to_char():
     sql = _compile(PostgreSQLCompiler, TABLE.d.cast("string").name("dstr"))
 
     assert "rtrim(to_char(t0.d, :to_char_1), :rtrim_1)" in sql
+
+
+def test_mssql_fillna_inlines_literal():
+    sql = _compile(
+        MsSqlCompiler, TABLE.s.fillna("DEFAULT_REPLACEMENT_STRING").name("ifnull_s")
+    )
+
+    _assert_fragments(
+        sql,
+        ["coalesce(t0.s, 'DEFAULT_REPLACEMENT_STRING')"],
+        [":param_1"],
+    )
+
+
+def test_postgres_fillna_uses_bound_parameter():
+    sql = _compile(
+        PostgreSQLCompiler,
+        TABLE.s.fillna("DEFAULT_REPLACEMENT_STRING").name("ifnull_s"),
+    )
+
+    _assert_fragments(
+        sql,
+        ["coalesce(t0.s, :param_1)"],
+        ["'DEFAULT_REPLACEMENT_STRING'"],
+    )
+
+
+def test_mssql_fillna_rejects_invalid_replacement_string():
+    with pytest.raises(ValueError, match="contains invalid characters"):
+        _compile(MsSqlCompiler, TABLE.s.fillna("bad'val").name("ifnull_s"))

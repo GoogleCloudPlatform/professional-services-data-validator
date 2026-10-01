@@ -113,3 +113,11 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
 def list_to_sublists(id_list: list, max_size: int) -> list:
     """Return a list of items as a list of lists based on a max list length of max_size."""
     return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]
+
+
+def check_ifnull_default_literal(val: str) -> None:
+    """Validate that a string contains only alphanumeric, underscore, or hyphen characters."""
+    if not all(c.isalnum() or c in ("_", "-") for c in str(val)):
+        raise ValueError(
+            f"Value '{val}' contains invalid characters. Only alphanumeric, underscore, and hyphen characters are allowed."
+        )
