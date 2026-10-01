@@ -3,19 +3,56 @@
 The [combiner](../../../data_validation/combiner.py) generates the validation report based on the results of the SQL queries on the source and target tables. The results of the SQL queries are provided along with some other parameters (not the whole config manager for some reason). The code is obscure and it is not exactly clear what it does. If we have to migrate beyond Ibis 10.0, we need to stop using the pandas connector the code relies on at the moment.
 
 # Problem Definition
-DVT generates SQL queries that are expected to produce identical results if the source and target tables are identical. If the queries return different results, then the tables are likely different. Generating the validation report should be fairly straightforward. There are three different types of validations.
+DVT generates SQL queries that are expected to produce identical results if the source and target tables are identical. If the queries return different results, then the tables are likely different. Generating the validation report should be fairly straightforward.
 
-## Basic Column Validations
-These are validations where the table columns are evaluated in aggregate (count, min, max, sum etc) and the aggregates are compared. DVT produces a SQL query that generates one row with a column for each of the aggregates requested by the user. In some cases the aggregates are scalars (avg), where it may be acceptable to mix different types (e.g. decimal vs float). Generating a validation report should be fairly simple.
+The results from the query on the source and target table are in `source_table` and `target_table` respectively. Both tables will have the same columns with the same names and the column types will be compatible. E.g. the results from `sum__a` could be double in the source table and Decimal in the target table. The tables will have one or more rows in each table, though the target table could have zero rows in some unusual circumstances.
 
-## Grouped Column Validations
-This is a variation of the basic column validation, except that the rows in the source and target tables are grouped by one (one only?) column. An example might be when a table contains sales data and the aggregates are grouped by month (or storeID). The results from the source and target contain multiple rows. When both results are compared on the same value of the grouped column, this is same as a Basic Column Validation. This is a variation of basic column validation.
+There are different types of validations and here is what the source and target tables will contain for each type:
 
-## Row Validations
-In a row validation, each row in the source and target table are returned based on the primary keys provided. With hash validation and concat-fields, one aggregate value of all the columns in the row is returned. The report generation in this case is likely straightforward. There is an option --comparison-fields - I am not clear about the structure of the report to be generated.
+## Basic Column Validation
+Source and target tables will each have exactly one row. A column named `count` showing the number of rows being validated is always present. Additional columns, e.g. <aggregate>__<column_name> may be present. Aggregates include count, min, max and sum. Each of these columns represents a validation and the column name is the `validation_name` used to index into the `validations` dict within `RunMetadata`. 
+
+## Grouped Column Validation
+Source and target tables can have multiple rows with the `join_on_fields` columns serving as the primary keys to the table. Just like column validation, the `count` column is always present and additional aggregate columns may be present. Like the Basic Column Validation, the non-primary key columns are used to index into the `validations` dict within `RunMetadata`. 
+
+## Row Validations - concat and hash
+Source and target tables have multiple rows with the `join_on_fields` columns serving as the primary keys to the table. The table has one non-primary key column i.e.`concat__all` or `hash__all`. The non-primary key columns are used to index into the `validations` dict within `RunMetadata`.
+
+## Row Validations - comparison-fields
+Source and target tables each have multiple rows with the `join_on_fields` as primary keys like other row validations. There are multiple non-primary key columns, one for each column in `--comparison-fields`. These columns contain the values of the corresponding columns in the source and target tables. The non-primary key columns are used to index into the validations dict within RunMetadata.
+
+## Row Validations - random rows
+The source and target table structure are the same as for other row validations. The Validationmetadata (contained in RunMetadata) contains a non-null attribute `num_random_rows` with the number of random rows.
+
+## Building the results Dataframe
+In all validations, each non-primary key column in the source and target tables represents a validation with its own validation status, i.e. equal between source and target = success, not equal = failure, within a defined `threshold`. The `threshold` is only defined for column validations, is a float and represents the percentage difference tolerated. The report is generated by unpivoting these non-primary key columns (convert each column into its own row). The unpivoted source and target tables will have the following columns -  primary key columns, column name and column value. After unpivoting, the source and target are joined on the primary keys + column name. The difference and percentage difference are calculated if a threshold is specified. The validation status is then calculated. Additional columns are added to the results dataframe from the `RunMetadata` and `ValidationMetadata` and discussed below.
+
+The full results dataframe has a defined schema with the following columns:
+validation_name,validation_type,aggregation_type,source_table_name,source_column_name,source_agg_value,target_table_name,target_column_name,target_agg_value,group_by_columns,primary_keys,num_random_rows,difference,pct_difference,pct_threshold,validation_status,run_id,labels,start_time,end_time. Most of the columns are filled from the metadata for the run, contained in the RunMetadata object.
+
+### RunMetadata columns
+run_id : RunMetadata.run_id
+labels: RunMetadata.labels
+start_time: RunMetadata.start_time
+end_time: RunMetadata.end_time
+
+### ValidationMetadata columns
+The RunMetadata contains a ValidationMetadata object which has a dict of ValidationMetadata objects, indexed by validation_name. The list below shows how the column values are calculated in the results dataframe.
+
+validation_type: validation_metadata.validation_type
+aggregation_type: validation_metadata.aggregation_type
+source_table_name: validation_metadata.source_table_schema + '.' + validation_metadata.source_table_name
+source_column_name: validation_metadata.source_column_name
+target_table_name: validation_metadata.target_table_schema + '.' + validation_metadata.target_table_name
+target_column_name: validation_metadata.target_column_name
+primary_keys: validation_metadata.primary_keys  
+num_random_rows: validation_metadata.num_random_rows
+pct_threshold: validation_metadata.threshold
+
 
 # Related Comments
 ## Recursive Validation is dead code
-The [data_validation](../../../data_validation/data_validation.py) contains a function called `execute_recursive_validation` which is mostly dead code. If grouped_fields is Null, then the function calls `_execute_validation`. grouped_fields is set from config manager. Looking through the code the grouped fields is from the command line parameter `--grouped-columns` which are only usable with column validations. So most of this code is useless and the function should be factored out. 
+The [data_validation](../../../data_validation/data_validation.py) contains a function called `execute_recursive_validation` which is mostly dead code. If grouped_fields is Null, then the function calls `_execute_validation`. grouped_fields is set from config manager. Looking through the code the grouped fields is from the command line parameter `--grouped-columns` which are only usable with column validations. So most of this code is useless and the function should be factored out.
+git  
 ## Pandas is type flexible while SQL is strongly typed
 The combiner runs SQL queries on pandas dataframes. This results in lot of complexity in converting from a strongly typed data (from the database engine) to Pandas dataframe (loosely typed) and using SQL. Ibis supports pyArrow which is strongly typed and support some simple SQL functions on its own. It might be easier to receive the data as a PyArrow table and generate the report which can be converted to a Pandas dataframe.

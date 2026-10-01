@@ -16,12 +16,11 @@
 
 import csv
 import dataclasses
-import datetime
 import logging
 import os
-import shutil
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
+from pprint import pformat
 
 import pandas as pd
 
@@ -163,36 +162,19 @@ def capture_generate_report(
 ) -> None:
     """Capture generate_report inputs and output to text and CSV files."""
     try:
-        breakpoint()
         base_dir = _get_capture_dir()
         os.makedirs(base_dir, exist_ok=True)
-
-        call_idx = _get_next_call_index(base_dir)
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        run_id = getattr(run_metadata, "run_id", "") or "unknown"
-        clean_run_id = "".join(
-            c if c.isalnum() or c in "-_" else "_" for c in str(run_id)
+        call_dir = os.path.join(
+            base_dir, f"call_{getattr(run_metadata, 'run_id', 'unknown')}"
         )
-        call_folder_name = f"call_{call_idx:03d}_{clean_run_id}".rstrip("_")
-        call_dir = os.path.join(base_dir, call_folder_name)
         os.makedirs(call_dir, exist_ok=True)
 
         source_df = _to_dataframe(source_table)
         target_df = _to_dataframe(target_table)
         out_df = _to_dataframe(result_df)
 
-        source_rows = len(source_df) if source_df is not None else 0
-        source_cols = len(source_df.columns) if source_df is not None else 0
-        target_rows = len(target_df) if target_df is not None else 0
-        target_cols = len(target_df.columns) if target_df is not None else 0
         out_rows = len(out_df) if out_df is not None else 0
         out_cols = len(out_df.columns) if out_df is not None else 0
-
-        status = (
-            "SUCCESS"
-            if exception is None
-            else f"FAILED: {type(exception).__name__}: {exception}"
-        )
 
         # 1. Save CSV files in call_dir
         source_csv = os.path.join(call_dir, "input_source_table.csv")
@@ -210,39 +192,15 @@ def capture_generate_report(
             _save_df_to_csv(out_df, out_csv)
 
         # 2. Save input_parameters.txt in call_dir
-        params_txt = os.path.join(call_dir, "input_parameters.txt")
-        with open(params_txt, "w", encoding="utf-8") as f:
-            f.write(f"Call Index: {call_idx}\n")
-            f.write(f"Timestamp: {timestamp}\n")
-            f.write(f"Status: {status}\n")
-            f.write(f"Run ID: {run_id}\n")
-            f.write(f"join_on_fields: {tuple(join_on_fields)}\n")
-            f.write(f"is_value_comparison: {is_value_comparison}\n")
-            f.write(f"verbose: {verbose}\n\n")
-
-            f.write("Run Metadata:\n")
-            if run_metadata is not None:
-                f.write(f"  run_id: {getattr(run_metadata, 'run_id', None)}\n")
-                f.write(f"  start_time: {getattr(run_metadata, 'start_time', None)}\n")
-                f.write(f"  end_time: {getattr(run_metadata, 'end_time', None)}\n")
-                f.write(f"  labels: {getattr(run_metadata, 'labels', None)}\n")
-                f.write(f"  validations_count: {len(validations)}\n")
-            else:
-                f.write("  None\n")
-
-            f.write("\nSource Table:\n")
-            f.write(f"  Type: {type(source_table).__name__}\n")
-            f.write(f"  Shape: ({source_rows}, {source_cols})\n")
-            if source_df is not None:
-                f.write(f"  Columns: {list(source_df.columns)}\n")
-                f.write(f"  Dtypes:\n{source_df.dtypes.to_string()}\n")
-
-            f.write("\nTarget Table:\n")
-            f.write(f"  Type: {type(target_table).__name__}\n")
-            f.write(f"  Shape: ({target_rows}, {target_cols})\n")
-            if target_df is not None:
-                f.write(f"  Columns: {list(target_df.columns)}\n")
-                f.write(f"  Dtypes:\n{target_df.dtypes.to_string()}\n")
+        metadata_txt = os.path.join(call_dir, "metadata.txt")
+        with open(metadata_txt, "w", encoding="utf-8") as f:
+            if join_on_fields :
+                f.write(f"join_on_fields: {join_on_fields}\n")
+            if is_value_comparison :
+                f.write(f"is_value_comparison: {is_value_comparison}\n")
+            if verbose :
+                f.write(f"verbose: {verbose}\n")
+            f.write(pformat(run_metadata))
 
         # 3. Save output text or error in call_dir
         if out_df is not None:
@@ -266,130 +224,6 @@ def capture_generate_report(
                         )
                     )
                 )
-
-        # 4. Update 'latest' copies in base_dir
-        try:
-            latest_source = os.path.join(base_dir, "latest_source_table.csv")
-            latest_target = os.path.join(base_dir, "latest_target_table.csv")
-            latest_params = os.path.join(base_dir, "latest_parameters.txt")
-            _save_df_to_csv(source_df, latest_source)
-            _save_df_to_csv(target_df, latest_target)
-            shutil.copyfile(params_txt, latest_params)
-
-            if validations:
-                latest_val = os.path.join(base_dir, "latest_validations.csv")
-                _save_validations_csv(validations, latest_val)
-
-            if out_df is not None:
-                latest_out = os.path.join(base_dir, "latest_output_report.csv")
-                _save_df_to_csv(out_df, latest_out)
-        except Exception:
-            pass
-
-        # 5. Append to summary.csv in base_dir
-        summary_csv = os.path.join(base_dir, "summary.csv")
-        file_exists = os.path.exists(summary_csv)
-        try:
-            with open(summary_csv, "a", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                if not file_exists:
-                    writer.writerow(
-                        [
-                            "call_index",
-                            "timestamp",
-                            "run_id",
-                            "status",
-                            "join_on_fields",
-                            "is_value_comparison",
-                            "source_rows",
-                            "source_cols",
-                            "target_rows",
-                            "target_cols",
-                            "output_rows",
-                            "output_cols",
-                            "folder",
-                        ]
-                    )
-                writer.writerow(
-                    [
-                        call_idx,
-                        timestamp,
-                        run_id,
-                        "SUCCESS" if exception is None else type(exception).__name__,
-                        str(tuple(join_on_fields)),
-                        is_value_comparison,
-                        source_rows,
-                        source_cols,
-                        target_rows,
-                        target_cols,
-                        out_rows,
-                        out_cols,
-                        call_folder_name,
-                    ]
-                )
-        except Exception:
-            pass
-
-        # 6. Append to generate_report_log.txt in base_dir
-        log_file = os.path.join(base_dir, "generate_report_log.txt")
-        try:
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write("=" * 80 + "\n")
-                f.write(
-                    f"CALL #{call_idx} | {timestamp} | Run ID: {run_id} | Status: {status}\n"
-                )
-                f.write(f"Folder: {call_dir}\n")
-                f.write("-" * 80 + "\n")
-                f.write("INPUT PARAMETERS:\n")
-                f.write(f"  join_on_fields: {tuple(join_on_fields)}\n")
-                f.write(f"  is_value_comparison: {is_value_comparison}\n")
-                f.write(f"  verbose: {verbose}\n")
-                f.write("  run_metadata:\n")
-                if run_metadata is not None:
-                    f.write(f"    run_id: {getattr(run_metadata, 'run_id', None)}\n")
-                    f.write(
-                        f"    start_time: {getattr(run_metadata, 'start_time', None)}\n"
-                    )
-                    f.write(
-                        f"    end_time: {getattr(run_metadata, 'end_time', None)}\n"
-                    )
-                    f.write(f"    validations: {len(validations)} validation(s)\n")
-                    for v in validations:
-                        f.write(
-                            f"      - {v.get('validation_name')}: "
-                            f"type={v.get('validation_type')}, agg={v.get('aggregation_type')}, "
-                            f"src={v.get('source_table_name')}.{v.get('source_column_name')}, "
-                            f"tgt={v.get('target_table_name')}.{v.get('target_column_name')}\n"
-                        )
-                else:
-                    f.write("    None\n")
-
-                f.write(f"\nSource Table: ({source_rows} rows, {source_cols} cols)\n")
-                if source_df is not None:
-                    safe_src = _sanitize_df_for_export(source_df)
-                    if safe_src is not None:
-                        f.write(safe_src.head(10).to_string(index=False) + "\n")
-
-                f.write(f"\nTarget Table: ({target_rows} rows, {target_cols} cols)\n")
-                if target_df is not None:
-                    safe_tgt = _sanitize_df_for_export(target_df)
-                    if safe_tgt is not None:
-                        f.write(safe_tgt.head(10).to_string(index=False) + "\n")
-
-                f.write("-" * 80 + "\n")
-                f.write("OUTPUT:\n")
-                if out_df is not None:
-                    f.write(f"Result DataFrame: ({out_rows} rows, {out_cols} cols)\n")
-                    safe_out = _sanitize_df_for_export(out_df)
-                    if safe_out is not None:
-                        f.write(safe_out.to_string(index=False, max_rows=50) + "\n")
-                elif exception is not None:
-                    f.write(f"ERROR: {type(exception).__name__}: {exception}\n")
-
-                f.write("=" * 80 + "\n\n")
-        except Exception:
-            pass
-
-        logging.info("Captured generate_report call #%d to %s", call_idx, call_dir)
+        logging.info("Captured generate_report call in %s", call_dir)
     except Exception as e:
         logging.warning("combiner_capture failed: %s", e)
