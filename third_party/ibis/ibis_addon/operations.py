@@ -42,6 +42,7 @@ from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
 import third_party.ibis.ibis_pandas
+from third_party.ibis.ibis_addon.api import check_ifnull_default_literal
 
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import bigquery_cast
@@ -58,8 +59,6 @@ from ibis.expr.types import (
     TimeValue,
     TimestampValue,
 )
-
-from data_validation.util import check_ifnull_default_literal
 
 # Do not remove these lines, they trigger patching of Ibis code.
 # We patch Ibis native compilers/backends directly.

@@ -169,3 +169,33 @@ def test_cache_generator_results_mixed_args():
     )
     assert backend.execution_count == 1
     assert res1 == res3
+
+
+@pytest.mark.parametrize(
+    "valid_val",
+    [
+        "DEFAULT_REPLACEMENT_STRING",
+        "default",
+        "abc_123",
+        "valid-val",
+        "",
+    ],
+)
+def test_check_ifnull_default_literal_valid(valid_val: str):
+    api.check_ifnull_default_literal(valid_val)
+
+
+@pytest.mark.parametrize(
+    "invalid_val",
+    [
+        "bad'val",
+        "bad val",
+        "bad;DROP TABLE x;--",
+        "\u02bc",
+        "é",
+        "ＡＢＣ",
+    ],
+)
+def test_check_ifnull_default_literal_invalid(invalid_val: str):
+    with pytest.raises(ValueError, match="contains invalid characters"):
+        api.check_ifnull_default_literal(invalid_val)

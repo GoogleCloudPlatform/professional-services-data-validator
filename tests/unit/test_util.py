@@ -252,33 +252,3 @@ def test_list_to_sublists(
 ):
     result = module_under_test.list_to_sublists(input_list, max_length)
     assert result == expected_result
-
-
-@pytest.mark.parametrize(
-    "valid_val",
-    [
-        "DEFAULT_REPLACEMENT_STRING",
-        "default",
-        "abc_123",
-        "valid-val",
-        "",
-    ],
-)
-def test_check_ifnull_default_literal_valid(module_under_test, valid_val: str):
-    module_under_test.check_ifnull_default_literal(valid_val)
-
-
-@pytest.mark.parametrize(
-    "invalid_val",
-    [
-        "bad'val",
-        "bad val",
-        "bad;DROP TABLE x;--",
-        "\u02bc",
-        "é",
-        "ＡＢＣ",
-    ],
-)
-def test_check_ifnull_default_literal_invalid(module_under_test, invalid_val: str):
-    with pytest.raises(ValueError, match="contains invalid characters"):
-        module_under_test.check_ifnull_default_literal(invalid_val)

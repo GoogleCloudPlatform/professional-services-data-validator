@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     from ibis.expr.types.relations import Table as IbisTable
     from ibis.backends.base import BaseBackend
 
-_IFNULL_DEFAULT_LITERAL_RE = re.compile(r"[A-Za-z0-9_-]*")
-
 
 def timed_call(log_txt, fn, *args, **kwargs):
     t0 = time.time()
@@ -115,23 +113,3 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
 def list_to_sublists(id_list: list, max_size: int) -> list:
     """Return a list of items as a list of lists based on a max list length of max_size."""
     return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]
-
-
-def check_ifnull_default_literal(val: str) -> None:
-    """Validate an IFNULL replacement token that may be inlined into SQL text.
-
-    Some engines (SQL Server, Db2 z/OS) inline the token as a quoted literal
-    rather than a bind parameter, so only ASCII alphanumerics, underscore and
-    hyphen are permitted.
-
-    Args:
-        val: The replacement token.
-
-    Raises:
-        ValueError: If the token is not a string or contains disallowed characters.
-    """
-    if not isinstance(val, str) or not _IFNULL_DEFAULT_LITERAL_RE.fullmatch(val):
-        raise ValueError(
-            f"IFNULL replacement value {val!r} contains invalid characters. "
-            "Only ASCII alphanumeric, underscore and hyphen characters are allowed."
-        )
