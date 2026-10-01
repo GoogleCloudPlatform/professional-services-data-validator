@@ -387,9 +387,10 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
 def _verify_connection(data_client) -> None:
     """Open and release one connection so lazily-connecting backends fail fast.
 
-    Ibis SQLAlchemy backends only create an Engine in do_connect(); no network
-    round-trip happens until first use. Without this, invalid credentials are
-    not detected until the first query.
+    Some Ibis SQLAlchemy backends (e.g. SQL Server, MySQL, Db2, Sybase) only
+    create an Engine in do_connect(); no network round-trip happens until first
+    use. Without this, invalid credentials are not detected until the first
+    query.
     """
     if is_sqlalchemy_backend(data_client):
         with data_client.con.connect():
