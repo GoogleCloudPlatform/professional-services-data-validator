@@ -194,8 +194,10 @@ def test_check_ifnull_default_literal_valid(valid_val: str):
         "\u02bc",
         "é",
         "ＡＢＣ",
+        0,
+        None,
     ],
 )
-def test_check_ifnull_default_literal_invalid(invalid_val: str):
+def test_check_ifnull_default_literal_invalid(invalid_val):
     with pytest.raises(ValueError, match="contains invalid characters"):
         api.check_ifnull_default_literal(invalid_val)
