@@ -149,9 +149,10 @@ target_table_map = _get_table_map(
 `_compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8, schema_map=None)` matches each source table against `target_table_map`:
 
 1.  **Lookup Key Construction**:
+    *   `schema_map` keys come from the user and may differ in case from the real source schema names. `_resolve_schema_map` re-keys `schema_map` using the source schema names in `source_table_map`, with the same rule as `_filter_schemas`: an exact-case match is preferred, otherwise the casefolded name is used. For example `--allowed-schemas PROD_HR=DWH_HR` maps a real source schema `prod_hr`, but if the source has both `PROD_HR` and `prod_hr`, only `PROD_HR` is mapped.
     *   For each `source_key` in `source_table_map`:
         *   Retrieves `source_schema` and `source_table` from `source_table_map[source_key]`.
-        *   Maps the schema if present in `schema_map`:
+        *   Maps the schema if present in the resolved `schema_map`:
             ```python
             lookup_schema = schema_map.get(source_schema, source_schema)
             lookup_key = f"{lookup_schema}.{source_table}".casefold()

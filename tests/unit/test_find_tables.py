@@ -610,3 +610,56 @@ def test_get_mapped_table_configs_fuzzy_does_not_prune_target(
 )
 def test__filter_schemas(module_under_test, schemas, allowed_schemas, expected):
     assert module_under_test._filter_schemas(schemas, allowed_schemas) == expected
+
+
+@pytest.mark.parametrize(
+    "schema_map,source_schemas,expected",
+    [
+        # Empty/None.
+        (None, {"s1"}, {}),
+        ({}, {"s1"}, {}),
+        # Exact match.
+        ({"PROD_HR": "DWH_HR"}, {"PROD_HR"}, {"PROD_HR": "DWH_HR"}),
+        # User key case differs from the real source schema.
+        ({"PROD_HR": "DWH_HR"}, {"prod_hr"}, {"prod_hr": "DWH_HR"}),
+        ({"prod_hr": "DWH_HR"}, {"PROD_HR"}, {"PROD_HR": "DWH_HR"}),
+        # Both cases exist in the source, only the exact-case schema is mapped.
+        ({"PROD_HR": "X"}, {"PROD_HR", "prod_hr"}, {"PROD_HR": "X"}),
+        # Both cases exist in the source and both are mapped.
+        (
+            {"PROD_HR": "X", "prod_hr": "Y"},
+            {"PROD_HR", "prod_hr"},
+            {"PROD_HR": "X", "prod_hr": "Y"},
+        ),
+        # Two user keys resolve to the same schema, the exact-case key wins
+        # regardless of order.
+        ({"PROD_HR": "X", "prod_hr": "Y"}, {"prod_hr"}, {"prod_hr": "Y"}),
+        ({"prod_hr": "Y", "PROD_HR": "X"}, {"prod_hr"}, {"prod_hr": "Y"}),
+        # Unresolved keys are kept as-is, None schemas are ignored.
+        ({"other": "X"}, {"s1", None}, {"other": "X"}),
+    ],
+)
+def test__resolve_schema_map(module_under_test, schema_map, source_schemas, expected):
+    assert module_under_test._resolve_schema_map(schema_map, source_schemas) == expected
+
+
+@pytest.mark.parametrize("score_cutoff", [1, 0.8])
+def test_get_mapped_table_configs_schema_map_case_insensitive(
+    module_under_test, score_cutoff
+):
+    """User typed -as PROD_HR=DWH_HR but the real source schema is prod_hr."""
+    configs = module_under_test.get_mapped_table_configs(
+        _make_mock_client({"prod_hr": ["employees"]}),
+        _make_mock_client({"DWH_HR": ["EMPLOYEES"], "other": ["employees"]}),
+        allowed_schemas=["PROD_HR"],
+        score_cutoff=score_cutoff,
+        schema_map={"PROD_HR": "DWH_HR"},
+    )
+    assert configs == [
+        {
+            "schema_name": "prod_hr",
+            "table_name": "employees",
+            "target_schema_name": "DWH_HR",
+            "target_table_name": "EMPLOYEES",
+        }
+    ]

@@ -29,6 +29,51 @@ if TYPE_CHECKING:
     import ibis
 
 
+def _casefold_keys(d: dict) -> dict:
+    """Return a copy of d with keys casefolded, where this does not cause a collision.
+
+    If a casefolded key already exists (e.g. both "HR" and "hr" are present) the
+    original key is retained so both entries remain distinct.
+    """
+    folded = dict(d)
+    for key in [_ for _ in folded if _ != _.casefold()]:
+        if key.casefold() not in folded:
+            # Only lower case the key if there isn't one already.
+            folded[key.casefold()] = folded.pop(key)
+    return folded
+
+
+def _get_casefolded(folded: dict, key: str, default=None):
+    """Lookup key in a dict produced by _casefold_keys.
+
+    An exact-case match is preferred, otherwise the casefolded key is used.
+    """
+    if not key:
+        return default
+    if key in folded:
+        return folded[key]
+    return folded.get(key.casefold(), default)
+
+
+def _resolve_schema_map(schema_map: dict, source_schemas: set) -> dict:
+    """Re-key a user supplied schema_map using the real source schema names.
+
+    The keys of schema_map come from the user and may differ in case from the
+    real schema names, e.g. "PROD_HR" vs "prod_hr". Keys are resolved using the
+    same rule as _filter_schemas: an exact-case match is preferred, otherwise the
+    casefolded name is used. Keys that do not resolve are kept as-is.
+    """
+    if not schema_map:
+        return {}
+    folded_sources = _casefold_keys({s: s for s in source_schemas if s})
+    resolved = {}
+    # Exact-case keys first so they take priority over casefolded matches.
+    for key in sorted(schema_map, key=lambda k: k not in source_schemas):
+        real_schema = _get_casefolded(folded_sources, key, default=key)
+        resolved.setdefault(real_schema, schema_map[key])
+    return resolved
+
+
 def _compare_match_tables(
     source_table_map: dict,
     target_table_map: dict,
@@ -38,7 +83,10 @@ def _compare_match_tables(
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
-    schema_map = schema_map or {}
+    schema_map = _resolve_schema_map(
+        schema_map,
+        {_[consts.CONFIG_SCHEMA_NAME] for _ in source_table_map.values()},
+    )
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
@@ -83,12 +131,7 @@ def _get_table_map_from_obj_list(table_objs: list) -> dict:
         }
 
     # Post process table_map and lower case table_keys, if possible.
-    for table_key in [_ for _ in table_map if _ != _.casefold()]:
-        if table_key.casefold() not in table_map:
-            # Only lower case the key if there isn't one already.
-            table_map[table_key.casefold()] = table_map.pop(table_key)
-
-    return table_map
+    return _casefold_keys(table_map)
 
 
 def _filter_schemas(schemas: list, allowed_schemas: list = None) -> list:
@@ -100,19 +143,11 @@ def _filter_schemas(schemas: list, allowed_schemas: list = None) -> list:
     if not allowed_schemas:
         return None
 
-    schema_map = {s: s for s in schemas if s}
-    for schema_key in [_ for _ in schema_map if _ != _.casefold()]:
-        if schema_key.casefold() not in schema_map:
-            schema_map[schema_key.casefold()] = schema_map.pop(schema_key)
+    schema_map = _casefold_keys({s: s for s in schemas if s})
 
     matched_schemas = []
     for allowed_schema in allowed_schemas:
-        lookup_schema = (
-            allowed_schema
-            if allowed_schema in schema_map
-            else allowed_schema.casefold()
-        )
-        matched_schema = schema_map.get(lookup_schema)
+        matched_schema = _get_casefolded(schema_map, allowed_schema)
         if matched_schema is not None and matched_schema not in matched_schemas:
             matched_schemas.append(matched_schema)
 
