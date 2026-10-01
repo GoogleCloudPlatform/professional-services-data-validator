@@ -273,27 +273,25 @@ else:
             clients.get_data_client(DB2_CONN_CONFIG)
 
 
-@mock.patch("sqlalchemy.inspect")
 @mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
 @mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
-def test_get_mssql_data_client(mock_create_engine, mock_listens_for, mock_inspect):
-    engine = mock.Mock()
+def test_get_mssql_data_client(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
     mock_create_engine.return_value = engine
     mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
 
     ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG)
 
     assert ibis_client.name == "mssql"
-    mock_inspect.assert_called_once_with(engine)
+    engine.connect.assert_called_once_with()
 
 
-@mock.patch("sqlalchemy.inspect", side_effect=Exception("Login timeout expired"))
 @mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
 @mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
-def test_get_mssql_data_client_connection_failure(
-    mock_create_engine, mock_listens_for, mock_inspect
-):
-    mock_create_engine.return_value = mock.Mock()
+def test_get_mssql_data_client_connection_failure(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
+    engine.connect.side_effect = Exception("Login timeout expired")
+    mock_create_engine.return_value = engine
     mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
 
     with pytest.raises(

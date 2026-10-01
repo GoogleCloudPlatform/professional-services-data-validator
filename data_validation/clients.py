@@ -384,6 +384,18 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     return table_objs
 
 
+def _verify_connection(data_client) -> None:
+    """Open and release one connection so lazily-connecting backends fail fast.
+
+    Ibis SQLAlchemy backends only create an Engine in do_connect(); no network
+    round-trip happens until first use. Without this, invalid credentials are
+    not detected until the first query.
+    """
+    if is_sqlalchemy_backend(data_client):
+        with data_client.con.connect():
+            pass
+
+
 def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
@@ -428,10 +440,7 @@ def get_data_client(connection_config):
     try:
         data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
         data_client._source_type = source_type
-        if is_sqlalchemy_backend(data_client):
-            # Ibis 7+ defers SQLAlchemy inspector initialization until first use.
-            # Accessing .inspector runs sa.inspect(engine), which connects to the DB.
-            _ = data_client.inspector
+        _verify_connection(data_client)
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
             source_type=source_type, error=str(e)
