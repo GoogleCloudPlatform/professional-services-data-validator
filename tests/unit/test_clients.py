@@ -61,6 +61,15 @@ ORACLE_CONN_CONFIG = {
     "port": 1521,
 }
 
+MSSQL_CONN_CONFIG = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
+    "host": "127.0.0.1",
+    "port": 1433,
+    "user": "u",
+    "password": "p",
+    "database": "db",
+}
+
 
 class RecordingBigQueryClient:
     name = "bigquery"
@@ -253,6 +262,7 @@ if ibm_db_sa:
     def test_get_db2_data_client(fn_mock, connection_mock, connect_mock):
         # The import is good, we can test the code.
         clients.get_data_client(DB2_CONN_CONFIG)
+        connect_mock.assert_called_once()
 
 else:
 
@@ -261,3 +271,33 @@ else:
             exceptions.DataClientConnectionFailure, match=r".*pip install ibm_db_sa"
         ):
             clients.get_data_client(DB2_CONN_CONFIG)
+
+
+@mock.patch("sqlalchemy.inspect")
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client(mock_create_engine, mock_listens_for, mock_inspect):
+    engine = mock.Mock()
+    mock_create_engine.return_value = engine
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG)
+
+    assert ibis_client.name == "mssql"
+    mock_inspect.assert_called_once_with(engine)
+
+
+@mock.patch("sqlalchemy.inspect", side_effect=Exception("Login timeout expired"))
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client_connection_failure(
+    mock_create_engine, mock_listens_for, mock_inspect
+):
+    mock_create_engine.return_value = mock.Mock()
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    with pytest.raises(
+        exceptions.DataClientConnectionFailure,
+        match=r'Connection Type "MSSQL" could not connect: Login timeout expired',
+    ):
+        clients.get_data_client(MSSQL_CONN_CONFIG)

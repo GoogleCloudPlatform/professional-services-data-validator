@@ -428,6 +428,10 @@ def get_data_client(connection_config):
     try:
         data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
         data_client._source_type = source_type
+        if is_sqlalchemy_backend(data_client):
+            # Ibis 7+ defers SQLAlchemy inspector initialization until first use.
+            # Accessing .inspector runs sa.inspect(engine), which connects to the DB.
+            _ = data_client.inspector
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
             source_type=source_type, error=str(e)
