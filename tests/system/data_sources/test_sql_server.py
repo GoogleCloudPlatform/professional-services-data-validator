@@ -1229,9 +1229,11 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
     conn_args.extend(
         [
             "--query",
-            SQL_SERVER_CONFIG_JSON
-            if SQL_SERVER_CONFIG_JSON
-            else '{"TrustServerCertificate": "yes"}',
+            (
+                SQL_SERVER_CONFIG_JSON
+                if SQL_SERVER_CONFIG_JSON
+                else '{"TrustServerCertificate": "yes"}'
+            ),
         ]
     )
     connections_add_test(
@@ -1256,9 +1258,11 @@ def test_connections_add_fail(caplog, tmp_path, monkeypatch):
     conn_args.extend(
         [
             "--query",
-            SQL_SERVER_CONFIG_JSON
-            if SQL_SERVER_CONFIG_JSON
-            else '{"TrustServerCertificate": "yes"}',
+            (
+                SQL_SERVER_CONFIG_JSON
+                if SQL_SERVER_CONFIG_JSON
+                else '{"TrustServerCertificate": "yes"}'
+            ),
         ]
     )
     with pytest.raises(exceptions.DataClientConnectionFailure):
