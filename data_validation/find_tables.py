@@ -91,10 +91,12 @@ def _get_table_map_from_obj_list(table_objs: list) -> dict:
     return table_map
 
 
-def _filter_schemas(
-    schemas: list, allowed_schemas: list = None, score_cutoff: float = 1
-) -> list:
-    """Filter database schemas using casefolded and fuzzy string matching."""
+def _filter_schemas(schemas: list, allowed_schemas: list = None) -> list:
+    """Filter database schemas using exact, case-insensitive matching.
+
+    An exact-case match is preferred, otherwise the casefolded name is used.
+    This mirrors the casefolding applied to table keys in _get_table_map_from_obj_list.
+    """
     if not allowed_schemas:
         return None
 
@@ -110,13 +112,9 @@ def _filter_schemas(
             if allowed_schema in schema_map
             else allowed_schema.casefold()
         )
-        matched_key = jellyfish_distance.extract_closest_match(
-            lookup_schema,
-            schema_map.keys(),
-            score_cutoff=score_cutoff,
-        )
-        if matched_key is not None and schema_map[matched_key] not in matched_schemas:
-            matched_schemas.append(schema_map[matched_key])
+        matched_schema = schema_map.get(lookup_schema)
+        if matched_schema is not None and matched_schema not in matched_schemas:
+            matched_schemas.append(matched_schema)
 
     return matched_schemas
 
@@ -125,14 +123,12 @@ def _get_table_map(
     client: "ibis.backends.base.BaseBackend",
     allowed_schemas=None,
     include_views=False,
-    score_cutoff: float = 1,
 ) -> dict:
     """Return dict with searchable keys for table matching."""
     if allowed_schemas:
         allowed_schemas = _filter_schemas(
             clients.list_databases(client),
             allowed_schemas,
-            score_cutoff=score_cutoff,
         )
     else:
         allowed_schemas = None
@@ -158,16 +154,19 @@ def get_mapped_table_configs(
         source_table_map = _get_table_map(
             source_client, allowed_schemas=allowed_schemas, include_views=include_views
         )
-        target_allowed_schemas = (
-            [(schema_map or {}).get(s, s) for s in allowed_schemas]
-            if allowed_schemas
-            else None
-        )
+        target_allowed_schemas = None
+        if allowed_schemas and score_cutoff >= 1:
+            # Pruning target schemas is only lossless for exact (case-insensitive)
+            # matching. With fuzzy matching a schema.table key can score above
+            # score_cutoff even when the schema names alone do not, so all target
+            # schemas must be considered.
+            target_allowed_schemas = [
+                (schema_map or {}).get(s, s) for s in allowed_schemas
+            ]
         target_table_map = _get_table_map(
             target_client,
             allowed_schemas=target_allowed_schemas,
             include_views=include_views,
-            score_cutoff=score_cutoff,
         )
         return _compare_match_tables(
             source_table_map,

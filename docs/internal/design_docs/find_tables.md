@@ -38,10 +38,10 @@ flowchart TD
     A2 -->|"allowed_schemas=[schema],<br/>include_views=False, score_cutoff=1"| B
 
     B --> C1["Source: _get_table_map(source_client,<br/>allowed_schemas=allowed_schemas,<br/>include_views=include_views)"]
-    B --> C2["Target: _get_table_map(target_client,<br/>allowed_schemas=target_allowed_schemas,<br/>include_views=include_views,<br/>score_cutoff=score_cutoff)"]
+    B --> C2["Target: _get_table_map(target_client,<br/>allowed_schemas=target_allowed_schemas<br/>(None when score_cutoff < 1),<br/>include_views=include_views)"]
 
-    C1 --> D1["1. _filter_schemas(list_databases(source_client),<br/>allowed_schemas, score_cutoff=1)<br/>2. clients.get_all_tables(source_client)<br/>3. list_tables per matched schema"]
-    C2 --> D2["1. _filter_schemas(list_databases(target_client),<br/>target_allowed_schemas, score_cutoff)<br/>2. clients.get_all_tables(target_client)<br/>3. list_tables per matched schema"]
+    C1 --> D1["1. _filter_schemas(list_databases(source_client),<br/>allowed_schemas)<br/>2. clients.get_all_tables(source_client)<br/>3. list_tables per matched schema"]
+    C2 --> D2["1. _filter_schemas(list_databases(target_client),<br/>target_allowed_schemas)<br/>2. clients.get_all_tables(target_client)<br/>3. list_tables per matched schema"]
 
     D1 --> E1["_get_table_map_from_obj_list<br/>Build source_table_map (casefolded keys)"]
     D2 --> E2["_get_table_map_from_obj_list<br/>Build target_table_map (casefolded keys)"]
@@ -91,16 +91,13 @@ flowchart TD
 source_table_map = _get_table_map(
     source_client, allowed_schemas=allowed_schemas, include_views=include_views
 )
-target_allowed_schemas = (
-    [(schema_map or {}).get(s, s) for s in allowed_schemas]
-    if allowed_schemas
-    else None
-)
+target_allowed_schemas = None
+if allowed_schemas and score_cutoff >= 1:
+    target_allowed_schemas = [(schema_map or {}).get(s, s) for s in allowed_schemas]
 target_table_map = _get_table_map(
     target_client,
     allowed_schemas=target_allowed_schemas,
     include_views=include_views,
-    score_cutoff=score_cutoff,
 )
 ```
 
@@ -108,9 +105,11 @@ target_table_map = _get_table_map(
 
 1.  **Filter by `allowed_schemas` (`find_tables._filter_schemas`)**:
     *   If `allowed_schemas` is empty or `None`, `allowed_schemas` is set to `None`, and `clients.get_all_tables` calls `clients.list_databases(client)` to scan all schemas visible to the connection.
-    *   Otherwise, `_get_table_map` calls `clients.list_databases(client)` and passes the database schemas to `_filter_schemas(schemas, allowed_schemas, score_cutoff=score_cutoff)`.
-    *   `_filter_schemas` builds a collision-safe casefolded lookup map of the database's schemas and matches each schema in `allowed_schemas` (casefolded unless an exact-case key exists) using `jellyfish_distance.extract_closest_match(..., score_cutoff=score_cutoff)`.
-    *   For `source_client`, `score_cutoff=1` (case-insensitive exact match); for `target_client`, the caller's `score_cutoff` is used after translating `allowed_schemas` via `schema_map`.
+    *   Otherwise, `_get_table_map` calls `clients.list_databases(client)` and passes the database schemas to `_filter_schemas(schemas, allowed_schemas)`.
+    *   `_filter_schemas` builds a collision-safe casefolded lookup map of the database's schemas and matches each schema in `allowed_schemas` exactly (casefolded unless an exact-case key exists). There is no fuzzy matching of schema names.
+    *   For `source_client`, `allowed_schemas` is always filtered this way.
+    *   For `target_client`, filtering only happens when `score_cutoff >= 1`, after translating `allowed_schemas` via `schema_map` (so `--allowed-schemas src=tgt` filters the target to `tgt`). With exact matching a `schema.table` key can only match a target schema whose casefolded name equals the (mapped) source schema, so pruning is lossless.
+    *   When `score_cutoff < 1`, target schemas are **not** filtered and all target schemas are scanned. Jaro similarity of the full `schema.table` key does not decompose into schema and table parts, e.g. `hr` vs `hr_dwh` scores 0.778 but `hr.employees` vs `hr_dwh.employees` scores 0.917, so no schema-level filter is safe.
     *   The resulting list of matched schema names (or `[]` if none matched) is passed to `clients.get_all_tables`, which iterates directly over `allowed_schemas` without calling `list_databases(client)` a second time.
 2.  **List Tables per Schema (`clients.list_tables`)**:
     *   Selects the listing method on the Ibis backend:

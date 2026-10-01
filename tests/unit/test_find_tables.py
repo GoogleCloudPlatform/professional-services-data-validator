@@ -452,12 +452,19 @@ def _make_mock_client(schema_tables: dict):
                 }
             ],
         ),
-        # Fuzzy match (score_cutoff=0.8) matches target schema fuzzy_schema_v2 from source fuzzy_schema.
+        # Fuzzy match (score_cutoff<1) does not prune target schemas, all are queried.
         (
             ["fuzzy_schema"],
             None,
             0.8,
-            ["fuzzy_schema_v2"],
+            [
+                "other_ds1",
+                "other_ds2",
+                "pso_data_validator",
+                "hr",
+                "dwh_prod",
+                "fuzzy_schema_v2",
+            ],
             [
                 {
                     "schema_name": "fuzzy_schema",
@@ -520,3 +527,86 @@ def test_get_mapped_table_configs_target_schema_filtering(
         call.kwargs["database"] for call in target_client.dvt_list_tables.call_args_list
     ]
     assert queried_target_schemas == expected_target_schemas_queried
+
+
+@pytest.mark.parametrize(
+    "source_schema_tables,target_schema_tables,allowed_schemas,expected_configs",
+    [
+        # Schema-only Jaro (hr vs hr_dwh = 0.778) is below the cutoff but the
+        # full key (hr.employees vs hr_dwh.employees = 0.917) is above it.
+        (
+            {"hr": ["employees"]},
+            {"hr_dwh": ["employees"]},
+            ["hr"],
+            [
+                {
+                    "schema_name": "hr",
+                    "table_name": "employees",
+                    "target_schema_name": "hr_dwh",
+                    "target_table_name": "employees",
+                }
+            ],
+        ),
+        # Tables from one source schema match tables in two different target schemas.
+        (
+            {"sales": ["orders", "items"]},
+            {"sales_v1": ["orders"], "sales_v2": ["items"]},
+            ["sales"],
+            [
+                {
+                    "schema_name": "sales",
+                    "table_name": "orders",
+                    "target_schema_name": "sales_v1",
+                    "target_table_name": "orders",
+                },
+                {
+                    "schema_name": "sales",
+                    "table_name": "items",
+                    "target_schema_name": "sales_v2",
+                    "target_table_name": "items",
+                },
+            ],
+        ),
+    ],
+)
+def test_get_mapped_table_configs_fuzzy_does_not_prune_target(
+    module_under_test,
+    source_schema_tables,
+    target_schema_tables,
+    allowed_schemas,
+    expected_configs,
+):
+    """Fuzzy matching must not drop target schemas based on schema-name similarity alone.
+
+    Adding allowed_schemas must not lose matches that are found without it.
+    """
+    for test_allowed_schemas in (allowed_schemas, None):
+        configs = module_under_test.get_mapped_table_configs(
+            _make_mock_client(source_schema_tables),
+            _make_mock_client(target_schema_tables),
+            allowed_schemas=test_allowed_schemas,
+            score_cutoff=0.8,
+        )
+        assert configs == expected_configs
+
+
+@pytest.mark.parametrize(
+    "schemas,allowed_schemas,expected",
+    [
+        # No filter.
+        (["s1", "s2"], None, None),
+        (["s1", "s2"], [], None),
+        # Case-insensitive match returns the real schema name.
+        (["HR", "sales"], ["hr"], ["HR"]),
+        (["hr", "sales"], ["HR"], ["hr"]),
+        # Exact-case key is preferred when both cases exist.
+        (["HR", "hr"], ["HR"], ["HR"]),
+        (["HR", "hr"], ["hr"], ["hr"]),
+        # Duplicates are removed.
+        (["s1"], ["s1", "S1"], ["s1"]),
+        # No fuzzy matching.
+        (["fuzzy_schema_v2"], ["fuzzy_schema"], []),
+    ],
+)
+def test__filter_schemas(module_under_test, schemas, allowed_schemas, expected):
+    assert module_under_test._filter_schemas(schemas, allowed_schemas) == expected
