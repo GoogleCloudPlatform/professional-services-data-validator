@@ -396,8 +396,15 @@ def _verify_connection(data_client) -> None:
             pass
 
 
-def get_data_client(connection_config):
-    """Return DataClient client from given configuration"""
+def get_data_client(connection_config, verify_connection: bool = False):
+    """Return DataClient client from given configuration.
+
+    Args:
+        connection_config: Connection dictionary as stored by `connections add`.
+        verify_connection: Open and release a connection to fail fast on bad
+            credentials. Only needed where nothing else touches the DB, e.g.
+            `connections add`.
+    """
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
     secret_manager_type = connection_config.pop(consts.SECRET_MANAGER_TYPE, None)
@@ -440,7 +447,8 @@ def get_data_client(connection_config):
     try:
         data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
         data_client._source_type = source_type
-        _verify_connection(data_client)
+        if verify_connection:
+            _verify_connection(data_client)
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
             source_type=source_type, error=str(e)

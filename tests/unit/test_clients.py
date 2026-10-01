@@ -262,7 +262,6 @@ if ibm_db_sa:
     def test_get_db2_data_client(fn_mock, connection_mock, connect_mock):
         # The import is good, we can test the code.
         clients.get_data_client(DB2_CONN_CONFIG)
-        connect_mock.assert_called_once()
 
 else:
 
@@ -283,6 +282,19 @@ def test_get_mssql_data_client(mock_create_engine, mock_listens_for):
     ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG)
 
     assert ibis_client.name == "mssql"
+    engine.connect.assert_not_called()
+
+
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client_verify_connection(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
+    mock_create_engine.return_value = engine
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG, verify_connection=True)
+
+    assert ibis_client.name == "mssql"
     engine.connect.assert_called_once_with()
 
 
@@ -298,4 +310,4 @@ def test_get_mssql_data_client_connection_failure(mock_create_engine, mock_liste
         exceptions.DataClientConnectionFailure,
         match=r'Connection Type "MSSQL" could not connect: Login timeout expired',
     ):
-        clients.get_data_client(MSSQL_CONN_CONFIG)
+        clients.get_data_client(MSSQL_CONN_CONFIG, verify_connection=True)
