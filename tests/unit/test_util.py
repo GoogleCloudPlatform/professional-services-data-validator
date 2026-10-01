@@ -274,6 +274,9 @@ def test_check_ifnull_default_literal_valid(module_under_test, valid_val: str):
         "bad'val",
         "bad val",
         "bad;DROP TABLE x;--",
+        "\u02bc",
+        "é",
+        "ＡＢＣ",
     ],
 )
 def test_check_ifnull_default_literal_invalid(module_under_test, invalid_val: str):

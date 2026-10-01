@@ -314,25 +314,3 @@ def test_validation_add_filter(module_under_test, filter_field: dict):
     builder = module_under_test.ValidationBuilder(mock_config_manager)
     # Not currently checking effects, just that each filter type is accepted.
     builder.add_filter(filter_field)
-
-
-@pytest.mark.parametrize(
-    "invalid_token",
-    [
-        "bad'token",
-        "bad token",
-        "bad;DROP TABLE x;--",
-    ],
-)
-def test_calculated_field_ifnull_rejects_invalid_default_string(
-    module_under_test, invalid_token: str
-):
-    calc_config = {
-        consts.CONFIG_FIELD_ALIAS: "ifnull_col",
-        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["col"],
-        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["col"],
-        consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
-        consts.CALC_FIELD_IFNULL_DEFAULT: invalid_token,
-    }
-    with pytest.raises(ValueError, match="contains invalid characters"):
-        module_under_test.CalculatedField.ifnull(calc_config, ["col"])

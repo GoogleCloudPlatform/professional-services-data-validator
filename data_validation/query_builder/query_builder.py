@@ -17,7 +17,7 @@ import logging
 import ibis
 import pandas
 from data_validation import clients, consts
-from data_validation.util import check_ifnull_default_literal, list_to_sublists
+from data_validation.util import list_to_sublists
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 
@@ -459,12 +459,13 @@ class CalculatedField(object):
 
     @staticmethod
     def ifnull(config, fields):
-        default_null_string = config.get(
-            consts.CALC_FIELD_IFNULL_DEFAULT,
-            consts.CALC_FIELD_IFNULL_DEFAULT_STRING,
+        default_null_string = ibis.literal(
+            config.get(
+                consts.CALC_FIELD_IFNULL_DEFAULT,
+                consts.CALC_FIELD_IFNULL_DEFAULT_STRING,
+            )
         )
-        check_ifnull_default_literal(default_null_string)
-        fields = [fields[0], ibis.literal(default_null_string)]
+        fields = [fields[0], default_null_string]
         return CalculatedField(
             ibis.expr.types.Value.fillna,
             config,

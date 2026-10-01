@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from ibis.expr.types.relations import Table as IbisTable
     from ibis.backends.base import BaseBackend
 
+_IFNULL_DEFAULT_LITERAL_RE = re.compile(r"[A-Za-z0-9_-]*")
+
 
 def timed_call(log_txt, fn, *args, **kwargs):
     t0 = time.time()
@@ -116,8 +118,20 @@ def list_to_sublists(id_list: list, max_size: int) -> list:
 
 
 def check_ifnull_default_literal(val: str) -> None:
-    """Validate that a string contains only alphanumeric, underscore, or hyphen characters."""
-    if not all(c.isalnum() or c in ("_", "-") for c in str(val)):
+    """Validate an IFNULL replacement token that may be inlined into SQL text.
+
+    Some engines (SQL Server, Db2 z/OS) inline the token as a quoted literal
+    rather than a bind parameter, so only ASCII alphanumerics, underscore and
+    hyphen are permitted.
+
+    Args:
+        val: The replacement token.
+
+    Raises:
+        ValueError: If the token is not a string or contains disallowed characters.
+    """
+    if not isinstance(val, str) or not _IFNULL_DEFAULT_LITERAL_RE.fullmatch(val):
         raise ValueError(
-            f"Value '{val}' contains invalid characters. Only alphanumeric, underscore, and hyphen characters are allowed."
+            f"IFNULL replacement value {val!r} contains invalid characters. "
+            "Only ASCII alphanumeric, underscore and hyphen characters are allowed."
         )
