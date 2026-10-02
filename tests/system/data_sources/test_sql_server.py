@@ -21,7 +21,7 @@ import pathlib
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, data_validation, consts, exceptions
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
@@ -1230,9 +1230,47 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         SQL_SERVER_PORT,
         "--database",
         SQL_SERVER_DATABASE,
-        "--query",
-        '{"TrustServerCertificate": "yes"}',
     ]
+    conn_args.extend(
+        [
+            "--query",
+            (
+                SQL_SERVER_CONFIG_JSON
+                if SQL_SERVER_CONFIG_JSON
+                else '{"TrustServerCertificate": "yes"}'
+            ),
+        ]
+    )
     connections_add_test(
         caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch
     )
+
+
+def test_connections_add_fail(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command with invalid credentials."""
+    conn_args = [
+        "--host",
+        SQL_SERVER_HOST,
+        "--user",
+        "invalid_user",
+        "--password",
+        "invalid_password",
+        "--port",
+        SQL_SERVER_PORT,
+        "--database",
+        SQL_SERVER_DATABASE,
+    ]
+    conn_args.extend(
+        [
+            "--query",
+            (
+                SQL_SERVER_CONFIG_JSON
+                if SQL_SERVER_CONFIG_JSON
+                else '{"TrustServerCertificate": "yes"}'
+            ),
+        ]
+    )
+    with pytest.raises(exceptions.DataClientConnectionFailure):
+        connections_add_test(
+            caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch
+        )

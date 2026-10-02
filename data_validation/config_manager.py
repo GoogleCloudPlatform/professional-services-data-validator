@@ -432,9 +432,12 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
-            self._source_ibis_table = clients.get_ibis_table(
-                self.source_client, self.source_schema, self.source_table
-            )
+            if self.validation_type == consts.CUSTOM_QUERY:
+                self._source_ibis_table = self.get_source_ibis_table_from_query()
+            else:
+                self._source_ibis_table = clients.get_ibis_table(
+                    self.source_client, self.source_schema, self.source_table
+                )
         return self._source_ibis_table
 
     def get_source_ibis_table_from_query(self):
@@ -448,10 +451,7 @@ class ConfigManager(object):
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         depth: Int the depth of subquery requested"""
-        if self.validation_type == consts.CUSTOM_QUERY:
-            table = self.get_source_ibis_table_from_query()
-        else:
-            table = self.get_source_ibis_table()
+        table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -462,13 +462,16 @@ class ConfigManager(object):
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
-            self._target_ibis_table = clients.get_ibis_table(
-                self.target_client, self.target_schema, self.target_table
-            )
+            if self.validation_type == consts.CUSTOM_QUERY:
+                self._target_ibis_table = self.get_target_ibis_table_from_query()
+            else:
+                self._target_ibis_table = clients.get_ibis_table(
+                    self.target_client, self.target_schema, self.target_table
+                )
         return self._target_ibis_table
 
     def get_target_ibis_table_from_query(self):
-        """Return IbisTable from source."""
+        """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
             self._target_ibis_table = clients.get_ibis_query(
                 self.target_client, self.target_query
@@ -478,10 +481,7 @@ class ConfigManager(object):
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        if self.validation_type == consts.CUSTOM_QUERY:
-            table = self.get_target_ibis_table_from_query()
-        else:
-            table = self.get_target_ibis_table()
+        table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.target_builder.compile_calculated_fields(table, n=depth)
@@ -763,23 +763,22 @@ class ConfigManager(object):
         type_list: List[str],
     ) -> bool:
         """Returns True when either source or target column is of a client & type."""
-        raw_source_types = self.get_source_raw_data_types()
-        raw_target_types = self.get_target_raw_data_types()
         # Raw data type map uses casefold column name as the key.
-        return bool(
-            (
-                self.source_client.name == client_name
-                and raw_source_types
-                and raw_source_types.get(source_column_name.casefold(), [None])[0]
-                in type_list
-            )
-            or (
-                self.target_client.name == client_name
-                and raw_target_types
-                and raw_target_types.get(target_column_name.casefold(), [None])[0]
-                in type_list
-            )
-        )
+        if self.source_client.name == client_name:
+            raw_source_types = self.get_source_raw_data_types()
+            if raw_source_types:
+                raw_info = raw_source_types.get(source_column_name.casefold())
+                if raw_info and raw_info[0] in type_list:
+                    return True
+
+        if self.target_client.name == client_name:
+            raw_target_types = self.get_target_raw_data_types()
+            if raw_target_types:
+                raw_info = raw_target_types.get(target_column_name.casefold())
+                if raw_info and raw_info[0] in type_list:
+                    return True
+
+        return False
 
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
@@ -1118,8 +1117,8 @@ class ConfigManager(object):
             return False
 
         aggregate_configs = []
-        source_table = self.get_source_ibis_calculated_table()
-        target_table = self.get_target_ibis_calculated_table()
+        source_table = self.get_source_ibis_table()
+        target_table = self.get_target_ibis_table()
 
         logging.debug(
             f"Building aggregates for validation of {self.source_schema}.{self.source_table} "

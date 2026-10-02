@@ -61,6 +61,15 @@ ORACLE_CONN_CONFIG = {
     "port": 1521,
 }
 
+MSSQL_CONN_CONFIG = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
+    "host": "127.0.0.1",
+    "port": 1433,
+    "user": "u",
+    "password": "p",
+    "database": "db",
+}
+
 
 class RecordingBigQueryClient:
     name = "bigquery"
@@ -261,3 +270,44 @@ else:
             exceptions.DataClientConnectionFailure, match=r".*pip install ibm_db_sa"
         ):
             clients.get_data_client(DB2_CONN_CONFIG)
+
+
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
+    mock_create_engine.return_value = engine
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG)
+
+    assert ibis_client.name == "mssql"
+    engine.connect.assert_not_called()
+
+
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client_verify_connection(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
+    mock_create_engine.return_value = engine
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    ibis_client = clients.get_data_client(MSSQL_CONN_CONFIG, verify_connection=True)
+
+    assert ibis_client.name == "mssql"
+    engine.connect.assert_called_once_with()
+
+
+@mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
+@mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
+def test_get_mssql_data_client_connection_failure(mock_create_engine, mock_listens_for):
+    engine = mock.MagicMock()
+    engine.connect.side_effect = Exception("Login timeout expired")
+    mock_create_engine.return_value = engine
+    mock_listens_for.side_effect = lambda *args, **kwargs: lambda fn: fn
+
+    with pytest.raises(
+        exceptions.DataClientConnectionFailure,
+        match=r'Connection Type "MSSQL" could not connect: Login timeout expired',
+    ):
+        clients.get_data_client(MSSQL_CONN_CONFIG, verify_connection=True)

@@ -1243,3 +1243,165 @@ def test_custom_query_with_config_dir_errors():
         cli_tools._check_custom_query_args(
             parser, parser.parse_args(base_args + ["--config-dir-json", "dir_path"])
         )
+
+
+@pytest.mark.parametrize(
+    "cli_args,expect_table_schema_called,expect_query_schema_called",
+    [
+        (
+            [
+                "validate",
+                "column",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--sum=*",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "schema",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--comparison-fields=col1,col2",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--hash=col1,col2",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--hash=*",
+            ],
+            True,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-tbls=s.t",
+                "--primary-keys=id",
+                "--concat=col1,col2",
+                "--exclude-columns",
+            ],
+            True,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "custom-query",
+                "column",
+                "-sc=src",
+                "-tc=tgt",
+                "-sq=SELECT id, col1 FROM s.t",
+                "-tq=SELECT id, col1 FROM s.t",
+                "--sum=*",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "custom-query",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-sq=SELECT id, col1 FROM s.t",
+                "-tq=SELECT id, col1 FROM s.t",
+                "--primary-keys=id",
+                "--hash=col1",
+            ],
+            False,
+            False,
+        ),
+        (
+            [
+                "validate",
+                "custom-query",
+                "row",
+                "-sc=src",
+                "-tc=tgt",
+                "-sq=SELECT id, col1 FROM s.t",
+                "-tq=SELECT id, col1 FROM s.t",
+                "--primary-keys=id",
+                "--hash=*",
+            ],
+            False,
+            True,
+        ),
+    ],
+)
+@mock.patch(
+    "data_validation.clients.get_ibis_query_schema",
+    return_value=MockIbisSchema(["id", "col1", "col2", "col3"]),
+)
+@mock.patch(
+    "data_validation.clients.get_ibis_table_schema",
+    return_value=MockIbisSchema(["id", "col1", "col2", "col3"]),
+)
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.state_manager.StateManager.get_connection_config")
+def test_get_pre_build_configs_lazy_base_columns(
+    mock_get_conn,
+    mock_get_client,
+    mock_table_schema,
+    mock_query_schema,
+    cli_args,
+    expect_table_schema_called,
+    expect_query_schema_called,
+):
+    """Ensure _get_pre_build_configs_base_columns is only called when row hash/concat uses '*' or --exclude-columns."""
+    mock_client = mock.MagicMock()
+    mock_client._source_type = "BigQuery"
+    mock_client.name = "bigquery"
+    mock_get_client.return_value = mock_client
+
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(cli_args)
+    cli_tools.get_pre_build_configs(args, None)
+
+    assert mock_table_schema.called == expect_table_schema_called
+    assert mock_query_schema.called == expect_query_schema_called
+    if expect_query_schema_called:
+        mock_query_schema.assert_called_once_with(
+            mock_client, "SELECT id, col1 FROM s.t"
+        )
