@@ -163,3 +163,31 @@ def test_raw_column_metadata_qry(mock_raw_sql, module_under_test):
     assert all(isinstance(_[1], str) for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
+@mock.patch("third_party.ibis.ibis_teradata.pandas.read_sql")
+def test_execute_preserves_decimal_precision(mock_read_sql, module_under_test):
+    import ibis
+    import ibis.expr.datatypes as dt
+    import pandas as pd
+
+    large_dec = decimal.Decimal("123456789012345678901234567890")
+    mock_read_sql.return_value = pd.DataFrame(
+        {"id": [large_dec], "val_float": [decimal.Decimal("12.34")]}
+    )
+
+    backend = module_under_test.Backend()
+    backend.client = mock.Mock()
+    backend.use_no_lock_tables = False
+
+    schema = ibis.schema({"id": dt.Decimal(38, 0), "val_float": dt.Float64()})
+    expr = ibis.table(schema, name="dvt_large_decimals")
+
+    df = backend.execute(expr)
+
+    mock_read_sql.assert_called_once()
+    assert mock_read_sql.call_args.kwargs.get("coerce_float") is False
+    assert isinstance(df["id"].iloc[0], decimal.Decimal)
+    assert df["id"].iloc[0] == large_dec
+    assert df["val_float"].dtype == "float64"

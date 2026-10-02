@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
 import sqlalchemy as sa
 import ibis.expr.operations as ops
 
@@ -207,10 +208,18 @@ def sa_whitespace_rstrip(t, op):
 
 
 def sa_literal(t, op):
-    if op.dtype.is_timestamp() and op.dtype.timezone:
+    dtype = op.dtype
+    value = op.value
+
+    if value is None:
+        return sa.null()
+
+    if dtype.is_timestamp() and dtype.timezone:
         # Sybase ASE does not have a time zoned data type.
-        value = op.value.replace(tzinfo=None)
+        value = value.replace(tzinfo=None)
         return sa.literal(value)
+    elif dtype.is_decimal() or isinstance(value, decimal.Decimal):
+        return sa.literal_column(format(value, "f"))
     else:
         return base_literal(t, op)
 
