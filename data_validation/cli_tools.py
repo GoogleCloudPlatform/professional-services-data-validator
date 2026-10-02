@@ -97,6 +97,12 @@ CONNECTION_SOURCE_FIELDS = {
             "storage_api_endpoint",
             '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://bigquerystorage-mypsc.p.googleapis.com")',
         ],
+        [
+            "storage_api_insecure_channel",
+            "(Optional) Connect to storage_api_endpoint over an insecure (no TLS) gRPC channel "
+            "- for a local BigQuery emulator that serves its Storage API port without TLS "
+            "(defaults to False)",
+        ],
     ],
     consts.SOURCE_TYPE_TERADATA: [
         ["host", "Teradata host"],
@@ -594,6 +600,9 @@ def _configure_database_specific_parsers(parser):
             help_txt = field_obj[1]
             if (
                 field_obj[0] == "thick_mode" and database == consts.SOURCE_TYPE_ORACLE
+            ) or (
+                field_obj[0] == "storage_api_insecure_channel"
+                and database == consts.SOURCE_TYPE_BIGQUERY
             ):  # flag
                 db_parser.add_argument(arg_field, help=help_txt, action="store_true")
             else:
