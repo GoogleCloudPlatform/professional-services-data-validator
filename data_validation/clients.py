@@ -368,10 +368,8 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     allowed_schemas (List[str]): List of schemas to pull.
     """
     table_objs = []
-    schemas = list_databases(client)
+    schemas = allowed_schemas if allowed_schemas is not None else list_databases(client)
     for schema_name in schemas:
-        if allowed_schemas and schema_name not in allowed_schemas:
-            continue
         try:
             tables = list_tables(client, schema_name, tables_only=tables_only)
         except Exception as e:
