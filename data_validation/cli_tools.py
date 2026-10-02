@@ -1718,10 +1718,6 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             tables_list, source_client, target_client
         )
     for table_obj in tables_list:
-        casefold_source_columns = _get_pre_build_configs_base_columns(
-            source_client, table_obj, query_str
-        )
-
         pre_build_configs = {
             "config_type": config_type,
             consts.CONFIG_SOURCE_CONN_NAME: args.source_conn,
@@ -1751,9 +1747,17 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
             # Ensure we don't have too many columns for the engines involved.
-            cols = _get_pre_build_configs_cols_from_arg(
+            row_col_arg = (
                 pre_build_configs[consts.CONFIG_ROW_HASH]
-                or pre_build_configs[consts.CONFIG_ROW_CONCAT],
+                or pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            )
+            casefold_source_columns = (
+                _get_pre_build_configs_base_columns(source_client, table_obj, query_str)
+                if (row_col_arg == "*" or args.exclude_columns)
+                else []
+            )
+            cols = _get_pre_build_configs_cols_from_arg(
+                row_col_arg,
                 casefold_source_columns,
                 args.exclude_columns,
             )

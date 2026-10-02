@@ -310,6 +310,7 @@ def test_successful_connection_add_with_mocked_list_connections(mock_args, mock_
     main.main()
     mock_args.assert_called_once()
     mock_run.assert_called_once()
+    assert mock_run.call_args.kwargs == {"verify_connection": True}
 
 
 @mock.patch(
