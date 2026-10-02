@@ -270,3 +270,67 @@ def test_postgres_decimal_string_cast_compiles_to_char():
     sql = _compile(PostgreSQLCompiler, TABLE.d.cast("string").name("dstr"))
 
     assert "rtrim(to_char(t0.d, :to_char_1), :rtrim_1)" in sql
+
+
+def test_mssql_fillna_inlines_literal():
+    sql = _compile(
+        MsSqlCompiler, TABLE.s.fillna("DEFAULT_REPLACEMENT_STRING").name("ifnull_s")
+    )
+
+    _assert_fragments(
+        sql,
+        ["coalesce(t0.s, 'DEFAULT_REPLACEMENT_STRING')"],
+        [":param_1"],
+    )
+
+
+def test_postgres_fillna_uses_bound_parameter():
+    sql = _compile(
+        PostgreSQLCompiler,
+        TABLE.s.fillna("DEFAULT_REPLACEMENT_STRING").name("ifnull_s"),
+    )
+
+    _assert_fragments(
+        sql,
+        ["coalesce(t0.s, :param_1)"],
+        ["'DEFAULT_REPLACEMENT_STRING'"],
+    )
+
+
+def test_mssql_fillna_rejects_invalid_replacement_string():
+    with pytest.raises(ValueError, match="contains invalid characters"):
+        _compile(MsSqlCompiler, TABLE.s.fillna("bad'val").name("ifnull_s"))
+
+
+def test_mssql_fillna_numeric_literal_not_inlined():
+    sql = _compile(MsSqlCompiler, TABLE.d.fillna(0).name("ifnull_d"))
+
+    assert "coalesce(t0.d, :param_1)" in sql
+
+
+def test_mssql_coalesce_multi_argument():
+    sql_cols = _compile(
+        MsSqlCompiler, ibis.coalesce(TABLE.s, TABLE.s, "X").name("coal")
+    )
+    sql_lits = _compile(MsSqlCompiler, ibis.coalesce(TABLE.s, "A", "X").name("coal"))
+
+    assert "coalesce(t0.s, t0.s, 'X')" in sql_cols
+    assert "coalesce(t0.s, :param_1, 'X')" in sql_lits
+
+
+def test_mssql_coalesce_column_only():
+    sql = _compile(MsSqlCompiler, ibis.coalesce(TABLE.s, TABLE.s).name("coal"))
+
+    assert "coalesce(t0.s, t0.s)" in sql
+
+
+def test_mssql_coalesce_single_argument():
+    sql = _compile(MsSqlCompiler, ibis.coalesce(TABLE.s).name("coal"))
+
+    assert "coalesce(t0.s)" in sql
+
+
+def test_mssql_fillna_empty_string_inlined():
+    sql = _compile(MsSqlCompiler, TABLE.s.fillna("").name("ifnull_s"))
+
+    assert "coalesce(t0.s, '')" in sql

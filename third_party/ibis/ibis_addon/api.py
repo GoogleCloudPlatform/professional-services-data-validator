@@ -15,6 +15,7 @@
 from typing import Iterable, Optional
 import functools
 import inspect
+import re
 
 from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import ibis.expr.datatypes as dt
@@ -24,6 +25,8 @@ import parsy
 import sqlalchemy as sa
 
 from data_validation import consts
+
+_IFNULL_DEFAULT_LITERAL_RE = re.compile(r"[A-Za-z0-9_-]*")
 
 
 def _uuid_string_cast(self):
@@ -240,3 +243,23 @@ def cache_generator_results(func):
         yield from self._generator_cache[key]
 
     return wrapper
+
+
+def check_ifnull_default_literal(val: str) -> None:
+    """Validate an IFNULL replacement token that may be inlined into SQL text.
+
+    Some engines (SQL Server, Db2 z/OS) inline the token as a quoted literal
+    rather than a bind parameter, so only ASCII alphanumerics, underscore and
+    hyphen are permitted.
+
+    Args:
+        val: The replacement token.
+
+    Raises:
+        ValueError: If the token is not a string or contains disallowed characters.
+    """
+    if not isinstance(val, str) or not _IFNULL_DEFAULT_LITERAL_RE.fullmatch(val):
+        raise ValueError(
+            f"IFNULL replacement value {val!r} contains invalid characters. "
+            "Only ASCII alphanumeric, underscore and hyphen characters are allowed."
+        )
