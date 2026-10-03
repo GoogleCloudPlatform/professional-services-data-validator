@@ -25,6 +25,7 @@ non-textual languages.
 
 import datetime
 import dateutil
+import decimal
 import string
 from typing import Union
 
@@ -36,6 +37,7 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 from ibis.backends.base import BaseBackend
+from ibis.backends.base.sql import BaseSQLBackend
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
@@ -470,3 +472,152 @@ if SybaseExprTranslator:
     )
     SybaseExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
     SybaseExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
+
+
+# -------------------------------------------------------------------------
+# Monkey patches for Ibis PyArrow execution
+#
+# Standard upstream Ibis implementations:
+#   - BaseSQLBackend.to_pyarrow_batches (ibis/backends/base/sql/__init__.py):
+#       Calls pa.array(map(tuple, batch), type=array_type) with the statically
+#       inferred schema. If the database cursor returns Decimals or floats with
+#       different precision or scale than statically inferred (e.g. Postgres
+#       STDDEV, AVG, or Decimal conversions), PyArrow throws:
+#       "Rescaling Decimal128 value would cause data loss" or
+#       "tried to convert to double".
+#   - BaseBackend.to_pyarrow (ibis/backends/base/__init__.py):
+#       Calls table.cast(arrow_schema) directly on the entire table. If an aggregate
+#       returns a decimal with a higher scale or precision than the column's static
+#       schema (e.g. STDDEV of numeric(10, 2) returning scale 20), casting directly
+#       to arrow_schema silently truncates significant decimal digits down to scale 2.
+# -------------------------------------------------------------------------
+
+
+def _sql_to_pyarrow_batches(
+    self,
+    expr,
+    *,
+    params=None,
+    limit=None,
+    chunk_size=1_000_000,
+):
+    """Execute expression and return an iterator of pyarrow record batches.
+
+    Deviation from standard Ibis:
+    Instead of forcing each batch into a single StructArray with the statically
+    inferred schema type, this converts each column independently using
+    `pa.array(col)` to let PyArrow preserve the cursor's actual data types and
+    scales (e.g. Postgres DBAPI Decimal values), avoiding rescaling failures.
+    """
+    pa = self._import_pyarrow()
+
+    schema = expr.as_table().schema()
+    names = schema.names
+
+    def _batch_to_record_batch(batch):
+        if not batch:
+            pa_schema = schema.to_pyarrow()
+            return pa.RecordBatch.from_pydict(
+                {name: [] for name in names}, schema=pa_schema
+            )
+        cols = list(zip(*batch))
+
+        def _make_array(col):
+            try:
+                return pa.array(col)
+            except OverflowError:
+                return pa.array(
+                    [decimal.Decimal(str(x)) if isinstance(x, int) else x for x in col]
+                )
+
+        arrays = [_make_array(col) for col in cols]
+        pa_schema = pa.schema(
+            [pa.field(name, arr.type) for name, arr in zip(names, arrays)]
+        )
+        return pa.RecordBatch.from_arrays(arrays, schema=pa_schema)
+
+    batches = list(
+        _batch_to_record_batch(batch)
+        for batch in self._cursor_batches(
+            expr, params=params, limit=limit, chunk_size=chunk_size
+        )
+    )
+    if batches:
+        out_schema = batches[0].schema
+    else:
+        out_schema = schema.to_pyarrow()
+    return pa.ipc.RecordBatchReader.from_batches(out_schema, batches)
+
+
+BaseSQLBackend.to_pyarrow_batches = _sql_to_pyarrow_batches
+
+
+def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
+    """Execute expression and return results as a pyarrow Table.
+
+    Deviation from standard Ibis:
+    Standard Ibis does `table.cast(arrow_schema)`. Here, we inspect each column:
+    if the column in the batch was returned by the database cursor with a higher
+    decimal scale or as a float (e.g. for aggregations like STDDEV or AVG on a
+    decimal column), we preserve the cursor's full precision rather than truncating
+    it down to the column's static schema definition.
+    """
+    pa = self._import_pyarrow()
+    self._run_pre_execute_hooks(expr)
+    table_expr = expr.as_table()
+    arrow_schema = table_expr.schema().to_pyarrow()
+    try:
+        with self.to_pyarrow_batches(
+            table_expr, params=params, limit=limit, **kwargs
+        ) as reader:
+            batches = list(reader)
+            if not batches:
+                return arrow_schema.empty_table()
+            table = pa.Table.from_batches(batches).rename_columns(table_expr.columns)
+            table_arrays = []
+            final_fields = []
+            for name, field in zip(table.column_names, arrow_schema):
+                col = table[name]
+                target_type = field.type
+                # Avoid precision loss when cursor returns higher scale decimal or float for an aggregate,
+                # or when cursor returns timestamp for a date column (e.g. Oracle DATE which stores time).
+                if (
+                    (
+                        pa.types.is_decimal(target_type)
+                        and pa.types.is_decimal(col.type)
+                        and col.type.scale > target_type.scale
+                    )
+                    or (
+                        pa.types.is_decimal(target_type)
+                        and pa.types.is_floating(col.type)
+                    )
+                    or (
+                        pa.types.is_date(target_type)
+                        and pa.types.is_timestamp(col.type)
+                    )
+                ):
+                    target_type = col.type
+                try:
+                    cast_col = col.cast(target_type)
+                except Exception:
+                    try:
+                        cast_col = pa.compute.cast(col, target_type, safe=False)
+                    except Exception:
+                        if pa.types.is_integer(col.type) and pa.types.is_decimal(
+                            target_type
+                        ):
+                            cast_col = pa.compute.cast(
+                                pa.compute.cast(col, pa.string()), target_type
+                            )
+                        else:
+                            raise
+                table_arrays.append(cast_col)
+                final_fields.append(pa.field(name, target_type))
+            return pa.Table.from_arrays(table_arrays, schema=pa.schema(final_fields))
+    except pa.lib.ArrowInvalid:
+        raise
+    except ValueError:
+        return arrow_schema.empty_table()
+
+
+BaseBackend.to_pyarrow = _base_to_pyarrow
