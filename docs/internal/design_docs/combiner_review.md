@@ -39,15 +39,15 @@ end_time: RunMetadata.end_time
 ### ValidationMetadata columns
 The RunMetadata contains a ValidationMetadata object which has a dict of ValidationMetadata objects, indexed by validation_name. The list below shows how the column values are calculated in the results dataframe.
 
-validation_type: validation_metadata.validation_type
-aggregation_type: validation_metadata.aggregation_type
-source_table_name: validation_metadata.source_table_schema + '.' + validation_metadata.source_table_name
-source_column_name: validation_metadata.source_column_name
-target_table_name: validation_metadata.target_table_schema + '.' + validation_metadata.target_table_name
-target_column_name: validation_metadata.target_column_name
-primary_keys: validation_metadata.primary_keys  
-num_random_rows: validation_metadata.num_random_rows
-pct_threshold: validation_metadata.threshold
+validation_type: ValidationMetadata.validation_type
+aggregation_type: ValidationMetadata.aggregation_type
+source_table_name: ValidationMetadata.source_table_schema + '.' + ValidationMetadata.source_table_name
+source_column_name: ValidationMetadata.source_column_name
+target_table_name: ValidationMetadata.target_table_schema + '.' + ValidationMetadata.target_table_name
+target_column_name: ValidationMetadata.target_column_name
+primary_keys: ValidationMetadata.primary_keys  
+num_random_rows: ValidationMetadata.num_random_rows
+pct_threshold: ValidationMetadata.threshold
 
 
 # Related Comments

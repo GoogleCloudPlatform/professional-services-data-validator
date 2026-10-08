@@ -425,6 +425,87 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                 }
             ),
         ),
+        # Source aggregate value is 0:
+        # - count: source=0, target=0 -> difference=0.0, pct_difference=0.0, status=success
+        # - sum__a: source=0, target=5 -> difference=5.0, denominator falls back to target (5),
+        #   so pct_difference=100.0, status=fail
+        (
+            pandas.DataFrame({"count": [0], "sum__a": [0]}),
+            pandas.DataFrame({"count": [0], "sum__a": [5]}),
+            metadata.RunMetadata(
+                validations={
+                    "count": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_table_schema="bq-public.source_dataset",
+                        source_column_name=None,
+                        target_table_name="test_target",
+                        target_table_schema="bq-public.target_dataset",
+                        target_column_name=None,
+                        validation_type="Column",
+                        aggregation_type="count",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "sum__a": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_table_schema="bq-public.source_dataset",
+                        source_column_name="a",
+                        target_table_name="test_target",
+                        target_table_schema="bq-public.target_dataset",
+                        target_column_name="a",
+                        validation_type="Column",
+                        aggregation_type="sum",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=None,
+                labels=[],
+                run_id="test-run",
+            ),
+            pandas.DataFrame(
+                {
+                    consts.CONFIG_RUN_ID: ["test-run"] * 2,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 2,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
+                    consts.SOURCE_TABLE_NAME: [
+                        "bq-public.source_dataset.test_source",
+                        "bq-public.source_dataset.test_source",
+                    ],
+                    consts.SOURCE_COLUMN_NAME: [None, "a"],
+                    consts.TARGET_TABLE_NAME: [
+                        "bq-public.target_dataset.test_target",
+                        "bq-public.target_dataset.test_target",
+                    ],
+                    consts.TARGET_COLUMN_NAME: [None, "a"],
+                    consts.VALIDATION_TYPE: ["Column", "Column"],
+                    consts.AGGREGATION_TYPE: ["count", "sum"],
+                    consts.VALIDATION_NAME: ["count", "sum__a"],
+                    consts.SOURCE_AGG_VALUE: ["0", "0"],
+                    consts.TARGET_AGG_VALUE: ["0", "5"],
+                    consts.GROUP_BY_COLUMNS: [None, None],
+                    consts.CONFIG_PRIMARY_KEYS: [None, None],
+                    consts.NUM_RANDOM_ROWS: [None, None],
+                    consts.VALIDATION_DIFFERENCE: [0.0, 5.0],
+                    consts.VALIDATION_PCT_DIFFERENCE: [0.0, 100.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0, 0.0],
+                    consts.VALIDATION_STATUS: [
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_FAIL,
+                    ],
+                    consts.CONFIG_LABELS: [[]] * 2,
+                }
+            ),
+        ),
     ),
 )
 def test_generate_report_without_group_by(
@@ -677,10 +758,10 @@ def test_generate_report_without_group_by(
                     consts.VALIDATION_PCT_THRESHOLD: [
                         25.0,
                         25.0,
-                        _NAN,
-                        _NAN,
-                        _NAN,
-                        _NAN,
+                        25.0,
+                        25.0,
+                        25.0,
+                        25.0,
                     ],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
@@ -1063,6 +1144,7 @@ def test_generate_report_with_nan_agg_value(
             pandas.DataFrame(
                 {
                     consts.VALIDATION_TYPE: [consts.ROW_VALIDATION] * 5,
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 5,
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
                     + [consts.VALIDATION_STATUS_FAIL] * 3,
                     consts.GROUP_BY_COLUMNS: [
@@ -1151,6 +1233,7 @@ def test_generate_report_with_nan_agg_value(
             pandas.DataFrame(
                 {
                     consts.VALIDATION_TYPE: [consts.COLUMN_VALIDATION] * 5,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 5,
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
                     + [consts.VALIDATION_STATUS_FAIL] * 3,
                     consts.SOURCE_COLUMN_NAME: ["col1", "col2", "col3", "col4", "col5"],
@@ -1318,3 +1401,1446 @@ def test_generate_report_with_binary_data(module_under_test):
     assert consts.TARGET_AGG_VALUE in report.columns
     assert report[consts.SOURCE_AGG_VALUE].iloc[0] == "aced0005"
     assert report[consts.TARGET_AGG_VALUE].iloc[0] == "aced0005"
+
+
+@pytest.mark.parametrize(
+    (
+        "source_table",
+        "target_table",
+        "join_on_fields",
+        "is_value_comparison",
+        "run_metadata",
+        "expected",
+    ),
+    [
+        pytest.param(
+            pyarrow.table(
+                {
+                    "id": [2, 1, 3],
+                    "count": [1, 1, 1],
+                    "count__a": [1, 1, 1],
+                    "count__b": [1, 1, 1],
+                    "sum__a": pyarrow.array(
+                        [
+                            decimal.Decimal("123.220000000"),
+                            decimal.Decimal("123.110000000"),
+                            decimal.Decimal("123.300000000"),
+                        ],
+                        type=pyarrow.decimal128(38, 9),
+                    ),
+                    "avg__b": [123456.2, 123456.1, 123456.3],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "id": [2, 1, 3],
+                    "count": [1, 1, 1],
+                    "count__a": [1, 1, 1],
+                    "count__b": [1, 1, 1],
+                    "sum__a": [123456.2, 123456.1, 123456.3],
+                    "avg__b": pyarrow.array(
+                        [
+                            decimal.Decimal("123456.100000000"),
+                            decimal.Decimal("123456.100000000"),
+                            decimal.Decimal("123456.100000000"),
+                        ],
+                        type=pyarrow.decimal128(38, 9),
+                    ),
+                }
+            ),
+            ("id",),
+            False,
+            metadata.RunMetadata(
+                run_id="d48471f6-baf4-436f-9cdd-878f7d57ef3d",
+                validations={
+                    "avg__b": metadata.ValidationMetadata(
+                        validation_type="Custom-query",
+                        aggregation_type="avg",
+                        source_table_schema=None,
+                        source_table_name=None,
+                        target_table_schema=None,
+                        target_table_name=None,
+                        source_column_name="b",
+                        target_column_name="b",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=30.0,
+                    ),
+                    "count": metadata.ValidationMetadata(
+                        validation_type="Custom-query",
+                        aggregation_type="count",
+                        source_table_schema=None,
+                        source_table_name=None,
+                        target_table_schema=None,
+                        target_table_name=None,
+                        source_column_name=None,
+                        target_column_name=None,
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=30.0,
+                    ),
+                    "count__a": metadata.ValidationMetadata(
+                        validation_type="Custom-query",
+                        aggregation_type="count",
+                        source_table_schema=None,
+                        source_table_name=None,
+                        target_table_schema=None,
+                        target_table_name=None,
+                        source_column_name="a",
+                        target_column_name="a",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=30.0,
+                    ),
+                    "count__b": metadata.ValidationMetadata(
+                        validation_type="Custom-query",
+                        aggregation_type="count",
+                        source_table_schema=None,
+                        source_table_name=None,
+                        target_table_schema=None,
+                        target_table_name=None,
+                        source_column_name="b",
+                        target_column_name="b",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=30.0,
+                    ),
+                    "sum__a": metadata.ValidationMetadata(
+                        validation_type="Custom-query",
+                        aggregation_type="sum",
+                        source_table_schema=None,
+                        source_table_name=None,
+                        target_table_schema=None,
+                        target_table_name=None,
+                        source_column_name="a",
+                        target_column_name="a",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=30.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 28, 17, 45, 49, 338186, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 28, 17, 45, 52, 947991, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: [
+                        "count",
+                        "count",
+                        "count",
+                        "count__a",
+                        "count__a",
+                        "count__a",
+                        "count__b",
+                        "count__b",
+                        "count__b",
+                        "sum__a",
+                        "sum__a",
+                        "sum__a",
+                        "avg__b",
+                        "avg__b",
+                        "avg__b",
+                    ],
+                    consts.VALIDATION_TYPE: ["Custom-query"] * 15,
+                    consts.AGGREGATION_TYPE: [
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "count",
+                        "sum",
+                        "sum",
+                        "sum",
+                        "avg",
+                        "avg",
+                        "avg",
+                    ],
+                    consts.SOURCE_TABLE_NAME: [None] * 15,
+                    consts.SOURCE_COLUMN_NAME: [
+                        None,
+                        None,
+                        None,
+                        "a",
+                        "a",
+                        "a",
+                        "b",
+                        "b",
+                        "b",
+                        "a",
+                        "a",
+                        "a",
+                        "b",
+                        "b",
+                        "b",
+                    ],
+                    consts.SOURCE_AGG_VALUE: [
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "123.220000000",
+                        "123.110000000",
+                        "123.300000000",
+                        "123456.2",
+                        "123456.1",
+                        "123456.3",
+                    ],
+                    consts.TARGET_TABLE_NAME: [None] * 15,
+                    consts.TARGET_COLUMN_NAME: [
+                        None,
+                        None,
+                        None,
+                        "a",
+                        "a",
+                        "a",
+                        "b",
+                        "b",
+                        "b",
+                        "a",
+                        "a",
+                        "a",
+                        "b",
+                        "b",
+                        "b",
+                    ],
+                    consts.TARGET_AGG_VALUE: [
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "1",
+                        "123456.2",
+                        "123456.1",
+                        "123456.3",
+                        "123456.100000000",
+                        "123456.100000000",
+                        "123456.100000000",
+                    ],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "2"}',
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ]
+                    * 5,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 15,
+                    consts.NUM_RANDOM_ROWS: [None] * 15,
+                    consts.VALIDATION_DIFFERENCE: [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        123332.98,
+                        123332.99,
+                        123333.0,
+                        -0.09999999999126885,
+                        0.0,
+                        -0.19999999999708962,
+                    ],
+                    consts.VALIDATION_PCT_DIFFERENCE: [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        100091.6869,
+                        100181.1325,
+                        100026.764,
+                        -0.0001,
+                        0.0,
+                        -0.0002,
+                    ],
+                    consts.VALIDATION_PCT_THRESHOLD: [30.0] * 15,
+                    consts.VALIDATION_STATUS: [
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_FAIL,
+                        consts.VALIDATION_STATUS_FAIL,
+                        consts.VALIDATION_STATUS_FAIL,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                        consts.VALIDATION_STATUS_SUCCESS,
+                    ],
+                    consts.CONFIG_RUN_ID: ["d48471f6-baf4-436f-9cdd-878f7d57ef3d"] * 15,
+                    consts.CONFIG_LABELS: [[]] * 15,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            28,
+                            17,
+                            45,
+                            49,
+                            338186,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 15,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            28,
+                            17,
+                            45,
+                            52,
+                            947991,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 15,
+                }
+            ),
+            id="column_custom_query_with_threshold",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "count": [3],
+                    "count__col_int8": [3],
+                    "count__col_int16": [3],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "count": [3],
+                    "count__col_int8": [3],
+                    "count__col_int16": [3],
+                }
+            ),
+            (),
+            False,
+            metadata.RunMetadata(
+                run_id="186f78e3-0b76-42ff-a02f-64bc5f328d7c",
+                validations={
+                    "count": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name=None,
+                        target_column_name=None,
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "count__col_int16": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int16",
+                        target_column_name="col_int16",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "count__col_int8": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int8",
+                        target_column_name="col_int8",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 15, 17, 41, 49, 885792, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 15, 17, 41, 53, 610613, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: [
+                        "count",
+                        "count__col_int8",
+                        "count__col_int16",
+                    ],
+                    consts.VALIDATION_TYPE: ["Column"] * 3,
+                    consts.AGGREGATION_TYPE: ["count"] * 3,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 3,
+                    consts.SOURCE_COLUMN_NAME: [None, "col_int8", "col_int16"],
+                    consts.SOURCE_AGG_VALUE: ["3", "3", "3"],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 3,
+                    consts.TARGET_COLUMN_NAME: [None, "col_int8", "col_int16"],
+                    consts.TARGET_AGG_VALUE: ["3", "3", "3"],
+                    consts.GROUP_BY_COLUMNS: [None] * 3,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 3,
+                    consts.NUM_RANDOM_ROWS: [None] * 3,
+                    consts.VALIDATION_DIFFERENCE: [0.0, 0.0, 0.0],
+                    consts.VALIDATION_PCT_DIFFERENCE: [0.0, 0.0, 0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0, 0.0, 0.0],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 3,
+                    consts.CONFIG_RUN_ID: ["186f78e3-0b76-42ff-a02f-64bc5f328d7c"] * 3,
+                    consts.CONFIG_LABELS: [[]] * 3,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            15,
+                            17,
+                            41,
+                            49,
+                            885792,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 3,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            15,
+                            17,
+                            41,
+                            53,
+                            610613,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 3,
+                }
+            ),
+            id="column_validation",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "id": [2, 1, 3],
+                    "count": [1, 1, 1],
+                    "count__col_int8": [1, 1, 1],
+                    "count__col_int16": [1, 1, 1],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "id": [2, 1, 3],
+                    "count": [1, 1, 1],
+                    "count__col_int8": [1, 1, 1],
+                    "count__col_int16": [1, 1, 1],
+                }
+            ),
+            ("id",),
+            False,
+            metadata.RunMetadata(
+                run_id="2e8bc264-22a8-4d0c-9605-f9c92daec4e0",
+                validations={
+                    "count": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name=None,
+                        target_column_name=None,
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "count__col_int16": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int16",
+                        target_column_name="col_int16",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "count__col_int8": metadata.ValidationMetadata(
+                        validation_type="Column",
+                        aggregation_type="count",
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int8",
+                        target_column_name="col_int8",
+                        primary_keys=[],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 15, 19, 21, 0, 253135, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 15, 19, 21, 3, 252970, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: [
+                        "count",
+                        "count",
+                        "count",
+                        "count__col_int8",
+                        "count__col_int8",
+                        "count__col_int8",
+                        "count__col_int16",
+                        "count__col_int16",
+                        "count__col_int16",
+                    ],
+                    consts.VALIDATION_TYPE: ["Column"] * 9,
+                    consts.AGGREGATION_TYPE: ["count"] * 9,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 9,
+                    consts.SOURCE_COLUMN_NAME: [
+                        None,
+                        None,
+                        None,
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int16",
+                        "col_int16",
+                        "col_int16",
+                    ],
+                    consts.SOURCE_AGG_VALUE: ["1"] * 9,
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 9,
+                    consts.TARGET_COLUMN_NAME: [
+                        None,
+                        None,
+                        None,
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int16",
+                        "col_int16",
+                        "col_int16",
+                    ],
+                    consts.TARGET_AGG_VALUE: ["1"] * 9,
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "2"}',
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ]
+                    * 3,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 9,
+                    consts.NUM_RANDOM_ROWS: [None] * 9,
+                    consts.VALIDATION_DIFFERENCE: [0.0] * 9,
+                    consts.VALIDATION_PCT_DIFFERENCE: [0.0] * 9,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 9,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 9,
+                    consts.CONFIG_RUN_ID: ["2e8bc264-22a8-4d0c-9605-f9c92daec4e0"] * 9,
+                    consts.CONFIG_LABELS: [[]] * 9,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026, 9, 15, 19, 21, 0, 253135, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 9,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026, 9, 15, 19, 21, 3, 252970, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 9,
+                }
+            ),
+            id="column_validation_with_grouped_by",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "col_int8": pyarrow.array([2, 1, 3], type=pyarrow.int8()),
+                    "col_int64": pyarrow.array([2, 1, 3], type=pyarrow.int64()),
+                    "col_dec_20": pyarrow.array(
+                        [
+                            decimal.Decimal("12345678901234567890.000000000"),
+                            decimal.Decimal("12345678901234567890.000000000"),
+                            decimal.Decimal("12345678901234567890.000000000"),
+                        ],
+                        type=pyarrow.decimal128(38, 9),
+                    ),
+                    "col_float32": pyarrow.array(
+                        [123456.2, 123456.1, 123456.3], type=pyarrow.float64()
+                    ),
+                    "col_varchar_30": pyarrow.array(
+                        ["Hello DVT", "Hello DVT", "Hello DVT"], type=pyarrow.string()
+                    ),
+                    "col_date": pyarrow.array(
+                        [
+                            datetime.date(1970, 1, 2),
+                            datetime.date(1970, 1, 1),
+                            datetime.date(1970, 1, 3),
+                        ],
+                        type=pyarrow.date32(),
+                    ),
+                    "col_tstz": pyarrow.array(
+                        [
+                            datetime.datetime(
+                                1970, 1, 2, 2, 0, 2, tzinfo=datetime.timezone.utc
+                            ),
+                            datetime.datetime(
+                                1970, 1, 1, 1, 0, 1, tzinfo=datetime.timezone.utc
+                            ),
+                            datetime.datetime(
+                                1970, 1, 3, 3, 0, 3, tzinfo=datetime.timezone.utc
+                            ),
+                        ],
+                        type=pyarrow.timestamp("us", tz="UTC"),
+                    ),
+                    "id": pyarrow.array([2, 1, 3], type=pyarrow.int64()),
+                }
+            ),
+            pyarrow.table(
+                {
+                    "col_int8": pyarrow.array([2, 1, 3], type=pyarrow.int8()),
+                    "col_int64": pyarrow.array([2, 1, 3], type=pyarrow.int64()),
+                    "col_dec_20": pyarrow.array(
+                        [
+                            decimal.Decimal("12345678901234567890.000000000"),
+                            decimal.Decimal("12345678901234567890.000000000"),
+                            decimal.Decimal("12345678901234567890.000000000"),
+                        ],
+                        type=pyarrow.decimal128(38, 9),
+                    ),
+                    "col_float32": pyarrow.array(
+                        [123456.2, 123456.1, 123456.3], type=pyarrow.float64()
+                    ),
+                    "col_varchar_30": pyarrow.array(
+                        ["Hello DVT", "Hello DVT", "Hello DVT"], type=pyarrow.string()
+                    ),
+                    "col_date": pyarrow.array(
+                        [
+                            datetime.date(1970, 1, 2),
+                            datetime.date(1970, 1, 1),
+                            datetime.date(1970, 1, 3),
+                        ],
+                        type=pyarrow.date32(),
+                    ),
+                    "col_tstz": pyarrow.array(
+                        [
+                            datetime.datetime(
+                                1970, 1, 2, 2, 0, 2, tzinfo=datetime.timezone.utc
+                            ),
+                            datetime.datetime(
+                                1970, 1, 1, 1, 0, 1, tzinfo=datetime.timezone.utc
+                            ),
+                            datetime.datetime(
+                                1970, 1, 3, 3, 0, 3, tzinfo=datetime.timezone.utc
+                            ),
+                        ],
+                        type=pyarrow.timestamp("us", tz="UTC"),
+                    ),
+                    "id": pyarrow.array([2, 1, 3], type=pyarrow.int64()),
+                }
+            ),
+            ("id",),
+            True,
+            metadata.RunMetadata(
+                run_id="ea8a48b2-b4ba-4275-b58c-85b2b75fa3ed",
+                validations={
+                    "col_date": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_date",
+                        target_column_name="col_date",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_dec_20": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_dec_20",
+                        target_column_name="col_dec_20",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_float32": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_float32",
+                        target_column_name="col_float32",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_int64": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int64",
+                        target_column_name="col_int64",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_int8": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int8",
+                        target_column_name="col_int8",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_tstz": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_tstz",
+                        target_column_name="col_tstz",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_varchar_30": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_varchar_30",
+                        target_column_name="col_varchar_30",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 27, 22, 16, 26, 52563, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 27, 22, 16, 28, 937587, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int64",
+                        "col_int64",
+                        "col_int64",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_float32",
+                        "col_float32",
+                        "col_float32",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_date",
+                        "col_date",
+                        "col_date",
+                        "col_tstz",
+                        "col_tstz",
+                        "col_tstz",
+                    ],
+                    consts.VALIDATION_TYPE: ["Row"] * 21,
+                    consts.AGGREGATION_TYPE: [None] * 21,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"]
+                    * 21,
+                    consts.SOURCE_COLUMN_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int64",
+                        "col_int64",
+                        "col_int64",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_float32",
+                        "col_float32",
+                        "col_float32",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_date",
+                        "col_date",
+                        "col_date",
+                        "col_tstz",
+                        "col_tstz",
+                        "col_tstz",
+                    ],
+                    consts.SOURCE_AGG_VALUE: [
+                        "2",
+                        "1",
+                        "3",
+                        "2",
+                        "1",
+                        "3",
+                        "12345678901234567890.000000000",
+                        "12345678901234567890.000000000",
+                        "12345678901234567890.000000000",
+                        "123456.2",
+                        "123456.1",
+                        "123456.3",
+                        "Hello DVT",
+                        "Hello DVT",
+                        "Hello DVT",
+                        "1970-01-02",
+                        "1970-01-01",
+                        "1970-01-03",
+                        "1970-01-02 02:00:02+00:00",
+                        "1970-01-01 01:00:01+00:00",
+                        "1970-01-03 03:00:03+00:00",
+                    ],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"]
+                    * 21,
+                    consts.TARGET_COLUMN_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int64",
+                        "col_int64",
+                        "col_int64",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_dec_20",
+                        "col_float32",
+                        "col_float32",
+                        "col_float32",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_varchar_30",
+                        "col_date",
+                        "col_date",
+                        "col_date",
+                        "col_tstz",
+                        "col_tstz",
+                        "col_tstz",
+                    ],
+                    consts.TARGET_AGG_VALUE: [
+                        "2",
+                        "1",
+                        "3",
+                        "2",
+                        "1",
+                        "3",
+                        "12345678901234567890.000000000",
+                        "12345678901234567890.000000000",
+                        "12345678901234567890.000000000",
+                        "123456.2",
+                        "123456.1",
+                        "123456.3",
+                        "Hello DVT",
+                        "Hello DVT",
+                        "Hello DVT",
+                        "1970-01-02",
+                        "1970-01-01",
+                        "1970-01-03",
+                        "1970-01-02 02:00:02+00:00",
+                        "1970-01-01 01:00:01+00:00",
+                        "1970-01-03 03:00:03+00:00",
+                    ],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "2"}',
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ]
+                    * 7,
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 21,
+                    consts.NUM_RANDOM_ROWS: [None] * 21,
+                    consts.VALIDATION_DIFFERENCE: [_NAN] * 21,
+                    consts.VALIDATION_PCT_DIFFERENCE: [_NAN] * 21,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 21,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 21,
+                    consts.CONFIG_RUN_ID: ["ea8a48b2-b4ba-4275-b58c-85b2b75fa3ed"] * 21,
+                    consts.CONFIG_LABELS: [[]] * 21,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026, 9, 27, 22, 16, 26, 52563, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 21,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            27,
+                            22,
+                            16,
+                            28,
+                            937587,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 21,
+                }
+            ),
+            id="comp_row_many_types_validation",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "col_int8": [2, 1, 3],
+                    "col_int16": [2, 1, 3],
+                    "id": [2, 1, 3],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "col_int8": [2, 1, 3],
+                    "col_int16": [2, 1, 3],
+                    "id": [2, 1, 3],
+                }
+            ),
+            ("id",),
+            True,
+            metadata.RunMetadata(
+                run_id="cb07cc0e-252e-4204-b07f-c220175c0a75",
+                validations={
+                    "col_int16": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int16",
+                        target_column_name="col_int16",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "col_int8": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="col_int8",
+                        target_column_name="col_int8",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 18, 16, 31, 9, 788079, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 18, 16, 31, 14, 127144, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int16",
+                        "col_int16",
+                        "col_int16",
+                    ],
+                    consts.VALIDATION_TYPE: ["Row"] * 6,
+                    consts.AGGREGATION_TYPE: [None] * 6,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 6,
+                    consts.SOURCE_COLUMN_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int16",
+                        "col_int16",
+                        "col_int16",
+                    ],
+                    consts.SOURCE_AGG_VALUE: ["2", "1", "3", "2", "1", "3"],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 6,
+                    consts.TARGET_COLUMN_NAME: [
+                        "col_int8",
+                        "col_int8",
+                        "col_int8",
+                        "col_int16",
+                        "col_int16",
+                        "col_int16",
+                    ],
+                    consts.TARGET_AGG_VALUE: ["2", "1", "3", "2", "1", "3"],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "2"}',
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ]
+                    * 2,
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 6,
+                    consts.NUM_RANDOM_ROWS: [None] * 6,
+                    consts.VALIDATION_DIFFERENCE: [_NAN] * 6,
+                    consts.VALIDATION_PCT_DIFFERENCE: [_NAN] * 6,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 6,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 6,
+                    consts.CONFIG_RUN_ID: ["cb07cc0e-252e-4204-b07f-c220175c0a75"] * 6,
+                    consts.CONFIG_LABELS: [[]] * 6,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026, 9, 18, 16, 31, 9, 788079, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 6,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            18,
+                            16,
+                            31,
+                            14,
+                            127144,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 6,
+                }
+            ),
+            id="comp_row_validation",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "hash__all": [
+                        "37303565336232333937366431356239333734646166383037373434373961653137333664653731353637343665653235636361316138313333656633653735",
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    "id": [2, 1, 3],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "hash__all": [
+                        "37303565336232333937366431356239333734646166383037373434373961653137333664653731353637343665653235636361316138313333656633653735",
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    "id": [2, 1, 3],
+                }
+            ),
+            ("id",),
+            True,
+            metadata.RunMetadata(
+                run_id="17afba6b-e05a-4bad-ad18-d7ceb7d1ad2a",
+                validations={
+                    "hash__all": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="hash__all",
+                        target_column_name="hash__all",
+                        primary_keys=["id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 15, 19, 27, 49, 142728, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 15, 19, 27, 52, 707596, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: ["hash__all"] * 3,
+                    consts.VALIDATION_TYPE: ["Row"] * 3,
+                    consts.AGGREGATION_TYPE: [None] * 3,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 3,
+                    consts.SOURCE_COLUMN_NAME: ["hash__all"] * 3,
+                    consts.SOURCE_AGG_VALUE: [
+                        "37303565336232333937366431356239333734646166383037373434373961653137333664653731353637343665653235636361316138313333656633653735",
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 3,
+                    consts.TARGET_COLUMN_NAME: ["hash__all"] * 3,
+                    consts.TARGET_AGG_VALUE: [
+                        "37303565336232333937366431356239333734646166383037373434373961653137333664653731353637343665653235636361316138313333656633653735",
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "2"}',
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ],
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 3,
+                    consts.NUM_RANDOM_ROWS: [None] * 3,
+                    consts.VALIDATION_DIFFERENCE: [_NAN] * 3,
+                    consts.VALIDATION_PCT_DIFFERENCE: [_NAN] * 3,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 3,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 3,
+                    consts.CONFIG_RUN_ID: ["17afba6b-e05a-4bad-ad18-d7ceb7d1ad2a"] * 3,
+                    consts.CONFIG_LABELS: [[]] * 3,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            15,
+                            19,
+                            27,
+                            49,
+                            142728,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 3,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            15,
+                            19,
+                            27,
+                            52,
+                            707596,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 3,
+                }
+            ),
+            id="row_validation",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "binary_id": pyarrow.array(
+                        [
+                            bytes.fromhex("4456542d6b65792d35"),
+                            bytes.fromhex("4456542d6b65792d34"),
+                            bytes.fromhex("4456542d6b65792d33"),
+                            bytes.fromhex("4456542d6b65792d32"),
+                            bytes.fromhex("4456542d6b65792d31"),
+                        ],
+                        type=pyarrow.binary(),
+                    ),
+                    "other_data": ["Row 5", "Row 4", "Row 3", "Row 2", "Row 1"],
+                    "int_id": [5, 4, 3, 2, 1],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "binary_id": pyarrow.array(
+                        [
+                            bytes.fromhex("4456542d6b65792d35"),
+                            bytes.fromhex("4456542d6b65792d34"),
+                            bytes.fromhex("4456542d6b65792d33"),
+                            bytes.fromhex("4456542d6b65792d32"),
+                            bytes.fromhex("4456542d6b65792d31"),
+                        ],
+                        type=pyarrow.binary(),
+                    ),
+                    "other_data": ["Row 5", "Row 4", "Row 3", "Row 2", "Row 1"],
+                    "int_id": [5, 4, 3, 2, 1],
+                }
+            ),
+            ("int_id",),
+            True,
+            metadata.RunMetadata(
+                run_id="174a2bdb-265c-4230-9b51-cb8178285709",
+                validations={
+                    "binary_id": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_binary",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_binary",
+                        source_column_name="binary_id",
+                        target_column_name="binary_id",
+                        primary_keys=["int_id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                    "other_data": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_binary",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_binary",
+                        source_column_name="other_data",
+                        target_column_name="other_data",
+                        primary_keys=["int_id"],
+                        num_random_rows=None,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 28, 1, 23, 38, 293669, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 28, 1, 23, 41, 256741, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: ["binary_id"] * 5 + ["other_data"] * 5,
+                    consts.VALIDATION_TYPE: ["Row"] * 10,
+                    consts.AGGREGATION_TYPE: [None] * 10,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_binary"] * 10,
+                    consts.SOURCE_COLUMN_NAME: ["binary_id"] * 5 + ["other_data"] * 5,
+                    consts.SOURCE_AGG_VALUE: [
+                        "4456542d6b65792d35",
+                        "4456542d6b65792d34",
+                        "4456542d6b65792d33",
+                        "4456542d6b65792d32",
+                        "4456542d6b65792d31",
+                        "Row 5",
+                        "Row 4",
+                        "Row 3",
+                        "Row 2",
+                        "Row 1",
+                    ],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_binary"] * 10,
+                    consts.TARGET_COLUMN_NAME: ["binary_id"] * 5 + ["other_data"] * 5,
+                    consts.TARGET_AGG_VALUE: [
+                        "4456542d6b65792d35",
+                        "4456542d6b65792d34",
+                        "4456542d6b65792d33",
+                        "4456542d6b65792d32",
+                        "4456542d6b65792d31",
+                        "Row 5",
+                        "Row 4",
+                        "Row 3",
+                        "Row 2",
+                        "Row 1",
+                    ],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"int_id": "5"}',
+                        '{"int_id": "4"}',
+                        '{"int_id": "3"}',
+                        '{"int_id": "2"}',
+                        '{"int_id": "1"}',
+                    ]
+                    * 2,
+                    consts.CONFIG_PRIMARY_KEYS: ["{int_id}"] * 10,
+                    consts.NUM_RANDOM_ROWS: [None] * 10,
+                    consts.VALIDATION_DIFFERENCE: [_NAN] * 10,
+                    consts.VALIDATION_PCT_DIFFERENCE: [_NAN] * 10,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 10,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 10,
+                    consts.CONFIG_RUN_ID: ["174a2bdb-265c-4230-9b51-cb8178285709"] * 10,
+                    consts.CONFIG_LABELS: [[]] * 10,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026, 9, 28, 1, 23, 38, 293669, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 10,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026, 9, 28, 1, 23, 41, 256741, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 10,
+                }
+            ),
+            id="row_validation_comparison_binary",
+        ),
+        pytest.param(
+            pyarrow.table(
+                {
+                    "hash__all": [
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    "id": [1, 3],
+                }
+            ),
+            pyarrow.table(
+                {
+                    "hash__all": [
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    "id": [1, 3],
+                }
+            ),
+            ("id",),
+            True,
+            metadata.RunMetadata(
+                run_id="e91b0d8a-560e-4118-9e97-6095fdf094ba",
+                validations={
+                    "hash__all": metadata.ValidationMetadata(
+                        validation_type="Row",
+                        aggregation_type=None,
+                        source_table_schema="pso_data_validator",
+                        source_table_name="dvt_core_types",
+                        target_table_schema="pso_data_validator",
+                        target_table_name="dvt_core_types",
+                        source_column_name="hash__all",
+                        target_column_name="hash__all",
+                        primary_keys=["id"],
+                        num_random_rows=2,
+                        threshold=0.0,
+                    ),
+                },
+                labels=[],
+                start_time=datetime.datetime(
+                    2026, 9, 30, 21, 47, 5, 427114, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2026, 9, 30, 21, 47, 13, 752809, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_NAME: ["hash__all"] * 2,
+                    consts.VALIDATION_TYPE: ["Row"] * 2,
+                    consts.AGGREGATION_TYPE: [None] * 2,
+                    consts.SOURCE_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 2,
+                    consts.SOURCE_COLUMN_NAME: ["hash__all"] * 2,
+                    consts.SOURCE_AGG_VALUE: [
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    consts.TARGET_TABLE_NAME: ["pso_data_validator.dvt_core_types"] * 2,
+                    consts.TARGET_COLUMN_NAME: ["hash__all"] * 2,
+                    consts.TARGET_AGG_VALUE: [
+                        "34393339646532373033376632303836323265323861303434393331313030333162373036376439326365306564656234613663383138313536623139623239",
+                        "33386232393965356262326632333034633136653233663763616233333037326236666536313966646163653832343330383130393566646431333466653531",
+                    ],
+                    consts.GROUP_BY_COLUMNS: [
+                        '{"id": "1"}',
+                        '{"id": "3"}',
+                    ],
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 2,
+                    consts.NUM_RANDOM_ROWS: [2, 2],
+                    consts.VALIDATION_DIFFERENCE: [_NAN] * 2,
+                    consts.VALIDATION_PCT_DIFFERENCE: [_NAN] * 2,
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0] * 2,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2,
+                    consts.CONFIG_RUN_ID: ["e91b0d8a-560e-4118-9e97-6095fdf094ba"] * 2,
+                    consts.CONFIG_LABELS: [[]] * 2,
+                    consts.CONFIG_START_TIME: [
+                        datetime.datetime(
+                            2026, 9, 30, 21, 47, 5, 427114, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
+                    consts.CONFIG_END_TIME: [
+                        datetime.datetime(
+                            2026,
+                            9,
+                            30,
+                            21,
+                            47,
+                            13,
+                            752809,
+                            tzinfo=datetime.timezone.utc,
+                        )
+                    ]
+                    * 2,
+                }
+            ),
+            id="row_validation_random_row",
+        ),
+    ],
+)
+def test_generate_report_captured_reports(
+    module_under_test,
+    source_table,
+    target_table,
+    join_on_fields,
+    is_value_comparison,
+    run_metadata,
+    expected,
+):
+    with freeze_time(run_metadata.end_time):
+        report = module_under_test.generate_report(
+            run_metadata,
+            source_table,
+            target_table,
+            join_on_fields=join_on_fields,
+            is_value_comparison=is_value_comparison,
+        )
+    sort_cols = [consts.VALIDATION_NAME]
+    if join_on_fields:
+        sort_cols.append(consts.GROUP_BY_COLUMNS)
+    report = (
+        report.sort_values(sort_cols, key=lambda s: s.astype(str))
+        .reset_index(drop=True)
+        .reindex(sorted(report.columns), axis=1)
+    )
+    expected = (
+        expected.sort_values(sort_cols, key=lambda s: s.astype(str))
+        .reset_index(drop=True)
+        .reindex(sorted(expected.columns), axis=1)
+    )
+    _assert_frame_equal(report, expected)
