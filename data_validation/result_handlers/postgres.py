@@ -15,6 +15,7 @@
 """Output validation report to PostgreSQL table"""
 
 import logging
+from threading import Lock
 from typing import Iterable, Optional, TYPE_CHECKING
 
 import numpy
@@ -31,6 +32,9 @@ from data_validation.result_handlers.base_backend import (
 if TYPE_CHECKING:
     from pandas import DataFrame
     from ibis.backends.base import BaseBackend
+
+
+_TABLE_INITIALIZATION_LOCK = Lock()
 
 
 def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
@@ -161,7 +165,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
             _ = clients.get_ibis_table(self._client, schema_name, table_name)
             # Do nothing, the table exists.
         except sqlalchemy.exc.NoSuchTableError:
-            self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
+            with _TABLE_INITIALIZATION_LOCK:
+                try:
+                    clients.get_ibis_table(self._client, schema_name, table_name)
+                except sqlalchemy.exc.NoSuchTableError:
+                    self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
 
         if not result_df.empty:
             self._dataframe_to_sql(schema_name, table_name, result_df)
