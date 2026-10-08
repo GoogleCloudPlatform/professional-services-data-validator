@@ -567,7 +567,9 @@ data-validation
   [--config-file or -c CONFIG_FILE]
                         Path to YAML config file to run. Supports local and GCS paths.
   [--config-dir or -cdir CONFIG_DIR]
-                        Directory path containing YAML configs to be run sequentially. Supports local and GCS paths.
+                        Directory path containing YAML configs to run. Supports local and GCS paths.
+  [--concurrency N]     Maximum YAML files to run concurrently with --config-dir. Defaults to 1 (serial).
+                        Values greater than 1 cannot be used with --kube-completions or without --config-dir.
   [--dry-run or -dr]    If this flag is present, prints the source and target SQL generated in lieu of running the validation.
   [--kube-completions or -kc]
                         Flag to indicate usage in Kubernetes index completion mode.
@@ -590,6 +592,35 @@ View the complete YAML file for a Grouped Column validation on the
 
 
 ### Scaling DVT
+
+To run an existing directory of YAML configs concurrently in one local DVT process:
+
+```shell
+data-validation configs run --config-dir ./configs --concurrency 4
+```
+
+The default is serial execution in sorted file-name order. With `--concurrency N`,
+up to N files run in a rolling thread pool; validations within each file remain
+serial. Each file builds its own source and target clients and attempts cleanup
+using DVT's existing backend-specific cleanup helper when it finishes. All files
+are attempted even if one fails to load or execute, and the command raises a
+validation exception after the files have finished if any raised an exception.
+A reported validation status of `fail` is not itself an execution exception.
+
+Complete text reports and dry-run SQL blocks are printed without interleaving
+with each other, but their order is not guaranteed. Logs from different files
+can be interleaved; validation-start logs include the run ID and config file.
+Concurrent CSV/JSON reports retain the existing per-validation format, rather
+than becoming a single combined CSV or JSON document.
+
+Choose the worker count based on database query and connection limits and local
+memory. Source and target queries can already run concurrently within a
+validation, and large row validations can consume substantial memory. This
+option controls files, not the total number of connections or queries.
+Values greater than 1 require `--config-dir` and cannot be combined with
+`--kube-completions`; indexed Kubernetes and Cloud Run jobs still select one
+file per task. See [Config Directory Concurrency](docs/internal/config_concurrency.md)
+for more details.
 
 You can scale DVT for large validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](docs/internal/distributed_jobs.md) for a detailed overview.
 

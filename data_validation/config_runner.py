@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 import os
 from typing import Optional
 
@@ -77,13 +78,14 @@ def _list_validation_files(config_dir: str) -> list:
 
 
 def _run_config_files(args, config_file_names: list):
-    """Run the validations held in each of config_file_names, in sequence.
+    """Run the validations held in each file with bounded optional concurrency.
 
     A failure in one file does not prevent the remaining files from running, instead all
     failures are logged and a single exception is raised once they have all been attempted.
     """
-    errors = False
-    for file in config_file_names:
+
+    def run_config_file(file):
+        config_managers = []
         try:
             logging.info(
                 "Currently running the validation for YAML file: %s",
@@ -92,13 +94,27 @@ def _run_config_files(args, config_file_names: list):
             config_managers = build_config_managers_from_yaml(args, file)
             run_validations(args, config_managers)
         except Exception as e:
-            errors = True
             logging.error(
                 "Error '%s' occurred while running config file %s. Skipping it for now.",
                 str(e),
                 file,
                 exc_info=True,
             )
+            return False
+        finally:
+            if config_managers and hasattr(
+                config_managers[0], "close_client_connections"
+            ):
+                config_managers[0].close_client_connections()
+        return True
+
+    concurrency = getattr(args, "concurrency", 1)
+    if concurrency > 1:
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            outcomes = list(executor.map(run_config_file, config_file_names))
+    else:
+        outcomes = [run_config_file(file) for file in config_file_names]
+    errors = not all(outcomes)
     if errors:
         raise exceptions.ValidationException(
             "Some of the validations raised an exception"
@@ -141,6 +157,14 @@ def config_runner(args):
     file corresponding to its index in the sorted list. The number of tasks/completions should
     match the number of validation YAML files in the directory.
     """
+    if getattr(args, "concurrency", 1) > 1:
+        if not args.config_dir:
+            raise ValueError("--concurrency greater than 1 requires --config-dir.")
+        if args.kube_completions:
+            raise ValueError(
+                "--concurrency greater than 1 cannot be used with --kube-completions."
+            )
+
     if args.config_dir:
         if args.kube_completions and (job_index := _get_job_index()) is not None:
             # Running in Kubernetes / Cloud Run Job completions - only run the YAML file for this index
@@ -186,7 +210,6 @@ def config_runner(args):
             config_managers = build_config_managers_from_yaml(args, config_file_path)
             run_validations(args, config_managers)
         else:
-            # Sequentially process all validation YAML files in the directory
             if args.kube_completions:
                 logging.warning(
                     "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
