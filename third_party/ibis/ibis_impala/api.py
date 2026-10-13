@@ -250,6 +250,13 @@ ImpalaBackend.list_primary_key_columns = _list_primary_key_columns
 ImpalaBackend.dvt_list_tables = _dvt_list_tables
 
 
+def _to_bool(value) -> bool:
+    """Options given to "connections add" are stored as strings, e.g. "False"."""
+    if isinstance(value, str):
+        return value.strip().lower() in ("true", "t", "yes", "y", "1")
+    return bool(value)
+
+
 def impala_connect(
     host: str = "localhost",
     port: int = 10000,
@@ -266,6 +273,13 @@ def impala_connect(
     use_http_transport: bool = False,
     http_path: str = "",
 ):
+    # Options given to "connections add" are stored as strings, impyla needs
+    # the numeric and boolean ones in their real type.
+    port = int(port)
+    timeout = int(timeout)
+    pool_size = int(pool_size)
+    use_ssl = _to_bool(use_ssl)
+    use_http_transport = _to_bool(use_http_transport)
     backend = ibis.impala.connect(
         host=host,
         port=port,
