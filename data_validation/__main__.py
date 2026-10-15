@@ -552,7 +552,21 @@ def validate(args):
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
 
 
+def _use_utf8_stdout():
+    """Make sure results containing non-ASCII characters can be printed.
+
+    On Windows a redirected stdout uses a legacy code page, such as cp1252,
+    which cannot encode every character found in validation results.
+    """
+    encoding = getattr(sys.stdout, "encoding", None) or ""
+    if encoding.lower().replace("-", "") != "utf8" and hasattr(
+        sys.stdout, "reconfigure"
+    ):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+
 def main():
+    _use_utf8_stdout()
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
     logging.basicConfig(

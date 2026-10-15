@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import argparse
+import io
+import sys
 from unittest import mock
 import pytest
 
@@ -560,3 +562,21 @@ def test_build_config_managers_from_args_raises_build_config_exception_when_tabl
 
     assert "Validation build failed: Invalid schema" in str(exc_info.value)
     assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+def test_use_utf8_stdout(monkeypatch):
+    """A cp1252 stdout, as on Windows when redirected, must not fail on other characters."""
+    buffer = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(buffer, encoding="cp1252"))
+    main._use_utf8_stdout()
+    print("caf\u00e9 \x81 \u65e5\u672c")
+    sys.stdout.flush()
+    assert buffer.getvalue().decode("utf-8").strip() == "caf\u00e9 \x81 \u65e5\u672c"
+
+
+def test_use_utf8_stdout_not_reconfigurable(monkeypatch):
+    """A replaced stdout without reconfigure(), e.g. io.StringIO, is left alone."""
+    stdout = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    assert sys.stdout is stdout
