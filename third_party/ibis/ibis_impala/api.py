@@ -17,7 +17,7 @@ import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
 from ibis.backends.impala.client import ImpalaConnection
 
-from typing import Literal
+from typing import Literal, Union
 
 from ibis.backends.impala import udf
 from ibis.backends.impala.compiler import rewrites
@@ -259,24 +259,24 @@ def _to_bool(value) -> bool:
 
 def impala_connect(
     host: str = "localhost",
-    port: int = 10000,
+    port: Union[int, str] = 10000,
     database: str = "default",
-    timeout: int = 45,
-    use_ssl: bool = False,
+    timeout: Union[int, float, str, None] = 45,
+    use_ssl: Union[bool, str] = False,
     ca_cert: str = None,
     user: str = None,
     password: str = None,
     auth_mechanism: Literal["NOSASL", "PLAIN", "GSSAPI", "LDAP"] = "PLAIN",
     kerberos_service_name: str = "impala",
-    pool_size: int = 8,
+    pool_size: Union[int, str] = 8,
     hdfs_client: fsspec.spec.AbstractFileSystem = None,
-    use_http_transport: bool = False,
+    use_http_transport: Union[bool, str] = False,
     http_path: str = "",
 ):
     # Options given to "connections add" are stored as strings, impyla needs
     # the numeric and boolean ones in their real type.
     port = int(port)
-    timeout = int(timeout)
+    timeout = None if timeout is None else float(timeout)
     pool_size = int(pool_size)
     use_ssl = _to_bool(use_ssl)
     use_http_transport = _to_bool(use_http_transport)
