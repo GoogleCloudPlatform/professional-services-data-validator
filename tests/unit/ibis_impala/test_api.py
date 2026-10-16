@@ -57,6 +57,17 @@ def test_impala_connect_typed_options(module_under_test):
 
 @pytest.mark.parametrize(
     "value,expected",
+    [("0.5", 0.5), (0.5, 0.5), ("30", 30), (None, None)],
+)
+def test_impala_connect_timeout(module_under_test, value, expected):
+    """A fractional timeout must not be truncated to 0, and None means no timeout."""
+    with mock.patch("ibis.impala.connect") as mock_connect:
+        module_under_test.impala_connect(timeout=value)
+    assert mock_connect.call_args.kwargs["timeout"] == expected
+
+
+@pytest.mark.parametrize(
+    "value,expected",
     [
         ("true", True),
         ("True", True),
