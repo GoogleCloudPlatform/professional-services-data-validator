@@ -31,7 +31,7 @@ RUN pip install ${PIPOPTS} google_pso_data_validator
 # RUN pip install ${PIPOPTS} 'ibis-framework[impala]'
 # RUN pip install ${PIPOPTS} oracledb
 # RUN pip install ${PIPOPTS} pyodbc
-# RUN pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
+# RUN pip install ${PIPOPTS} snowflake-sqlalchemy
 # RUN pip install ${PIPOPTS} teradatasql
 
 ENTRYPOINT ["python","-m","data_validation"]
