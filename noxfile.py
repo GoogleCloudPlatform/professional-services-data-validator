@@ -46,7 +46,6 @@ UNIT_PACKAGES = [
     "freezegun",
     "oracledb",
     "teradatasql",
-    "snowflake-connector-python",
     "snowflake-sqlalchemy",
 ]
 
@@ -306,7 +305,7 @@ def integration_snowflake(session):
     # TODO Remove pinned version below when working on issue-1592.
     _setup_session_requirements(
         session,
-        extra_packages=["snowflake-sqlalchemy==1.7.6", "snowflake-connector-python"],
+        extra_packages=["snowflake-sqlalchemy==1.7.6"],
     )
 
     expected_env_vars = [

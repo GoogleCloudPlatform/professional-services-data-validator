@@ -42,7 +42,6 @@ RUN \
 # RUN pip install pyodbc
 # RUN pip install 'ibis-framework[impala]'
 # RUN pip install snowflake-sqlalchemy
-# RUN pip install snowflake-connector-python
 
 # The entrypoint script will handle connections and run the application
 ENTRYPOINT ["./entrypoint.sh"]
