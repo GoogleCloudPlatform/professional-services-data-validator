@@ -486,7 +486,7 @@ Db2 permissions required to run DVT custom-query validations:
 
 ## Snowflake
 
-Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
+Snowflake requires the `snowflake-sqlalchemy` package.
 For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters).
 
 ```
