@@ -551,7 +551,11 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name(consts.CONFIG_RUN_ID),
-        ibis.literal(run_metadata.labels).name(consts.CONFIG_LABELS),
+        ibis.literal(
+            [json.dumps(l) for l in run_metadata.labels]
+            if run_metadata.labels
+            else []
+        ).name(consts.CONFIG_LABELS),
         ibis.literal(run_metadata.start_time).name(consts.CONFIG_START_TIME),
         ibis.literal(run_metadata.end_time).name(consts.CONFIG_END_TIME),
     ]

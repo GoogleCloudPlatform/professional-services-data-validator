@@ -1312,3 +1312,47 @@ def test_generate_report_with_binary_data(module_under_test):
     assert consts.TARGET_AGG_VALUE in report.columns
     assert report[consts.SOURCE_AGG_VALUE].iloc[0] == "aced0005"
     assert report[consts.TARGET_AGG_VALUE].iloc[0] == "aced0005"
+
+
+@freeze_time("1998-09-04 07:31:42")
+def test_generate_report_with_nonempty_labels(module_under_test):
+    """Labels containing dicts must be serialized to JSON strings.
+
+    Without the fix, ibis.literal() infers array<map<string,string>>
+    and pandas conversion crashes in convert_Map_element.
+    """
+    source_df = pandas.DataFrame({"count": [1]})
+    target_df = pandas.DataFrame({"count": [2]})
+    labels = [{"table": "dim_costcenter"}, {"run": "nightly"}]
+    run_meta = metadata.RunMetadata(
+        validations={
+            "count": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="bq-public.source_dataset",
+                source_column_name=None,
+                target_table_name="test_target",
+                target_table_schema="bq-public.target_dataset",
+                target_column_name=None,
+                validation_type="Column",
+                aggregation_type="count",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=labels,
+        run_id="labels-test",
+    )
+
+    report = module_under_test.generate_report(run_meta, source_df, target_df)
+
+    result_labels = report[consts.CONFIG_LABELS].iloc[0]
+    assert isinstance(result_labels, list)
+    assert len(result_labels) == 2
+    for item in result_labels:
+        assert isinstance(item, str)
+        json.loads(item)
+    assert json.loads(result_labels[0]) == {"table": "dim_costcenter"}
+    assert json.loads(result_labels[1]) == {"run": "nightly"}
