@@ -566,6 +566,7 @@ def test_build_config_managers_from_args_raises_build_config_exception_when_tabl
 
 def test_use_utf8_stdout(monkeypatch):
     """A cp1252 stdout, as on Windows when redirected, must not fail on other characters."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
     buffer = io.BytesIO()
     monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(buffer, encoding="cp1252"))
     main._use_utf8_stdout()
@@ -580,3 +581,22 @@ def test_use_utf8_stdout_not_reconfigurable(monkeypatch):
     monkeypatch.setattr(sys, "stdout", stdout)
     main._use_utf8_stdout()
     assert sys.stdout is stdout
+
+
+def test_use_utf8_stdout_respects_pythonioencoding(monkeypatch):
+    """A user-set PYTHONIOENCODING is never overridden."""
+    monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
+    stdout = mock.Mock(encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    stdout.reconfigure.assert_not_called()
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "UTF-8", "utf_8", "utf8", "U8"])
+def test_use_utf8_stdout_already_utf8(monkeypatch, encoding):
+    """Any UTF-8 alias is recognised, so stdout is not reconfigured."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    stdout = mock.Mock(encoding=encoding)
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    stdout.reconfigure.assert_not_called()

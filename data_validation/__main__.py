@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import codecs
 import copy
 import logging
 import os
@@ -552,16 +553,23 @@ def validate(args):
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
 
 
-def _use_utf8_stdout():
+def _use_utf8_stdout() -> None:
     """Make sure results containing non-ASCII characters can be printed.
 
     On Windows a redirected stdout uses a legacy code page, such as cp1252,
     which cannot encode every character found in validation results.
+    A user who sets PYTHONIOENCODING keeps their own choice.
     """
-    encoding = getattr(sys.stdout, "encoding", None) or ""
-    if encoding.lower().replace("-", "") != "utf8" and hasattr(
-        sys.stdout, "reconfigure"
-    ):
+    if os.environ.get("PYTHONIOENCODING"):
+        return
+    encoding = getattr(sys.stdout, "encoding", None)
+    if not encoding or not hasattr(sys.stdout, "reconfigure"):
+        return
+    try:
+        is_utf8 = codecs.lookup(encoding).name == "utf-8"
+    except LookupError:
+        is_utf8 = False
+    if not is_utf8:
         sys.stdout.reconfigure(encoding="utf-8")
 
 
