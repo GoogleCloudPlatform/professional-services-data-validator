@@ -96,7 +96,7 @@ try:
 except Exception:
     TeradataExprTranslator = None
 
-# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
+# Snowflake requires snowflake-sqlalchemy
 try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
     from third_party.ibis.ibis_snowflake import registry as snowflake_registry
