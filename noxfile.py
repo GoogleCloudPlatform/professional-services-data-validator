@@ -46,7 +46,7 @@ UNIT_PACKAGES = [
     "freezegun",
     "oracledb",
     "teradatasql",
-    "snowflake-sqlalchemy",
+    "snowflake-sqlalchemy<2.0.0",
 ]
 
 
