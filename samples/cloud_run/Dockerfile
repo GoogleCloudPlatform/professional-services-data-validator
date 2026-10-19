@@ -32,7 +32,7 @@ RUN pip install ${PIPOPTS} Flask gunicorn google_pso_data_validator
 # RUN pip install ${PIPOPTS} 'ibis-framework[impala]'
 # RUN pip install ${PIPOPTS} oracledb
 # RUN pip install ${PIPOPTS} pyodbc
-# RUN pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
+# RUN pip install ${PIPOPTS} snowflake-sqlalchemy
 # RUN pip install ${PIPOPTS} teradatasql
 
 # Run the web service on container startup. Here we use the gunicorn
