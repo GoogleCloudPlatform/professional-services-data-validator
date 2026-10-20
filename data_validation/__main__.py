@@ -558,9 +558,13 @@ def _use_utf8_stdout() -> None:
 
     On Windows a redirected stdout uses a legacy code page, such as cp1252,
     which cannot encode every character found in validation results.
-    A user who sets PYTHONIOENCODING keeps their own choice.
+    Only Windows is changed, and a user who sets PYTHONIOENCODING keeps
+    their own choice.
+
+    Note: this function can be removed once python_requires reaches 3.15,
+    where UTF-8 mode is the default (PEP 686).
     """
-    if os.environ.get("PYTHONIOENCODING"):
+    if os.environ.get("PYTHONIOENCODING") or sys.platform != "win32":
         return
     encoding = getattr(sys.stdout, "encoding", None)
     if not encoding or not hasattr(sys.stdout, "reconfigure"):
