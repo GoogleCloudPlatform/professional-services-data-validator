@@ -14,7 +14,7 @@
 
 
 import json
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from data_validation import (
     cli_tools,
@@ -134,7 +134,7 @@ def _get_table_map_from_obj_list(table_objs: list) -> dict:
     return _casefold_keys(table_map)
 
 
-def _filter_schemas(schemas: list, allowed_schemas: list = None) -> list:
+def _filter_schemas(schemas: list, allowed_schemas: list = None) -> Optional[list]:
     """Filter database schemas using exact, case-insensitive matching.
 
     An exact-case match is preferred, otherwise the casefolded name is used.

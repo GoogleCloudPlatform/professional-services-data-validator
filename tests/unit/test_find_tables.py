@@ -644,16 +644,23 @@ def test__resolve_schema_map(module_under_test, schema_map, source_schemas, expe
 
 
 @pytest.mark.parametrize("score_cutoff", [1, 0.8])
+@pytest.mark.parametrize(
+    "allowed_schemas,schema_map",
+    [
+        (["PROD_HR"], {"PROD_HR": "DWH_HR"}),
+        (["prod_hr"], {"PROD_HR": "DWH_HR"}),
+    ],
+)
 def test_get_mapped_table_configs_schema_map_case_insensitive(
-    module_under_test, score_cutoff
+    module_under_test, score_cutoff, allowed_schemas, schema_map
 ):
     """User typed -as PROD_HR=DWH_HR but the real source schema is prod_hr."""
     configs = module_under_test.get_mapped_table_configs(
         _make_mock_client({"prod_hr": ["employees"]}),
         _make_mock_client({"DWH_HR": ["EMPLOYEES"], "other": ["employees"]}),
-        allowed_schemas=["PROD_HR"],
+        allowed_schemas=allowed_schemas,
         score_cutoff=score_cutoff,
-        schema_map={"PROD_HR": "DWH_HR"},
+        schema_map=schema_map,
     )
     assert configs == [
         {

@@ -92,8 +92,11 @@ source_table_map = _get_table_map(
     source_client, allowed_schemas=allowed_schemas, include_views=include_views
 )
 target_allowed_schemas = None
-if allowed_schemas and score_cutoff >= 1:
-    target_allowed_schemas = [(schema_map or {}).get(s, s) for s in allowed_schemas]
+if allowed_schemas and score_cutoff is not None and score_cutoff >= 1:
+    folded_schema_map = _casefold_keys(schema_map) if schema_map else {}
+    target_allowed_schemas = [
+        _get_casefolded(folded_schema_map, s, default=s) for s in allowed_schemas
+    ]
 target_table_map = _get_table_map(
     target_client,
     allowed_schemas=target_allowed_schemas,
