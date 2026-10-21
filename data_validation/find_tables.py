@@ -190,7 +190,7 @@ def get_mapped_table_configs(
             source_client, allowed_schemas=allowed_schemas, include_views=include_views
         )
         target_allowed_schemas = None
-        if allowed_schemas and score_cutoff >= 1:
+        if allowed_schemas and score_cutoff is not None and score_cutoff >= 1:
             # Pruning target schemas is only lossless for exact (case-insensitive)
             # matching. With fuzzy matching a schema.table key can score above
             # score_cutoff even when the schema names alone do not, so all target
