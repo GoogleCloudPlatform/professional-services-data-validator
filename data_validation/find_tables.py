@@ -195,8 +195,10 @@ def get_mapped_table_configs(
             # matching. With fuzzy matching a schema.table key can score above
             # score_cutoff even when the schema names alone do not, so all target
             # schemas must be considered.
+            folded_schema_map = _casefold_keys(schema_map) if schema_map else {}
             target_allowed_schemas = [
-                (schema_map or {}).get(s, s) for s in allowed_schemas
+                _get_casefolded(folded_schema_map, s, default=s)
+                for s in allowed_schemas
             ]
         target_table_map = _get_table_map(
             target_client,
