@@ -442,9 +442,8 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         IMPALA_DATABASE,
         "--auth-mechanism",
         IMPALA_AUTH_MECH,
-        # TODO Add options below back in once issue-1720 is complete.
-        # "--timeout",
-        # "1000",
+        "--timeout",
+        "1000",
     ]
     connections_add_test(
         caplog, consts.SOURCE_TYPE_IMPALA, conn_args, tmp_path, monkeypatch
