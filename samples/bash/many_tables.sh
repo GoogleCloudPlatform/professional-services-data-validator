@@ -152,7 +152,8 @@ for i in "${!YAML_FILES[@]}";do
 done | xargs -0 -n 2 -P "${PARALLELISM}" bash -c 'run_task "$1" "$2"' _ \
   | tee "${WORK_DIR}/summary.txt"
 
-ERROR_COUNT=$(grep -c '^\[ERROR\]' "${WORK_DIR}/summary.txt")
+OK_COUNT=$(grep -c '^\[OK\]' "${WORK_DIR}/summary.txt")
+ERROR_COUNT=$((FILE_COUNT - OK_COUNT))
 echo "============"
 echo "Validations: ${FILE_COUNT}, errors: ${ERROR_COUNT}, elapsed: ${SECONDS}s"
 echo "Logs: ${LOG_DIR}"
