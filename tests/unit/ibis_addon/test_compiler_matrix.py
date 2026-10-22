@@ -313,9 +313,16 @@ def test_mssql_coalesce_multi_argument():
         MsSqlCompiler, ibis.coalesce(TABLE.s, TABLE.s, "X").name("coal")
     )
     sql_lits = _compile(MsSqlCompiler, ibis.coalesce(TABLE.s, "A", "X").name("coal"))
+    sql_null = _compile(
+        MsSqlCompiler,
+        ibis.coalesce(TABLE.s, ibis.literal(None, type="string"), "X").name("coal"),
+    )
 
     assert "coalesce(t0.s, t0.s, 'X')" in sql_cols
-    assert "coalesce(t0.s, :param_1, 'X')" in sql_lits
+    assert "coalesce(t0.s, 'A', 'X')" in sql_lits
+    assert "coalesce(t0.s, NULL, 'X')" in sql_null
+    with pytest.raises(ValueError, match="contains invalid characters"):
+        _compile(MsSqlCompiler, ibis.coalesce(TABLE.s, "bad'val", "X").name("coal"))
 
 
 def test_mssql_coalesce_column_only():
