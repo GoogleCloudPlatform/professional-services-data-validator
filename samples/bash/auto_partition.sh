@@ -20,7 +20,7 @@
 # - All available RAM on the host is for this process to use in full.
 
 function show_usage {
-  echo 'Usage: $0 -t <table-name> -c <row-count-in-table> -i <primary-key-columns-csv> [-p <parallelism>]'
+  echo "Usage: $0 -t <table-name> -c <row-count-in-table> -i <primary-key-columns-csv> [-p <parallelism>]"
   echo '       parallelism defaults to local vCPU count'
 }
 
@@ -37,7 +37,7 @@ OPTIND=1
 
 # Initialize our own variables:
 TABLE_NAME=""
-TABLE_ROW_COUNT=0
+TABLE_ROW_COUNT=""
 PRIMARY_KEYS=""
 PARALLELISM=""
 
@@ -66,7 +66,7 @@ shift $((OPTIND-1))
 
 if [[ -z "${TABLE_NAME}" || -z "${TABLE_ROW_COUNT}" || -z "${PRIMARY_KEYS}" ]];then
   show_usage
-  exit 0
+  exit 1
 fi
 
 # Available RAM on the VM.
@@ -122,9 +122,9 @@ for i in $(seq 1 1 ${PARALLEL_PASSES});do
     echo "============"
     for j in $(seq 0 1 $(expr ${PARALLELISM} - 1));do
         echo "Submitting partition: ${JOB_COUNT}"
-        # JOB_COMPLETION_INDEX is a variable used by Kubernetes and catered for in DVT by the -kc option.
-        # We mimic this below to simplify picking a YAML file from cdir.
-        JOB_COMPLETION_INDEX=${JOB_COUNT} data-validation configs run -kc -cdir ${YAML_TABLE_DIR} &
+        # JOB_COMPLETION_INDEX and JOB_COMPLETION_COUNT are variables used by Kubernetes and catered for in DVT by the -kc option.
+        # We mimic them below to simplify picking a YAML file from cdir.
+        JOB_COMPLETION_INDEX=${JOB_COUNT} JOB_COMPLETION_COUNT=${DVT_PARTITIONS} data-validation configs run -kc -cdir ${YAML_TABLE_DIR} &
         JOB_COUNT=$(expr ${JOB_COUNT} + 1)
     done
     # Wait for all jobs in this pass to complete.

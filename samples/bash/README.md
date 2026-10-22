@@ -1,5 +1,8 @@
 # BASH DVT Utility Scripts
 
+- [auto_partition.sh](#auto_partitionsh): Row hash validation of a single large table, automatically partitioned to fit local vCPUs and RAM.
+- [many_tables.sh](#many_tablessh): Column validation of every table in one or more schemas, run concurrently on the local host.
+
 ## auto_partition.sh
 
 This script will execute DVT's [generate-table-partitions](https://github.com/GoogleCloudPlatform/professional-services-data-validator?tab=readme-ov-file#generate-partitions-for-large-row-validations) feature and then execute the partitions based on the resources of the local VM and the size of the table being validated. This approach is an alternative to the [main options to scale DVT usage](https://github.com/GoogleCloudPlatform/professional-services-data-validator?tab=readme-ov-file#scaling-dvt).
@@ -219,3 +222,77 @@ Notes:
 - The 40 partitions will take 5 passes to be processed
 - Validation of the 100m row table took 1 hour 45 minutes (your mileage may vary)
 - The auto_partition.sh script stored all results in BigQuery (100m entries) which takes some time. We could use --filter-status=fail for a faster validation
+
+## many_tables.sh
+
+This script validates every table in one or more schemas using column validations, running a configurable number of validations concurrently on the local VM. It is the local equivalent of the [Cloud Run Jobs many tables sample](../cloud_run_jobs/many_tables/README.md).
+
+The script works in two steps:
+
+1. Generate one validation YAML file per table by running `validate column` with `--tables-list=<schema>.*` and `--config-dir`. DVT expands `<schema>.*` to every table found in both the source and target, and names each file `<schema>.<table>.yaml`.
+1. Run the YAML files in a rolling pool of `-p` concurrent `data-validation configs run -kc` processes. Each process is started with the `CLOUD_RUN_TASK_INDEX` and `CLOUD_RUN_TASK_COUNT` environment variables that Cloud Run would set for a task, so DVT picks the single YAML file matching that index from the config directory. A new validation starts as soon as any running validation finishes, so one large table does not hold up the others.
+
+This simple example makes the following assumptions:
+
+- A column validation is the desired validation type.
+- Schema and table names are the same in the source and target.
+- The parallel validation will run on the current host (where this script is executing).
+- Column validations push aggregation down to the databases, therefore the main constraint on parallelism is load on the source/target databases rather than local RAM.
+
+To use the script please edit the `SRC`, `TRG` and `RH` variables. The aggregates validated are held in the `AGGREGATES` variable; remove all of them for a lightweight `COUNT(*)` only validation.
+
+The [find-tables](https://github.com/GoogleCloudPlatform/professional-services-data-validator?tab=readme-ov-file#building-matched-table-lists) command offers more control than `<schema>.*`, for example mapping source schema names to different target schema names. Its JSON output can be passed to `--tables-list` instead, although for a schema with many tables the JSON string may exceed the operating system's maximum argument length.
+
+All files for a run are written to a work directory, `/tmp/many_tables/<timestamp>` by default, which can be overridden with `-w`:
+
+- `yaml/`: The generated validation YAML files.
+- `logs/`: One DVT log file per table.
+- `summary.txt`: The outcome of each validation.
+
+The script exits with a non-zero status if any validation raised an error. Note that a validation with a `fail` status is not an error; check your results handler for validation outcomes.
+
+### Example
+
+Validate all 25 tables in the `pso_data_validator` schema on a host with 8 vCPUs, running 4 validations at a time:
+```shell
+$ ./many_tables.sh -s pso_data_validator -p 4
+```
+
+Output (abridged):
+```
+Tables: pso_data_validator.*
+Parallelism: 4
+Work directory: /tmp/many_tables/20261002161048
+10/02/2026 04:10:56 PM-INFO: Writing validation configs to directory: /tmp/many_tables/20261002161048/yaml
+10/02/2026 04:10:56 PM-INFO: Success! Config output written to /tmp/many_tables/20261002161048/yaml/pso_data_validator.dvt_binary.yaml
+10/02/2026 04:10:56 PM-INFO: Success! Config output written to /tmp/many_tables/20261002161048/yaml/pso_data_validator.dvt_bool.yaml
+...
+10/02/2026 04:10:56 PM-INFO: Success! Validation configs written to directory: /tmp/many_tables/20261002161048/yaml
+YAML configs generated: 25
+Starting task 0: pso_data_validator.DVT-IDENTIFIER$_#.yaml
+Starting task 1: pso_data_validator.dvt_binary.yaml
+Starting task 2: pso_data_validator.dvt_bool.yaml
+Starting task 3: pso_data_validator.dvt_char_id.yaml
+[OK]    task 3: pso_data_validator.dvt_char_id.yaml
+Starting task 4: pso_data_validator.dvt_composite_pk.yaml
+[OK]    task 1: pso_data_validator.dvt_binary.yaml
+Starting task 5: pso_data_validator.dvt_core_types.yaml
+[OK]    task 2: pso_data_validator.dvt_bool.yaml
+Starting task 6: pso_data_validator.dvt_datetime_id.yaml
+[OK]    task 0: pso_data_validator.DVT-IDENTIFIER$_#.yaml
+Starting task 7: pso_data_validator.dvt_decimals.yaml
+...
+Starting task 24: pso_data_validator.test_generate_partitions_v2.yaml
+[OK]    task 22: pso_data_validator.dvt_varchar_id.yaml
+[OK]    task 23: pso_data_validator.dvt_vol_composite_pk.yaml
+[OK]    task 24: pso_data_validator.test_generate_partitions_v2.yaml
+[OK]    task 14: pso_data_validator.dvt_many_cols.yaml
+============
+Validations: 25, errors: 0, elapsed: 75s
+Logs: /tmp/many_tables/20261002161048/logs
+```
+
+Notes:
+- As soon as one validation finished the next was started, keeping 4 DVT processes running at all times.
+- Task 14, `dvt_many_cols`, was the slowest validation but did not hold up the 10 validations started after it.
+- Validation results were written to each table's log file because this run was made with the `RH` variable set to an empty string, which defaults to the console result handler.
