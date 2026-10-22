@@ -113,9 +113,10 @@ if [[ $? != 0 ]];then
   exit 1
 fi
 
-# DVT assigns files to task indexes in sorted file name order (Python sorted()).
-# LC_ALL=C sort gives the same code point order, letting us label each task with its file name.
-mapfile -t YAML_FILES < <(cd "${YAML_DIR}" && ls -1 -- *.yaml 2>/dev/null | LC_ALL=C sort)
+# DVT assigns files to task indexes in sorted file name order (Python sorted() of os.listdir()
+# entries ending in ".yaml"). LC_ALL=C sort gives the same code point order, letting us label
+# each task with its file name. find avoids cd (CDPATH output) and glob expansion (ARG_MAX).
+mapfile -d '' -t YAML_FILES < <(find "${YAML_DIR}" -mindepth 1 -maxdepth 1 -name '*.yaml' -printf '%f\0' | LC_ALL=C sort -z)
 FILE_COUNT=${#YAML_FILES[@]}
 if [[ "${FILE_COUNT}" == 0 ]];then
   echo "No YAML configs generated"
