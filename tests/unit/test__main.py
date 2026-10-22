@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import argparse
+import io
+import sys
 from unittest import mock
 import pytest
 
@@ -560,3 +562,57 @@ def test_build_config_managers_from_args_raises_build_config_exception_when_tabl
 
     assert "Validation build failed: Invalid schema" in str(exc_info.value)
     assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+def test_use_utf8_stdout(monkeypatch):
+    """A cp1252 stdout, as on Windows when redirected, must not fail on other characters."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    buffer = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(buffer, encoding="cp1252"))
+    main._use_utf8_stdout()
+    print("caf\u00e9 \x81 \u65e5\u672c")
+    sys.stdout.flush()
+    assert buffer.getvalue().decode("utf-8").strip() == "caf\u00e9 \x81 \u65e5\u672c"
+
+
+def test_use_utf8_stdout_not_reconfigurable(monkeypatch):
+    """A replaced stdout without reconfigure(), e.g. io.StringIO, is left alone."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    stdout = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    assert sys.stdout is stdout
+
+
+def test_use_utf8_stdout_respects_pythonioencoding(monkeypatch):
+    """A user-set PYTHONIOENCODING is never overridden."""
+    monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
+    monkeypatch.setattr(sys, "platform", "win32")
+    stdout = mock.Mock(encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    stdout.reconfigure.assert_not_called()
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "UTF-8", "utf_8", "utf8", "U8"])
+def test_use_utf8_stdout_already_utf8(monkeypatch, encoding):
+    """Any UTF-8 alias is recognised, so stdout is not reconfigured."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    stdout = mock.Mock(encoding=encoding)
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    stdout.reconfigure.assert_not_called()
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin"])
+def test_use_utf8_stdout_not_windows(monkeypatch, platform):
+    """stdout is only reconfigured on Windows."""
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setattr(sys, "platform", platform)
+    stdout = mock.Mock(encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", stdout)
+    main._use_utf8_stdout()
+    stdout.reconfigure.assert_not_called()
