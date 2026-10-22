@@ -326,21 +326,19 @@ def _sa_coalesce_with_literal(t, op):
     Used by engines that either do not support query parameters in this context
     (Db2 z/OS) or have strict parameter count limits (SQL Server).
     """
-    if len(op.arg) == 1:
-        return sa.func.coalesce(t.translate(op.arg[0]))
+    sa_args = []
+    for arg in op.arg:
+        if (
+            isinstance(arg, ops.Literal)
+            and arg.dtype.is_string()
+            and arg.value is not None
+        ):
+            check_ifnull_default_literal(arg.value)
+            sa_args.append(sa.literal_column(f"'{arg.value}'"))
+        else:
+            sa_args.append(t.translate(arg))
 
-    exprs = op.arg[:-1]
-    default_val = op.arg[-1]
-
-    sa_exprs = [t.translate(x) for x in exprs]
-
-    if isinstance(default_val, ops.Literal) and default_val.dtype.is_string():
-        check_ifnull_default_literal(default_val.value)
-        sa_default = sa.literal_column(f"'{default_val.value}'")
-    else:
-        sa_default = t.translate(default_val)
-
-    return sa.func.coalesce(*sa_exprs, sa_default)
+    return sa.func.coalesce(*sa_args)
 
 
 execute_epoch_seconds = execute_epoch_seconds_new
