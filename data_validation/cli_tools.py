@@ -1351,7 +1351,9 @@ def get_filters(filter_value: str) -> List[Dict]:
     If only one filter is specified, it applies to both source and target
     For a doc on regular expression for filters see docs/internal/filters_regex.md
     """
-    filters = util.split_not_in_quotes(filter_value, ":")
+    # Only a lone colon separates the source and target filters, "::" is a type cast
+    # in PostgreSQL, Redshift and Snowflake, e.g. "id::text = '5'".
+    filters = util.split_not_in_quotes(filter_value, "(?<!:):(?!:)")
     if len(filters) not in (1, 2):
         raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
     filters = [_.strip() for _ in filters]
