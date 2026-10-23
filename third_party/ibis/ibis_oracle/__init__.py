@@ -318,7 +318,6 @@ class Backend(BaseAlchemyBackend):
             schema
             for schema in all_schemas
             if schema.upper() not in ORACLE_SYSTEM_SCHEMAS
-            and not schema.upper().startswith("C##")
         ]
         return self._filter_with_like(schemas, like)
 
