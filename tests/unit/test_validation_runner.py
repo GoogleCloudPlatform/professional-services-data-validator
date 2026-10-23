@@ -12,11 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from unittest import mock
 
 import pytest
 
 from data_validation import exceptions, validation_runner
+
+
+@mock.patch("data_validation.validation_runner.util.print_output")
+@mock.patch("data_validation.validation_runner.util.ibis_table_to_sql")
+@mock.patch("data_validation.validation_runner.DataValidation")
+def test_dry_run_uses_serialized_output(mock_validation, mock_sql, mock_print):
+    validator = mock.Mock()
+    mock_validation.return_value.__enter__.return_value = validator
+    mock_sql.side_effect = ["SELECT 1", "SELECT 2"]
+    manager = mock.Mock()
+    manager.config = {}
+
+    validation_runner.run_validation(manager, dry_run=True)
+
+    mock_print.assert_called_once()
+    assert json.loads(mock_print.call_args.args[0]) == {
+        "source_query": "SELECT 1",
+        "target_query": "SELECT 2",
+    }
+    validator.execute.assert_not_called()
+
+
+@mock.patch("data_validation.validation_runner.DataValidation")
+def test_run_validation_logs_run_id_with_config_file(mock_data_validation, caplog):
+    import logging
+    from data_validation import consts
+
+    validator = mock.Mock()
+    validator.run_metadata.run_id = "run-123"
+    mock_data_validation.return_value.__enter__.return_value = validator
+    manager = mock.Mock()
+    manager.full_source_table = "test_schema.test_table"
+    manager.config = {consts.CONFIG_FILE: "0001.yaml"}
+    caplog.set_level(logging.INFO)
+    validation_runner.run_validation(manager)
+    assert (
+        "Run id run-123 started for table test_schema.test_table (config file: 0001.yaml)"
+        in caplog.messages
+    )
 
 
 @mock.patch("data_validation.validation_runner.DataValidation")

@@ -15,6 +15,8 @@
 import logging
 import pytest
 import re
+from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 
 
 @pytest.fixture
@@ -22,6 +24,23 @@ def module_under_test():
     from data_validation import util
 
     return util
+
+
+def test_print_output_holds_lock_for_complete_blocks(module_under_test):
+    messages = [f"report {index}\nsecond line" for index in range(10)]
+
+    def print_locked(message):
+        assert module_under_test._OUTPUT_LOCK.locked()
+        assert message in messages
+
+    with mock.patch("builtins.print", side_effect=print_locked) as mock_print:
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            list(executor.map(module_under_test.print_output, messages))
+    mock_print.assert_has_calls(
+        [mock.call(message) for message in messages], any_order=True
+    )
+    assert mock_print.call_count == len(messages)
+    assert not module_under_test._OUTPUT_LOCK.locked()
 
 
 def test_timed_call_fn_no_args(module_under_test, caplog):
