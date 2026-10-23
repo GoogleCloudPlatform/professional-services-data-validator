@@ -37,7 +37,7 @@
 
 ## Snowflake
 
-- Requires the `snowflake-connector-python` and `snowflake-sqlalchemy` packages to be installed as extra dependencies.
+- Requires the `snowflake-sqlalchemy` package to be installed as an extra dependency.
 
 ## SQL Server
 

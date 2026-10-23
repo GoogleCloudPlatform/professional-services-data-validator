@@ -18,7 +18,13 @@ import pathlib
 from unittest import mock
 
 from data_validation import __main__ as main
-from data_validation import cli_tools, data_validation, consts, exceptions
+from data_validation import (
+    cli_tools,
+    data_validation,
+    consts,
+    exceptions,
+    validation_runner,
+)
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_test,
@@ -171,7 +177,7 @@ def test_mysql_dry_run(capsys):
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     with mock.patch("json.dumps") as mock_dump:
-        main.run_validation(config_managers[0], dry_run=True)
+        validation_runner.run_validation(config_managers[0], dry_run=True)
         actual = mock_dump.call_args.args[0]["source_query"]
         out, err = capsys.readouterr()
         assert err == ""

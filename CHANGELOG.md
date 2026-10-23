@@ -2,6 +2,29 @@
 
 ## Untagged
 
+## [8.10.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.3...v8.10.0) (2026-10-01)
+
+
+### Features
+
+* Extend configs run with config-dir to support all validation types (not only table-partitions) ([#1828](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1828)) ([552f460](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/552f46080848c9fb75e08ef994c8c2af3bf38e00))
+
+
+### Bug Fixes
+
+* Verify SQLAlchemy database connections during connections add ([#1845](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1845)) ([24ea7db](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/24ea7db9a626b0df4fd506a2551e600a2a00c3a7))
+
+
+### Performance Improvements
+
+* Optimize GCS Client instantiation ([#1833](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1833)) ([53d17a6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/53d17a6afb073475f3d8cbbfd775e104ad15dfba))
+* Optimize table metadata retrieval in ConfigManager ([#1841](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1841)) ([7bc8752](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7bc87529bf0af6b6b93744ec3dd206702e7c6fa2))
+
+
+### Documentation
+
+* explain Oracle DBMS_RANDOM access ([#1798](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1798)) ([ae359b6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ae359b635aebb0d280eb30a1f249db97101c7e2e))
+
 ## [8.9.3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.2...v8.9.3) (2026-08-27)
 
 

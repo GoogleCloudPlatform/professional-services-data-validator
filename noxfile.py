@@ -44,9 +44,9 @@ LINT_PACKAGES = ["flake8", "black==26.5.1"]
 UNIT_PACKAGES = [
     "pyfakefs",
     "freezegun",
+    "oracledb",
     "teradatasql",
-    "snowflake-connector-python",
-    "snowflake-sqlalchemy",
+    "snowflake-sqlalchemy<2.0.0",
 ]
 
 
@@ -305,7 +305,7 @@ def integration_snowflake(session):
     # TODO Remove pinned version below when working on issue-1592.
     _setup_session_requirements(
         session,
-        extra_packages=["snowflake-sqlalchemy==1.7.6", "snowflake-connector-python"],
+        extra_packages=["snowflake-sqlalchemy==1.7.6"],
     )
 
     expected_env_vars = [

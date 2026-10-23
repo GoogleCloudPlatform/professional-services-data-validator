@@ -67,7 +67,9 @@ To run all validations stored in a directory, use:
 ```bash
 data-validation configs run --config-dir <path_to_directory>
 ```
-*   **Non-Recursive Behavior**: `configs run` lists and executes `.yaml` files **only** in the immediate directory. It does not traverse subdirectories.
+*   **Non-Recursive Behavior**: `configs run` lists and executes `.yaml` files **only** in the immediate directory (sorted alphabetically by filename). It does not traverse subdirectories.
+*   **Empty Directory Validation**: If no `.yaml` files exist in the target directory (for example, due to a misspelled Cloud Storage prefix), DVT raises a `ValueError` rather than silently reporting a successful no-op run.
+*   **Continue-on-Error Execution**: Files are executed sequentially. If a validation file raises an exception, the error (with stack trace) is logged and execution continues through the remaining files; a `ValidationException` is raised once all files have been attempted.
 *   **Executing Partitioned Validations**: Because `generate-table-partitions` nests files under `<config_dir>/<schema>.<table_name>/`, you **must target the specific table subdirectory** to run them:
     ```bash
     data-validation configs run --config-dir my_partitions/dbo.customers/
@@ -75,18 +77,21 @@ data-validation configs run --config-dir <path_to_directory>
 *   **YAML Exclusivity**: CLI execution via `configs run` only supports YAML files. Any `.json` files in the directory are ignored (as `list_validations` filters strictly for `.yaml` extensions).
 
 ### B. Distributed Orchestration (`--kube-completions`)
-For large-scale migrations, partitioned validations can be executed concurrently in containerized environments like Kubernetes (Jobs) or Cloud Run (Jobs).
+For large-scale migrations, validations stored in a directory (either flat table-per-file directories or partitioned subdirectories) can be executed concurrently in containerized environments like Kubernetes (Indexed Jobs) or Cloud Run (Jobs).
 
 When executing with `--kube-completions` (or `-kc`):
 ```bash
-data-validation configs run --config-dir <path_to_table_subdir> --kube-completions
+data-validation configs run --config-dir <path_to_directory> --kube-completions
 ```
-1.  DVT detects the orchestrator-supplied environment variable:
+1.  DVT detects the orchestrator-supplied task index environment variable:
     *   `JOB_COMPLETION_INDEX` (Kubernetes)
     *   `CLOUD_RUN_TASK_INDEX` (Cloud Run)
-2.  It extracts the integer index (e.g., `3`).
-3.  It maps this index to the corresponding sequentially named file in the directory (e.g., `0003.yaml`).
-4.  It executes **only** that single file, allowing the orchestrator to scale workers horizontally, each processing one chunk of the table.
+2.  All `.yaml` files in `--config-dir` are sorted alphabetically by filename (`all_files`).
+3.  DVT checks the total task count from `JOB_COMPLETION_COUNT` (Kubernetes) or `CLOUD_RUN_TASK_COUNT` (Cloud Run):
+    *   If `JOB_COMPLETION_COUNT` (and `CLOUD_RUN_TASK_COUNT`) is not set, DVT logs a warning stating it should be set to the number of validation files in the directory.
+    *   If `CLOUD_RUN_TASK_COUNT` or `JOB_COMPLETION_COUNT` is less than the number of validation files in the directory, DVT logs a warning that the validation is likely to be partial.
+4.  If `job_index < len(all_files)`, DVT selects `all_files[job_index]` and executes **only** that single file. This works with any directory of YAML files regardless of naming convention (both `dbo.customers.yaml` and `0000.yaml`).
+5.  If `job_index >= len(all_files)`, DVT raises a `ValueError` indicating that no validation file exists for the index because too many jobs/tasks were instantiated.
 
 ---
 
@@ -100,12 +105,3 @@ To maintain backward compatibility, several inconsistencies currently exist in D
 2.  **JSON Execution Support**:
     *   *Current*: DVT can write JSON directories, but cannot execute them via `configs run`.
     *   *Goal*: Allow `configs run` to optionally parse and execute JSON-based configuration directories.
-3.  **Unified File Grouping (`--configs-per-file` / `--parts-per-file` Deprecation)**:
-    *   *Proposal*: Deprecate `--parts-per-file` (currently exclusive to `generate-table-partitions`) and replace it with a unified, global CLI option: `--configs-per-file` (or `-cpf`).
-    *   *Scope*: Support this option in both partition generation and standard validations (`validate column/row/schema`).
-    *   *Behavior for Standard Validations (`--config-dir`)*:
-        *   If `--configs-per-file` is **omitted** or set to **1** (default): DVT maintains backward compatibility, using **descriptive naming** (`dbo_customers_column.yaml`) and writing 1 validation per file.
-        *   If `--configs-per-file` is **strictly greater than 1**: DVT groups up to `N` table validations per file and switches to **sequential naming** (`0000.yaml`, `0001.yaml`...) directly under the flat target directory.
-    *   *Behavior for Partitions (`generate-table-partitions`)*:
-        *   `--configs-per-file` acts as a direct replacement for `--parts-per-file` (with the latter kept as a deprecated alias). It always uses sequential naming inside the nested subdirectory, matching current behavior.
-    *   *Orchestration Benefit*: This enables standard validations across many tables to be batched sequentially in a flat directory, allowing the use of `--kube-completions` for standard migrations (e.g., running 10 parallel Kubernetes workers to validate 100 tables, 10 tables per worker).

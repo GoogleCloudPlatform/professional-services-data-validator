@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "8.9.3"
+version = "8.10.0"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy>=2.0.49",  # Fixes warning when using MS SQL 2025
+    "SQLAlchemy>=2.0.49,<2.1.0",  # <2.1.0 needed for snowflake-sqlalchemy
     "tabulate>=0.9.0",
 ]
 
@@ -59,7 +59,6 @@ extras_require = {
         "pytest-cov",
         "pytest-rerunfailures",
         "pytest-timeout",
-        "snowflake-connector-python",
         "snowflake-sqlalchemy",
     ],
 }
