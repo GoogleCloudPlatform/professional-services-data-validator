@@ -140,9 +140,23 @@ class DataValidation(object):
             pk[consts.CONFIG_TARGET_COLUMN] for pk in self.config_manager.primary_keys
         ]
 
+        batch_size = self.config_manager.random_row_batch_size()
+        if (
+            self.config_manager.source_client.name == "mssql"
+            or self.config_manager.target_client.name == "mssql"
+        ):
+            # SQL Server has a limit of 2,100 bound parameters per query (SQLSTATE 07002).
+            # Cap effective batch size so total bound parameters do not exceed 2,000.
+            max_mssql_rows = max(1, 2000 // len(source_pk_columns))
+            if batch_size > max_mssql_rows:
+                logging.warning(
+                    f"Capping random_row_batch_size from {batch_size} to {max_mssql_rows} for SQL Server 2,100 parameter limit."
+                )
+                batch_size = max_mssql_rows
+
         randomRowBuilder = RandomRowBuilder(
             source_pk_columns,
-            self.config_manager.random_row_batch_size(),
+            batch_size,
         )
 
         if (self.config_manager.validation_type == consts.CUSTOM_QUERY) and (
