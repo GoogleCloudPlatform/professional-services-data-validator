@@ -623,17 +623,27 @@ def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
                 try:
                     cast_col = col.cast(target_type)
                 except Exception:
-                    try:
-                        cast_col = pa.compute.cast(col, target_type, safe=False)
-                    except Exception:
-                        if pa.types.is_integer(col.type) and pa.types.is_decimal(
-                            target_type
-                        ):
-                            cast_col = pa.compute.cast(
-                                pa.compute.cast(col, pa.string()), target_type
-                            )
-                        else:
-                            raise
+                    if pa.types.is_decimal(target_type) and pa.types.is_decimal(
+                        col.type
+                    ):
+                        # The cursor value does not fit the statically inferred decimal type,
+                        # e.g. SUM(NUMBER(38)) returned as decimal128(38, 0) when the schema
+                        # says decimal128(38, 2). An unsafe cast would silently corrupt the
+                        # value so we keep the cursor's decimal type instead.
+                        cast_col = col
+                        target_type = col.type
+                    else:
+                        try:
+                            cast_col = pa.compute.cast(col, target_type, safe=False)
+                        except Exception:
+                            if pa.types.is_integer(col.type) and pa.types.is_decimal(
+                                target_type
+                            ):
+                                cast_col = pa.compute.cast(
+                                    pa.compute.cast(col, pa.string()), target_type
+                                )
+                            else:
+                                raise
                 table_arrays.append(cast_col)
                 final_fields.append(pa.field(name, target_type))
             return pa.Table.from_arrays(table_arrays, schema=pa.schema(final_fields))

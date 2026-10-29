@@ -192,6 +192,114 @@ def test_generate_report_with_high_precision_aggs(
     assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
 
 
+@pytest.mark.parametrize(
+    ("source_array", "target_array", "expected_status"),
+    [
+        # Oracle -> BigQuery issue-1007 regression, common type needs precision 45.
+        (
+            pyarrow.array(
+                [decimal.Decimal("4938271605061728383.00")],
+                type=pyarrow.decimal128(38, 2),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("4938271605061728382.000000000")],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            pyarrow.array(
+                [decimal.Decimal("4938271605061728382.00")],
+                type=pyarrow.decimal128(38, 2),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("4938271605061728382.000000000")],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array([4938271605061728382], type=pyarrow.int64()),
+            pyarrow.array(
+                [decimal.Decimal("4938271605061728382")],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array(
+                [decimal.Decimal("12345678901234567890.5")],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("12345678901234567890.5")],
+                type=pyarrow.decimal256(76, 38),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+    ],
+)
+def test_generate_report_with_mixed_exact_types(
+    module_under_test, source_array, target_array, expected_status
+):
+    source = pyarrow.table({"count": source_array})
+    target = pyarrow.table({"count": target_array})
+
+    report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+
+
+@pytest.mark.parametrize("aggregation_type", ["avg", "std"])
+def test_generate_report_with_approximate_decimal_aggs(
+    module_under_test, aggregation_type
+):
+    """avg/std decimals returned with different scales should not be compared exactly.
+
+    e.g. Oracle returns STDDEV as decimal256(40, 40), BigQuery as decimal128(38, 9).
+    """
+    run_metadata = metadata.RunMetadata(
+        validations={
+            f"{aggregation_type}__col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col",
+                validation_type="Column",
+                aggregation_type=aggregation_type,
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table(
+        {
+            f"{aggregation_type}__col": pyarrow.array(
+                [decimal.Decimal("0.0953939201416945649152621586023226540255")],
+                type=pyarrow.decimal256(40, 40),
+            )
+        }
+    )
+    target = pyarrow.table(
+        {
+            f"{aggregation_type}__col": pyarrow.array(
+                [decimal.Decimal("0.095393920")], type=pyarrow.decimal128(38, 9)
+            )
+        }
+    )
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+
+
 def _grouped_count_run_metadata():
     return metadata.RunMetadata(
         validations={
@@ -298,15 +406,23 @@ def test_generate_report_with_null_group_keys(
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pyarrow.table({"count": [1, 1]})
     target = pyarrow.table({"count": [2, 2]})
-    report = module_under_test.generate_report(
-        # Validation occurs before run_metadata is needed.
-        EXAMPLE_RUN_METADATA,
-        source,
-        target,
-    )
+    with pytest.raises(ValueError, match="Expected at most one row per side"):
+        module_under_test.generate_report(
+            EXAMPLE_RUN_METADATA,
+            source,
+            target,
+        )
 
-    # In the PyArrow implementation, a cross-join of 2 source rows and 2 target rows produces 4 rows.
-    assert len(report) == 4
+
+def test_generate_report_with_empty_target(module_under_test):
+    """A column validation where the target returns no rows should fail, not error."""
+    source = pyarrow.table({"count": [1]})
+    target = pyarrow.table({"count": pyarrow.array([], type=pyarrow.int64())})
+    report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+
+    assert len(report) == 1
+    assert report.loc[0, consts.SOURCE_AGG_VALUE] == "1"
+    assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
 
 
 @freeze_time("1998-09-04 07:31:42")

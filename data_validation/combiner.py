@@ -43,6 +43,23 @@ def _is_exact_type(data_type: pa.DataType) -> bool:
     return pa.types.is_integer(data_type) or pa.types.is_decimal(data_type)
 
 
+def _exact_equal(src_col, tgt_col):
+    """Compare integer/decimal columns exactly.
+
+    Arrow promotes both sides to a common decimal type, scale=max(s1, s2) and
+    precision=max(p1-s1, p2-s2)+scale, but stays within decimal128 when both inputs are
+    decimal128. For example decimal128(38, 2) vs decimal128(38, 9) needs precision 45 and
+    raises an error. Widening to decimal256 first is lossless and allows up to 76 digits.
+    """
+
+    def _widen(col):
+        if pa.types.is_decimal128(col.type):
+            return pc.cast(col, pa.decimal256(col.type.precision, col.type.scale))
+        return col
+
+    return pc.equal(_widen(src_col), _widen(tgt_col))
+
+
 if TYPE_CHECKING:
     from pandas import DataFrame
     from data_validation.metadata import RunMetadata
@@ -95,11 +112,21 @@ def join_and_unpivot(
     is_value_comparison=False,
     verbose=False,
 ) -> pa.Table:
-    if (
-        not join_on_fields
-    ):  # Plain column validation without a group by, has only one row, we inject a fake join key
-        source_table = source_table.add_column(0, "__dvt_fake_pk", [[0]])
-        target_table = target_table.add_column(0, "__dvt_fake_pk", [[0]])
+    if not join_on_fields:
+        # Plain column validation without a group by has at most one aggregate row per
+        # side. We join on a constant fake key so the same code path can be used.
+        if source_table.num_rows > 1 or target_table.num_rows > 1:
+            raise ValueError(
+                "Expected at most one row per side for a column validation without "
+                f"grouped columns, got {consts.RESULT_TYPE_SOURCE}={source_table.num_rows}, "
+                f"{consts.RESULT_TYPE_TARGET}={target_table.num_rows}"
+            )
+        source_table = source_table.add_column(
+            0, "__dvt_fake_pk", pa.repeat(0, source_table.num_rows)
+        )
+        target_table = target_table.add_column(
+            0, "__dvt_fake_pk", pa.repeat(0, target_table.num_rows)
+        )
         pk_columns = ["__dvt_fake_pk"]
     else:
         pk_columns = join_on_fields
@@ -205,6 +232,8 @@ def join_and_unpivot(
             )
             if (
                 not validation.threshold
+                and validation.aggregation_type
+                not in (consts.CONFIG_TYPE_AVG, consts.CONFIG_TYPE_STD)
                 and _is_exact_type(src_col.type)
                 and _is_exact_type(tgt_col.type)
             ):
@@ -212,7 +241,9 @@ def join_and_unpivot(
                 # The float64 difference above can lose precision beyond ~16 significant
                 # digits so we compare the native values instead, Arrow promotes both
                 # sides to a common integer/decimal type without loss.
-                success_condition = pc.equal(src_col, tgt_col)
+                # avg and std are approximate by nature, engines return them with
+                # different precision/scale, so they use the percentage difference.
+                success_condition = _exact_equal(src_col, tgt_col)
             else:
                 success_condition = pc.less_equal(pc.abs(pct_difference), threshold)
             is_successful = pc.if_else(
