@@ -834,7 +834,7 @@ def test_get_filters_fail(test_input: str):
         ),
     ],
 )
-def test_get_filters_type_cast(test_input, expected):
+def test_get_filters_type_cast(test_input: str, expected: list):
     """Test get filters with PostgreSQL style "::" type casts."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
