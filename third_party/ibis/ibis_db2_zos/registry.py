@@ -24,30 +24,6 @@ from third_party.ibis.ibis_db2.registry import (
 operation_registry = db2_luw_operation_registry.copy()
 
 
-def _sa_coalesce(t, op):
-    """Db2 z/OS does not support query parameters in this context.
-
-    This override uses sa.literal_column to prevent parameterization.
-    """
-    if len(op.arg) == 1:
-        return sa.func.coalesce(t.translate(op.arg[0]))
-
-    exprs = op.arg[:-1]
-    default_val = op.arg[-1]
-
-    sa_exprs = [t.translate(x) for x in exprs]
-
-    if isinstance(default_val, ops.Literal):
-        assert all(
-            c.isalnum() or c == "_" for c in str(default_val.value)
-        ), f"Value '{default_val.value}' contains non-alphanumeric or non-underscore characters."
-        sa_default = sa.literal_column(f"'{default_val.value}'")
-    else:
-        sa_default = t.translate(default_val)
-
-    return sa.func.coalesce(*sa_exprs, sa_default)
-
-
 def _sa_format_hashbytes(translator, op):
     # Use of query parameters is throwing an error on Db2 z/OS.
     # Code below uses sa.sql.literal_column to prevent parameterization.
@@ -111,6 +87,5 @@ def db2_zos_cast(t, op):
 
 operation_registry[ops.Cast] = db2_zos_cast
 operation_registry[ops.HashBytes] = _sa_format_hashbytes
-operation_registry[ops.Coalesce] = _sa_coalesce
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
 operation_registry[ops.Strftime] = _sa_strftime
