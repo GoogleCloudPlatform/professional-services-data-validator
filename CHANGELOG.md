@@ -2,6 +2,26 @@
 
 ## Untagged
 
+## [8.10.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.0...v8.10.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* Allow snowflake-sqlalchemy to manage own dependencies ([#1855](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1855)) ([70f1ffa](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/70f1ffaa5638190d6af2c378a72e69bda09dc134))
+* Convert Impala connection options given as strings to their real types ([#1852](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1852)) ([a36966b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a36966b92167d40f2f49adf867571560f3919c11))
+* Inline ifnull replacement literal on SQL Server ([#1843](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1843)) ([4b0426c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4b0426c14d04c8e36f9a7e3acae239cccde186a0))
+* Use UTF-8 for stdout so non-ASCII results can be printed on Windows ([#1853](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1853)) ([39161e8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/39161e8d59fe82e14ce70fa73e3a3493899c0ac2))
+
+
+### Performance Improvements
+
+* Apply allowed_schemas to the target connection in find-tables ([#1847](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1847)) ([3e9f69a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3e9f69a38e985e7f54402c26359be82f7720f6fa))
+
+
+### Documentation
+
+* Add sample bash script concurrently validating tables ([#1848](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1848)) ([d70daac](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d70daacceac5f318a0e2a17ea368bb996998e4b1))
+
 ## [8.10.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.9.3...v8.10.0) (2026-10-01)
 
 

@@ -570,7 +570,7 @@ data-validation
                         Directory path containing YAML configs to be run sequentially. Supports local and GCS paths.
   [--dry-run or -dr]    If this flag is present, prints the source and target SQL generated in lieu of running the validation.
   [--kube-completions or -kc]
-                        Flag to indicate usage in Kubernetes index completion mode.
+                        Use with --config-dir to indicate usage in Kubernetes or Cloud Run indexed job mode.
                         See *Scaling DVT* section
 ```
 
