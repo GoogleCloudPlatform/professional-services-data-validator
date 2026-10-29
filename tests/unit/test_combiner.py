@@ -111,6 +111,190 @@ def test_generate_report_with_arrow_decimal(module_under_test):
     assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
 
 
+@pytest.mark.parametrize(
+    ("source_value", "target_value", "arrow_type", "threshold", "expected_status"),
+    [
+        # Regression test for issue-1007, values differ beyond float64 precision.
+        (
+            decimal.Decimal("4938271605061728382"),
+            decimal.Decimal("4938271605061728390"),
+            pyarrow.decimal128(38, 9),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            4938271605061728382,
+            4938271605061728390,
+            pyarrow.int64(),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            decimal.Decimal("61728394506172839450617283945061728390"),
+            decimal.Decimal("61728394506172839450617283945061728391"),
+            pyarrow.decimal256(76, 38),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            decimal.Decimal("61728394506172839450617283945061728390"),
+            decimal.Decimal("61728394506172839450617283945061728390"),
+            pyarrow.decimal256(76, 38),
+            0.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        # A non-zero threshold uses the percentage difference, these values are well within it.
+        (
+            decimal.Decimal("4938271605061728382"),
+            decimal.Decimal("4938271605061728390"),
+            pyarrow.decimal128(38, 9),
+            1.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+    ],
+)
+def test_generate_report_with_high_precision_aggs(
+    module_under_test,
+    source_value,
+    target_value,
+    arrow_type,
+    threshold,
+    expected_status,
+):
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "sum__col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col",
+                validation_type="Column",
+                aggregation_type="sum",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=threshold,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table({"sum__col": pyarrow.array([source_value], type=arrow_type)})
+    target = pyarrow.table({"sum__col": pyarrow.array([target_value], type=arrow_type)})
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+    assert report.loc[0, consts.SOURCE_AGG_VALUE].startswith(str(source_value))
+    assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
+
+
+def _grouped_count_run_metadata():
+    return metadata.RunMetadata(
+        validations={
+            "count": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name=None,
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name=None,
+                validation_type="Column",
+                aggregation_type="count",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+
+
+@pytest.mark.parametrize(
+    ("source_table", "target_table", "join_on_fields", "expected"),
+    [
+        # NULL group present in both source and target must match.
+        (
+            pyarrow.table({"grp": [1, None, 2], "count": [5, 3, 7]}),
+            pyarrow.table({"grp": [None, 2, 1], "count": [3, 7, 5]}),
+            ("grp",),
+            {
+                '{"grp": "1"}': ("5", "5", consts.VALIDATION_STATUS_SUCCESS),
+                '{"grp": "2"}': ("7", "7", consts.VALIDATION_STATUS_SUCCESS),
+                '{"grp": null}': ("3", "3", consts.VALIDATION_STATUS_SUCCESS),
+            },
+        ),
+        # NULL group only in source, sentinel fill value (1) must not match the real group 1.
+        (
+            pyarrow.table({"grp": [1, None], "count": [5, 3]}),
+            pyarrow.table({"grp": [1], "count": [5]}),
+            ("grp",),
+            {
+                '{"grp": "1"}': ("5", "5", consts.VALIDATION_STATUS_SUCCESS),
+                '{"grp": null}': ("3", None, consts.VALIDATION_STATUS_FAIL),
+            },
+        ),
+        # Composite key with a NULL in one part only.
+        (
+            pyarrow.table(
+                {"a": ["x", "x", None], "b": [1, None, None], "count": [1, 2, 3]}
+            ),
+            pyarrow.table(
+                {"a": [None, "x", "x"], "b": [None, None, 1], "count": [3, 2, 1]}
+            ),
+            ("a", "b"),
+            {
+                '{"a": "x", "b": "1"}': ("1", "1", consts.VALIDATION_STATUS_SUCCESS),
+                '{"a": "x", "b": null}': ("2", "2", consts.VALIDATION_STATUS_SUCCESS),
+                '{"a": null, "b": null}': ("3", "3", consts.VALIDATION_STATUS_SUCCESS),
+            },
+        ),
+        # Key entirely NULL on both sides.
+        (
+            pyarrow.table(
+                {"grp": pyarrow.array([None], type=pyarrow.date32()), "count": [4]}
+            ),
+            pyarrow.table(
+                {"grp": pyarrow.array([None], type=pyarrow.date32()), "count": [4]}
+            ),
+            ("grp",),
+            {'{"grp": null}': ("4", "4", consts.VALIDATION_STATUS_SUCCESS)},
+        ),
+    ],
+)
+def test_generate_report_with_null_group_keys(
+    module_under_test, source_table, target_table, join_on_fields, expected
+):
+    report = module_under_test.generate_report(
+        _grouped_count_run_metadata(),
+        source_table,
+        target_table,
+        join_on_fields=join_on_fields,
+    )
+    actual = {
+        row[consts.GROUP_BY_COLUMNS]: (
+            row[consts.SOURCE_AGG_VALUE],
+            row[consts.TARGET_AGG_VALUE],
+            row[consts.VALIDATION_STATUS],
+        )
+        for row in report.to_dict(orient="records")
+    }
+    assert len(report) == len(expected)
+    for group, (src, tgt, status) in expected.items():
+        assert actual[group][2] == status
+        assert actual[group][0] == src
+        if tgt is None:
+            assert actual[group][1] in (None, "nan")
+        else:
+            assert actual[group][1] == tgt
+
+
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pyarrow.table({"count": [1, 1]})
     target = pyarrow.table({"count": [2, 2]})

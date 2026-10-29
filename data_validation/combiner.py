@@ -38,6 +38,11 @@ def _is_numeric_type(data_type: pa.DataType) -> bool:
     )
 
 
+def _is_exact_type(data_type: pa.DataType) -> bool:
+    """Integer and decimal types can be compared exactly, unlike floating point."""
+    return pa.types.is_integer(data_type) or pa.types.is_decimal(data_type)
+
+
 if TYPE_CHECKING:
     from pandas import DataFrame
     from data_validation.metadata import RunMetadata
@@ -116,9 +121,7 @@ def join_and_unpivot(
             for col in target_table.column_names
         ]
     )
-    aligned = source_renamed.join(
-        target_renamed, keys=pk_columns, join_type="full outer"
-    )
+    aligned = _null_safe_full_outer_join(source_renamed, target_renamed, pk_columns)
     num_rows = aligned.num_rows
     slices = []
 
@@ -200,8 +203,20 @@ def join_and_unpivot(
                     ndigits=4,
                 ),
             )
+            if (
+                not validation.threshold
+                and _is_exact_type(src_col.type)
+                and _is_exact_type(tgt_col.type)
+            ):
+                # With a zero threshold integer/decimal aggregates must match exactly.
+                # The float64 difference above can lose precision beyond ~16 significant
+                # digits so we compare the native values instead, Arrow promotes both
+                # sides to a common integer/decimal type without loss.
+                success_condition = pc.equal(src_col, tgt_col)
+            else:
+                success_condition = pc.less_equal(pc.abs(pct_difference), threshold)
             is_successful = pc.if_else(
-                pc.fill_null(pc.less_equal(pc.abs(pct_difference), threshold), False),
+                pc.fill_null(success_condition, False),
                 consts.VALIDATION_STATUS_SUCCESS,
                 consts.VALIDATION_STATUS_FAIL,
             )
@@ -263,6 +278,40 @@ def join_and_unpivot(
         slices.append(col_slice)
     # 4. Stack all per-column slices into the final unpivoted table
     return pa.concat_tables(slices)
+
+
+def _null_safe_full_outer_join(
+    source_table: pa.Table, target_table: pa.Table, keys: list
+) -> pa.Table:
+    """Full outer join source and target tables where NULL key values match each other.
+
+    PyArrow joins follow SQL semantics where NULL != NULL. A grouped column validation can
+    legitimately have a NULL group, which must be matched between source and target.
+    For each key containing NULLs we join on a stand-in key instead: the position of each
+    value in the distinct values from both tables. NULL is one of those distinct values so
+    it matches itself. The original values, including NULLs, are restored after the join.
+    """
+
+    def _replace(table: pa.Table, name: str, values) -> pa.Table:
+        return table.set_column(table.column_names.index(name), name, values)
+
+    value_sets = {}
+    for key in keys:
+        if not (source_table[key].null_count or target_table[key].null_count):
+            continue
+        value_set = pc.unique(
+            pa.chunked_array(source_table[key].chunks + target_table[key].chunks)
+        )
+        value_sets[key] = value_set
+        source_table, target_table = (
+            _replace(t, key, pc.index_in(t[key], value_set=value_set, skip_nulls=False))
+            for t in (source_table, target_table)
+        )
+
+    aligned = source_table.join(target_table, keys=list(keys), join_type="full outer")
+    for key, value_set in value_sets.items():
+        aligned = _replace(aligned, key, value_set.take(aligned[key]))
+    return aligned
 
 
 def _check_schema_names(source_table: pa.Table, target_table: pa.Table):
