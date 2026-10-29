@@ -35,6 +35,7 @@ import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
 import numpy as np
 import pandas as pd
+import pyarrow.compute as pc
 import sqlalchemy as sa
 from ibis.backends.base import BaseBackend
 from ibis.backends.base.sql import BaseSQLBackend
@@ -575,6 +576,38 @@ def _sql_to_pyarrow_batches(
 BaseSQLBackend.to_pyarrow_batches = _sql_to_pyarrow_batches
 
 
+# Largest integer magnitude a float64 can represent exactly.
+_MAX_EXACT_FLOAT_INT = 2**53
+
+
+def _floats_exactly_fit_integer_decimal(col, target_type) -> bool:
+    """Return True when float values can be converted to an integer decimal without loss.
+
+    Some drivers return integer values as floats, e.g. Oracle describes a NUMBER(5) column
+    as an unconstrained NUMBER in some grouped queries and python-oracledb fetches 1.0 instead
+    of 1. When the expected type is an integer decimal (scale 0) and every value is a whole
+    number exactly representable in float64 we can safely use the expected type.
+
+    Note that a PyArrow float to decimal cast rounds (1.5 -> 2) rather than raising, so we
+    must check the values ourselves.
+    """
+    if target_type.scale != 0:
+        return False
+    values = col.drop_null()
+    if len(values) == 0:
+        return True
+    if not pc.all(pc.equal(values, pc.trunc(values))).as_py():
+        return False
+    if pc.max(pc.abs(values)).as_py() > _MAX_EXACT_FLOAT_INT:
+        return False
+    try:
+        col.cast(target_type)
+    except Exception:
+        # e.g. 123456.0 overflows decimal(5, 0).
+        return False
+    return True
+
+
 def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
     """Execute expression and return results as a pyarrow Table.
 
@@ -613,6 +646,7 @@ def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
                     or (
                         pa.types.is_decimal(target_type)
                         and pa.types.is_floating(col.type)
+                        and not _floats_exactly_fit_integer_decimal(col, target_type)
                     )
                     or (
                         pa.types.is_date(target_type)

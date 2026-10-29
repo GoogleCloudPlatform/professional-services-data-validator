@@ -182,3 +182,36 @@ def test_execute_epoch_seconds_new(
 ):
     result = module_under_test.execute_epoch_seconds_new(None, test_input)
     assert list(result) == list(expected)
+
+
+@pytest.mark.parametrize(
+    ("values", "target_type", "expected"),
+    [
+        # Oracle returns NUMBER(5) group key as float, e.g. 1.0 -> safe to use decimal(5, 0).
+        ([1.0, 2.0, None], "decimal128(5, 0)", True),
+        ([None, None], "decimal128(5, 0)", True),
+        # Fractional values (e.g. avg) must stay as float, Arrow would round 1.5 to 2.
+        ([1.0, 1.5], "decimal128(5, 0)", False),
+        # Overflows the target precision.
+        ([123456.0], "decimal128(5, 0)", False),
+        # Whole number but beyond exact float64 range, precision already lost.
+        ([1.2345678901234568e28], "decimal128(38, 0)", False),
+        # Only integer decimals (scale 0) are considered.
+        ([1.0], "decimal128(38, 9)", False),
+    ],
+)
+def test_floats_exactly_fit_integer_decimal(
+    module_under_test, values, target_type, expected
+):
+    import pyarrow
+
+    precision, scale = (
+        int(_) for _ in target_type[len("decimal128(") : -1].split(",")  # noqa: E203
+    )
+    col = pyarrow.chunked_array([pyarrow.array(values, type=pyarrow.float64())])
+    assert (
+        module_under_test._floats_exactly_fit_integer_decimal(
+            col, pyarrow.decimal128(precision, scale)
+        )
+        is expected
+    )

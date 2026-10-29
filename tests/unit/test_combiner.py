@@ -403,6 +403,49 @@ def test_generate_report_with_null_group_keys(
             assert actual[group][1] == tgt
 
 
+@pytest.mark.parametrize(
+    ("source_key", "target_key"),
+    [
+        # Oracle NUMBER(5) vs BigQuery INT64.
+        (
+            pyarrow.array(
+                [decimal.Decimal(1), decimal.Decimal(2), None], pyarrow.decimal128(5, 0)
+            ),
+            pyarrow.array([2, 1, None], pyarrow.int64()),
+        ),
+        (
+            pyarrow.array([1, 2, None], pyarrow.int64()),
+            pyarrow.array(
+                [decimal.Decimal(2), decimal.Decimal(1), None], pyarrow.decimal128(5, 0)
+            ),
+        ),
+        (
+            pyarrow.array([1, 2, None], pyarrow.int32()),
+            pyarrow.array([2, 1, None], pyarrow.int64()),
+        ),
+    ],
+)
+def test_generate_report_with_mismatched_key_types(
+    module_under_test, source_key, target_key
+):
+    source = pyarrow.table({"id": source_key, "count": [5, 7, 3]})
+    target = pyarrow.table({"id": target_key, "count": [7, 5, 3]})
+    report = module_under_test.generate_report(
+        _grouped_count_run_metadata(), source, target, join_on_fields=("id",)
+    )
+    assert len(report) == 3
+    assert set(report[consts.VALIDATION_STATUS]) == {consts.VALIDATION_STATUS_SUCCESS}
+
+
+def test_generate_report_with_incompatible_key_types(module_under_test):
+    source = pyarrow.table({"id": ["a", "b"], "count": [1, 2]})
+    target = pyarrow.table({"id": [1, 2], "count": [1, 2]})
+    with pytest.raises(ValueError, match="Unable to join on key id"):
+        module_under_test.generate_report(
+            _grouped_count_run_metadata(), source, target, join_on_fields=("id",)
+        )
+
+
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pyarrow.table({"count": [1, 1]})
     target = pyarrow.table({"count": [2, 2]})

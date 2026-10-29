@@ -311,6 +311,54 @@ def join_and_unpivot(
     return pa.concat_tables(slices)
 
 
+def _align_key_types(source_table: pa.Table, target_table: pa.Table, keys: list):
+    """Cast join keys with differing source/target types to a common type.
+
+    PyArrow joins require identical key types but engines often return the same key with
+    different types, e.g. Oracle NUMBER(5) as decimal128(5, 0) and BigQuery INT64 as int64.
+    For numeric keys we try a safe cast in each direction, a safe cast raises rather than
+    lose data. Other type mismatches are not silently converted.
+    """
+
+    def _is_numeric(data_type: pa.DataType) -> bool:
+        return (
+            pa.types.is_integer(data_type)
+            or pa.types.is_decimal(data_type)
+            or pa.types.is_floating(data_type)
+        )
+
+    for key in keys:
+        source_col = source_table[key]
+        target_col = target_table[key]
+        if source_col.type == target_col.type:
+            continue
+        incompatible = ValueError(
+            f"Unable to join on key {key}, incompatible data types "
+            f"{consts.RESULT_TYPE_SOURCE}: {source_col.type}, "
+            f"{consts.RESULT_TYPE_TARGET}: {target_col.type}"
+        )
+        if not (_is_numeric(source_col.type) and _is_numeric(target_col.type)):
+            raise incompatible
+        try:
+            target_table = target_table.set_column(
+                target_table.column_names.index(key),
+                key,
+                target_col.cast(source_col.type),
+            )
+            continue
+        except (pa.ArrowInvalid, pa.ArrowNotImplementedError):
+            pass
+        try:
+            source_table = source_table.set_column(
+                source_table.column_names.index(key),
+                key,
+                source_col.cast(target_col.type),
+            )
+        except (pa.ArrowInvalid, pa.ArrowNotImplementedError) as e:
+            raise incompatible from e
+    return source_table, target_table
+
+
 def _null_safe_full_outer_join(
     source_table: pa.Table, target_table: pa.Table, keys: list
 ) -> pa.Table:
@@ -326,6 +374,7 @@ def _null_safe_full_outer_join(
     def _replace(table: pa.Table, name: str, values) -> pa.Table:
         return table.set_column(table.column_names.index(name), name, values)
 
+    source_table, target_table = _align_key_types(source_table, target_table, keys)
     value_sets = {}
     for key in keys:
         if not (source_table[key].null_count or target_table[key].null_count):
