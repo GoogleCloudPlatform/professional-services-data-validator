@@ -25,7 +25,6 @@ non-textual languages.
 
 import datetime
 import dateutil
-import decimal
 import string
 from typing import Union
 
@@ -35,16 +34,16 @@ import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
 import numpy as np
 import pandas as pd
-import pyarrow.compute as pc
 import sqlalchemy as sa
+from ibis.common.annotations import attribute
 from ibis.backends.base import BaseBackend
-from ibis.backends.base.sql import BaseSQLBackend
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
 import third_party.ibis.ibis_pandas
+import third_party.ibis.ibis_pyarrow  # noqa: F401
 from third_party.ibis.ibis_addon.api import check_ifnull_default_literal
 
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
@@ -499,200 +498,36 @@ if SybaseExprTranslator:
 
 
 # -------------------------------------------------------------------------
-# Monkey patches for Ibis PyArrow execution
+# Monkey patch for Ibis Sum aggregate type inference
 #
-# Standard upstream Ibis implementations:
-#   - BaseSQLBackend.to_pyarrow_batches (ibis/backends/base/sql/__init__.py):
-#       Calls pa.array(map(tuple, batch), type=array_type) with the statically
-#       inferred schema. If the database cursor returns Decimals or floats with
-#       different precision or scale than statically inferred (e.g. Postgres
-#       STDDEV, AVG, or Decimal conversions), PyArrow throws:
-#       "Rescaling Decimal128 value would cause data loss" or
-#       "tried to convert to double".
-#   - BaseBackend.to_pyarrow (ibis/backends/base/__init__.py):
-#       Calls table.cast(arrow_schema) directly on the entire table. If an aggregate
-#       returns a decimal with a higher scale or precision than the column's static
-#       schema (e.g. STDDEV of numeric(10, 2) returning scale 20), casting directly
-#       to arrow_schema silently truncates significant decimal digits down to scale 2.
+# Standard upstream Ibis implementation:
+#   - ops.Sum.dtype (ibis/expr/operations/reductions.py):
+#       Hardcodes scale=max(dtype.scale, 2) while capping precision=max(dtype.precision, 38),
+#       stealing 2 integer digits from scale-0 decimals such as NUMBER(38, 0).
+#
+# PyArrow execution patches live in third_party/ibis/ibis_pyarrow/execution.py.
 # -------------------------------------------------------------------------
 
 
-def _sql_to_pyarrow_batches(
-    self,
-    expr,
-    *,
-    params=None,
-    limit=None,
-    chunk_size=1_000_000,
-):
-    """Execute expression and return an iterator of pyarrow record batches.
-
-    Deviation from standard Ibis:
-    Instead of forcing each batch into a single StructArray with the statically
-    inferred schema type, this converts each column independently using
-    `pa.array(col)` to let PyArrow preserve the cursor's actual data types and
-    scales (e.g. Postgres DBAPI Decimal values), avoiding rescaling failures.
-    """
-    pa = self._import_pyarrow()
-
-    schema = expr.as_table().schema()
-    names = schema.names
-
-    def _batch_to_record_batch(batch):
-        if not batch:
-            pa_schema = schema.to_pyarrow()
-            return pa.RecordBatch.from_pydict(
-                {name: [] for name in names}, schema=pa_schema
-            )
-        cols = list(zip(*batch))
-
-        def _make_array(col):
-            try:
-                return pa.array(col)
-            except OverflowError:
-                return pa.array(
-                    [decimal.Decimal(str(x)) if isinstance(x, int) else x for x in col]
-                )
-
-        arrays = [_make_array(col) for col in cols]
-        pa_schema = pa.schema(
-            [pa.field(name, arr.type) for name, arr in zip(names, arrays)]
+def _sum_dtype(self):
+    dtype = self.arg.dtype
+    if dtype.is_boolean():
+        return dt.int64
+    elif dtype.is_integer():
+        return dt.int64
+    elif dtype.is_unsigned_integer():
+        return dt.uint64
+    elif dtype.is_floating():
+        return dt.float64
+    elif dtype.is_decimal():
+        return dt.Decimal(
+            precision=(
+                max(dtype.precision, 38) if dtype.precision is not None else None
+            ),
+            scale=dtype.scale,
         )
-        return pa.RecordBatch.from_arrays(arrays, schema=pa_schema)
-
-    batches = list(
-        _batch_to_record_batch(batch)
-        for batch in self._cursor_batches(
-            expr, params=params, limit=limit, chunk_size=chunk_size
-        )
-    )
-    if batches:
-        out_schema = batches[0].schema
     else:
-        out_schema = schema.to_pyarrow()
-    return pa.ipc.RecordBatchReader.from_batches(out_schema, batches)
+        raise TypeError(f"Cannot compute sum of {dtype} values")
 
 
-BaseSQLBackend.to_pyarrow_batches = _sql_to_pyarrow_batches
-
-
-# Largest integer magnitude a float64 can represent exactly.
-_MAX_EXACT_FLOAT_INT = 2**53
-
-
-def _floats_exactly_fit_integer_decimal(col, target_type) -> bool:
-    """Return True when float values can be converted to an integer decimal without loss.
-
-    Some drivers return integer values as floats, e.g. Oracle describes a NUMBER(5) column
-    as an unconstrained NUMBER in some grouped queries and python-oracledb fetches 1.0 instead
-    of 1. When the expected type is an integer decimal (scale 0) and every value is a whole
-    number exactly representable in float64 we can safely use the expected type.
-
-    Note that a PyArrow float to decimal cast rounds (1.5 -> 2) rather than raising, so we
-    must check the values ourselves.
-    """
-    if target_type.scale != 0:
-        return False
-    values = col.drop_null()
-    if len(values) == 0:
-        return True
-    if not pc.all(pc.equal(values, pc.trunc(values))).as_py():
-        return False
-    if pc.max(pc.abs(values)).as_py() > _MAX_EXACT_FLOAT_INT:
-        return False
-    try:
-        col.cast(target_type)
-    except Exception:
-        # e.g. 123456.0 overflows decimal(5, 0).
-        return False
-    return True
-
-
-def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
-    """Execute expression and return results as a pyarrow Table.
-
-    Deviation from standard Ibis:
-    Standard Ibis does `table.cast(arrow_schema)`. Here, we inspect each column:
-    if the column in the batch was returned by the database cursor with a higher
-    decimal scale or as a float (e.g. for aggregations like STDDEV or AVG on a
-    decimal column), we preserve the cursor's full precision rather than truncating
-    it down to the column's static schema definition.
-    """
-    pa = self._import_pyarrow()
-    self._run_pre_execute_hooks(expr)
-    table_expr = expr.as_table()
-    arrow_schema = table_expr.schema().to_pyarrow()
-    try:
-        with self.to_pyarrow_batches(
-            table_expr, params=params, limit=limit, **kwargs
-        ) as reader:
-            batches = list(reader)
-            if not batches:
-                return arrow_schema.empty_table()
-            table = pa.Table.from_batches(batches).rename_columns(table_expr.columns)
-            table_arrays = []
-            final_fields = []
-            for name, field in zip(table.column_names, arrow_schema):
-                col = table[name]
-                target_type = field.type
-                # Avoid precision loss when cursor returns higher scale decimal or float for an aggregate,
-                # or when cursor returns timestamp for a date column (e.g. Oracle DATE which stores time).
-                if (
-                    (
-                        pa.types.is_decimal(target_type)
-                        and pa.types.is_decimal(col.type)
-                        and col.type.scale > target_type.scale
-                    )
-                    or (
-                        pa.types.is_decimal(target_type)
-                        and pa.types.is_floating(col.type)
-                        and not _floats_exactly_fit_integer_decimal(col, target_type)
-                    )
-                    or (
-                        pa.types.is_date(target_type)
-                        and pa.types.is_timestamp(col.type)
-                    )
-                ):
-                    target_type = col.type
-                try:
-                    cast_col = col.cast(target_type)
-                except Exception:
-                    if (
-                        pa.types.is_decimal(target_type)
-                        and pa.types.is_decimal(col.type)
-                    ) or (
-                        pa.types.is_integer(target_type)
-                        and (
-                            pa.types.is_decimal(col.type)
-                            or pa.types.is_integer(col.type)
-                        )
-                    ):
-                        # The cursor value does not fit the statically inferred type,
-                        # e.g. SUM(NUMBER(38)) returned as decimal128(38, 0) when the schema
-                        # says decimal128(38, 2), or PostgreSQL/MySQL SUM(BIGINT) exceeding
-                        # int64 and returned as Decimal. An unsafe cast would silently
-                        # wrap/corrupt the value so we keep the cursor's type instead.
-                        cast_col = col
-                        target_type = col.type
-                    else:
-                        try:
-                            cast_col = pa.compute.cast(col, target_type, safe=False)
-                        except Exception:
-                            if pa.types.is_integer(col.type) and pa.types.is_decimal(
-                                target_type
-                            ):
-                                cast_col = pa.compute.cast(
-                                    pa.compute.cast(col, pa.string()), target_type
-                                )
-                            else:
-                                raise
-                table_arrays.append(cast_col)
-                final_fields.append(pa.field(name, target_type))
-            return pa.Table.from_arrays(table_arrays, schema=pa.schema(final_fields))
-    except pa.lib.ArrowInvalid:
-        raise
-    except ValueError:
-        return arrow_schema.empty_table()
-
-
-BaseBackend.to_pyarrow = _base_to_pyarrow
+ops.Sum.__attributes__["dtype"] = attribute(_sum_dtype)

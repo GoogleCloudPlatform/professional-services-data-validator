@@ -20,7 +20,7 @@ Validation query results no longer pass through Pandas before the combiner:
 | BigQuery | Ibis `BigQueryBackend.to_pyarrow` → `QueryJob.result().to_arrow()` (Storage API/REST), Arrow native throughout | `PyArrowData.convert_table` → `table.cast(ibis_schema)` (safe cast) |
 | SQLAlchemy backends (Oracle, PostgreSQL, SQL Server, ...) | DB-API cursor `fetchmany()` → Python tuples → DVT patched `_sql_to_pyarrow_batches` builds each column with `pa.array(col)` | DVT patched `_base_to_pyarrow` casts to the Ibis schema with fallbacks |
 
-Both patched functions live in [operations.py](../../../third_party/ibis/ibis_addon/operations.py).
+Both patched functions live in [execution.py](../../../third_party/ibis/ibis_pyarrow/execution.py).
 Pandas is only used at the end of `generate_report()` to convert the finished report table.
 
 ### Commits
@@ -224,9 +224,10 @@ percentage difference instead. Unit test `test_generate_report_with_approximate_
 **Symptom:** Oracle `sum__col_dec_38` arrived as `477568460403916027209854607343450327.92` instead of
 `61728394506172839450617283945061728390`.
 
-**Root cause:** Ibis typed `SUM(NUMBER(38))` as `decimal128(38, 2)`, leaving 36 integer digits, while
-the cursor value needed 38. The safe cast failed, and `_base_to_pyarrow()` fell back to
-`pc.cast(..., safe=False)`, which silently overflowed:
+**Root cause:** Ibis 7.1's `ops.Sum.dtype` hardcoded `scale = max(dtype.scale, 2)` while capping
+`precision = max(dtype.precision, 38)`, typing `SUM(NUMBER(38, 0))` as `decimal128(38, 2)` (stealing 2
+integer digits so only 36 remained) while the cursor value needed 38. The safe cast failed, and
+`_base_to_pyarrow()` fell back to `pc.cast(..., safe=False)`, which silently overflowed:
 
 ```text
 pa.array([Decimal("61728394506172839450617283945061728390")])  -> decimal128(38, 0)
@@ -234,17 +235,43 @@ pa.array([Decimal("61728394506172839450617283945061728390")])  -> decimal128(38,
 pc.cast(..., decimal128(38, 2), safe=False)    -> 477568460403916027209854607343450327.92
 ```
 
-Similarly, on PostgreSQL (`SUM(bigint) -> numeric`) and MySQL (`SUM(bigint) -> DECIMAL`), SQL widens
-sums above $2^{63} - 1$ while Ibis statically types `t.col_int64.sum()` as `int64`; falling back to
-`pc.cast(..., pa.int64(), safe=False)` silently wraps modulo $2^{64}$.
+Related gaps in the same Arrow execution layer:
+* On PostgreSQL (`SUM(bigint) -> numeric`), MySQL (`SUM(bigint) -> DECIMAL`), and engines returning
+  `float64` for large sums (e.g. Teradata `SUM(BIGINT)`), SQL widens sums above $2^{63} - 1$ while Ibis
+  statically types `t.col_int64.sum()` as `int64`; falling back to `pc.cast(..., pa.int64(), safe=False)`
+  silently wraps or truncates.
+* `SnowflakeBackend.to_pyarrow` overrides `BaseBackend.to_pyarrow` and called `res.cast(target_schema)`
+  directly, bypassing `_base_to_pyarrow()` (affecting both 37–38 digit `SUM`s and `AVG` scale truncation).
+  (BigQuery is unaffected because `BigQuerySchema` maps `NUMERIC`/`BIGNUMERIC` to fixed `(38, 9)` /
+  `(76, 38)` matching the Storage Read API output.)
+* `_sql_to_pyarrow_batches()` inferred `pa.array(col)` independently per batch; if multi-batch results
+  (`>1M` rows) inferred different types across batches (e.g. `null` vs `int64`, or `decimal128(4, 2)` vs
+  `decimal128(8, 3)`), `pa.Table.from_batches()` raised `ArrowInvalid: Schema at index 1 was different`.
+  Note that `_sql_to_pyarrow_batches()` intentionally materializes `batches = list(...)` so batch schemas
+  can be unified up front before constructing `RecordBatchReader` (and `_base_to_pyarrow()` materializes
+  all batches into a `pa.Table` immediately anyway).
 
-Previously both cases were hidden because the values were cast to string in SQL (problem 1).
+Previously the aggregate overflow cases were hidden because the values were cast to string in SQL
+(problem 1).
 
-**Fix (`177dec40` + follow-up):** In `_base_to_pyarrow()`, when the expected type is decimal or integer,
-the cursor type is decimal or integer, and the safe cast fails (apart from `int -> decimal`, which uses
-string conversion), the cursor's type is kept rather than falling back to `safe=False`. Unit test
-`test_base_to_pyarrow_preserves_overflowing_numerics` in
-[test_operations.py](../../../tests/unit/ibis_addon/test_operations.py).
+**Fix (`177dec40` + follow-ups):**
+1. In [operations.py](../../../third_party/ibis/ibis_addon/operations.py), `ops.Sum.dtype` is patched to
+   preserve `scale=dtype.scale` rather than forcing `max(dtype.scale, 2)` (unit test
+   `test_sum_decimal_dtype_preserves_scale` in
+   [test_operations.py](../../../tests/unit/ibis_addon/test_operations.py)).
+2. In [execution.py](../../../third_party/ibis/ibis_pyarrow/execution.py), column alignment is extracted
+   into `_cast_column_preserving_precision()` and `_align_table_preserving_precision()`, shared by both
+   `_base_to_pyarrow()` and `_snowflake_to_pyarrow()`. Numeric casts (`decimal -> decimal`,
+   `decimal/int/float -> int`, and `int -> decimal`) never fall through to `safe=False`; when safe
+   casting fails due to wider cursor precision/range, the cursor's Arrow column is preserved.
+3. `_sql_to_pyarrow_batches()` in [execution.py](../../../third_party/ibis/ibis_pyarrow/execution.py)
+   unifies schemas across batches via `_unify_record_batches()` when `len(batches) > 1` and batch
+   schemas differ.
+
+Unit tests `test_base_to_pyarrow_preserves_overflowing_numerics`,
+`test_sql_to_pyarrow_batches_unifies_mismatched_batch_schemas`, and
+`test_snowflake_to_pyarrow_preserves_precision` in
+[test_execution.py](../../../tests/unit/ibis_pyarrow/test_execution.py).
 
 ## 6. NULL group-by keys do not join
 
@@ -326,7 +353,7 @@ when Ibis expects a decimal (to preserve `avg`/`std` precision), so the key reac
 `double`. Pandas tolerated `1.0 == 1`, PyArrow joins do not.
 
 **Fix (`057f73d5`):** New helper `_floats_exactly_fit_integer_decimal()` in
-[operations.py](../../../third_party/ibis/ibis_addon/operations.py). The float-to-decimal casting rule is
+[execution.py](../../../third_party/ibis/ibis_pyarrow/execution.py). The float-to-decimal casting rule is
 skipped (i.e. the expected decimal type is used) when all of these are true:
 
 - the expected type is a decimal with scale 0
@@ -339,7 +366,7 @@ rather than raising. `id`, `min__id` and `max__id` now arrive as `decimal128(5, 
 float because Oracle gives no precision for it.
 
 Unit test `test_floats_exactly_fit_integer_decimal` in
-[test_operations.py](../../../tests/unit/ibis_addon/test_operations.py).
+[test_execution.py](../../../tests/unit/ibis_pyarrow/test_execution.py).
 
 ## 9. Join keys with different numeric types
 
@@ -492,7 +519,7 @@ Note that `raw_sql()` also returns the cursor after the `db.snapshot()` context 
   and FileSystem/Pandas use upstream Ibis's `pa.Table.from_pandas(self.execute(...))` fallback,
   which re-introduces Pandas type coercion issues. SQLAlchemy backends stream DB-API cursor batches
   through DVT's patched `_sql_to_pyarrow_batches` and `_base_to_pyarrow` in
-  [operations.py](../../../third_party/ibis/ibis_addon/operations.py). Note that `client.execute()`
+  [execution.py](../../../third_party/ibis/ibis_pyarrow/execution.py). Note that `client.execute()`
   is still used outside `_execute_validation()` (random-row sampling, partition generation, `query`
   CLI) and must remain functional.
 - **Spanner libraries (`google-cloud-spanner`):** Spanner's gRPC API (`ExecuteStreamingSql`) streams
