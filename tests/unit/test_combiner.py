@@ -667,6 +667,73 @@ def test_generate_report_with_empty_target(module_under_test):
     assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
 
 
+@pytest.mark.parametrize("labels", [[], [("env", "dev")]])
+@pytest.mark.parametrize(
+    ("join_on_fields", "is_value_comparison", "table_schema"),
+    [
+        # Row validation on empty tables / empty partition
+        (
+            ["id"],
+            True,
+            pyarrow.schema([("id", pyarrow.int64()), ("hash__all", pyarrow.string())]),
+        ),
+        # Grouped column validation on empty tables
+        (
+            ["id"],
+            False,
+            pyarrow.schema([("id", pyarrow.int64()), ("count", pyarrow.int64())]),
+        ),
+        # Ungrouped validation where both sides return 0 rows (e.g. custom query)
+        ((), False, pyarrow.schema([("count", pyarrow.int64())])),
+    ],
+)
+def test_generate_report_with_both_sides_empty(
+    module_under_test, labels, join_on_fields, is_value_comparison, table_schema
+):
+    """When both source and target return 0 rows, generate_report returns an empty 20-col DataFrame."""
+    empty_table = table_schema.empty_table()
+    run_metadata = metadata.RunMetadata(
+        validations=EXAMPLE_RUN_METADATA.validations,
+        start_time=datetime.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc),
+        labels=labels,
+        run_id="empty-run",
+    )
+    report = module_under_test.generate_report(
+        run_metadata,
+        empty_table,
+        empty_table,
+        join_on_fields=join_on_fields,
+        is_value_comparison=is_value_comparison,
+    )
+
+    assert report.empty
+    assert len(report.columns) == 20
+    assert consts.VALIDATION_STATUS in report.columns
+    assert consts.CONFIG_LABELS in report.columns
+    assert run_metadata.end_time is not None
+
+
+def test_generate_report_with_no_value_columns(module_under_test):
+    """If only join key columns are present (no value columns), return an empty 20-col DataFrame."""
+    pk_only = pyarrow.table({"id": [1, 2]})
+    run_metadata = metadata.RunMetadata(
+        validations={},
+        start_time=datetime.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc),
+        labels=[("env", "dev")],
+        run_id="pk-only-run",
+    )
+    report = module_under_test.generate_report(
+        run_metadata,
+        pk_only,
+        pk_only,
+        join_on_fields=["id"],
+        is_value_comparison=True,
+    )
+
+    assert report.empty
+    assert len(report.columns) == 20
+
+
 @pytest.mark.parametrize(
     ("source_array", "target_array", "threshold", "expected_status"),
     [

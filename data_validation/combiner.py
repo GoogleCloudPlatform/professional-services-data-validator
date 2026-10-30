@@ -123,6 +123,39 @@ def generate_report(
     return result_df
 
 
+def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
+    """Return an empty report table with the standard 20-column schema."""
+    start_time_type = (
+        pa.scalar(run_metadata.start_time).type
+        if run_metadata.start_time is not None
+        else pa.timestamp("us", tz="UTC")
+    )
+    return pa.schema(
+        [
+            (consts.VALIDATION_NAME, pa.string()),
+            (consts.VALIDATION_TYPE, pa.string()),
+            (consts.AGGREGATION_TYPE, pa.string()),
+            (consts.SOURCE_TABLE_NAME, pa.string()),
+            (consts.SOURCE_COLUMN_NAME, pa.string()),
+            (consts.SOURCE_AGG_VALUE, pa.string()),
+            (consts.TARGET_TABLE_NAME, pa.string()),
+            (consts.TARGET_COLUMN_NAME, pa.string()),
+            (consts.TARGET_AGG_VALUE, pa.string()),
+            (consts.GROUP_BY_COLUMNS, pa.string()),
+            (consts.CONFIG_PRIMARY_KEYS, pa.string()),
+            (consts.NUM_RANDOM_ROWS, pa.int64()),
+            (consts.VALIDATION_DIFFERENCE, pa.float64()),
+            (consts.VALIDATION_PCT_DIFFERENCE, pa.float64()),
+            (consts.VALIDATION_PCT_THRESHOLD, pa.float64()),
+            (consts.VALIDATION_STATUS, pa.string()),
+            (consts.CONFIG_RUN_ID, pa.string()),
+            (consts.CONFIG_LABELS, pa.list_(pa.list_(pa.string()))),
+            (consts.CONFIG_START_TIME, start_time_type),
+            (consts.CONFIG_END_TIME, pa.timestamp("us", tz="UTC")),
+        ]
+    ).empty_table()
+
+
 def join_and_unpivot(
     run_metadata: "RunMetadata",
     source_table: pa.Table,
@@ -173,6 +206,10 @@ def join_and_unpivot(
 
     # 3. Many columns in the report are common across all validations, compute these once
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
+    if num_rows == 0 or not value_columns:
+        # PyArrow 14 raises ArrowInvalid on pa.repeat(<list>, 0) and pa.concat_tables([]).
+        return _empty_report_table(run_metadata)
+
     run_id_col = pa.repeat(run_metadata.run_id, num_rows)
     labels_col = pa.repeat(run_metadata.labels, num_rows)
     start_time_col = pa.repeat(run_metadata.start_time, num_rows)

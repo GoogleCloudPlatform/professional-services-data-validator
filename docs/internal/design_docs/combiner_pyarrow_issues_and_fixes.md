@@ -329,6 +329,19 @@ On `develop` the Ibis combiner used `cross_join()` and the equivalent test asser
 `test_generate_report_with_too_many_rows` now expects the `ValueError`. A new
 `test_generate_report_with_empty_target` checks that an empty target produces a single failed row.
 
+**Follow-up fix (both sides empty / empty `value_columns`):**
+
+- `test_generate_report_with_empty_target` covered 1 source row vs 0 target rows (`aligned.num_rows == 1`),
+  but when **both** source and target return 0 rows (`aligned.num_rows == 0`, e.g., empty tables or empty
+  partitions in a row validation, grouped column validation, or custom-query validation), PyArrow 14 raises
+  `ArrowInvalid: Must pass at least one array` on `pa.repeat(run_metadata.labels, 0)`. Similarly, if
+  `value_columns` is empty, `pa.concat_tables([])` raises `ArrowInvalid: Must pass at least one table`.
+- After running the ungrouped `num_rows > 1` check, `_null_safe_full_outer_join`, and updating
+  `run_metadata.end_time`, `join_and_unpivot()` now short-circuits when `num_rows == 0 or not value_columns`
+  and returns `_empty_report_table(run_metadata)` with the standard 20-column report schema.
+- Covered by `test_generate_report_with_both_sides_empty` (with `[]` and `[("env", "dev")]` labels across
+  row, grouped, and ungrouped validations) and `test_generate_report_with_no_value_columns`.
+
 ## 8. Oracle integer keys returned as floats
 
 **Test:** `test_column_validation_tricky_dates_to_bigquery` (Oracle to BigQuery, grouped by `id`).
