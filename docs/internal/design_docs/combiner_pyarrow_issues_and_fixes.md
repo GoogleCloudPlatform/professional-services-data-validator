@@ -157,16 +157,21 @@ issue-1007).
 
 This affects `int64` as well as decimals.
 
-**Fix (`bb103562`):** When `validation.threshold` is 0 and both sides are integer or decimal
-(`_is_exact_type()`), success is decided by an exact comparison of the native values. float64 is
-still used for the `difference`/`pct_difference` report columns and for thresholds above 0. Dates and
-timestamps qualify because they are already converted to `int64` epoch seconds.
+**Fix (`bb103562` + follow-up):** When `validation.threshold` is 0 and both sides are integer or
+decimal (`_is_exact_type()`), success is decided by an exact comparison of the native values. float64
+is still used for the `difference`/`pct_difference` report columns and for thresholds above 0 (a
+legacy `float32` cast on `difference` in `pct_difference` was also removed so differences above
+`~3.4e38` do not overflow to `inf` and tiny `float64` differences below `~1.4e-45` do not underflow
+to `0.0`). Dates and `min`/`max` timestamps are converted to whole-second `int64` epoch seconds
+before comparison, intentionally matching `develop` (PR #195) and DVT's whole-second SQL
+`epoch_seconds` semantics used by `sum`/`avg`/`std` (even though `source_agg_value` /
+`target_agg_value` format sub-second digits when present).
 
 Values that differ only beyond float64 precision will show `difference = 0.0` alongside a `fail`
 status, because the report columns are float64.
 
-A unit test `test_generate_report_with_high_precision_aggs` covers `decimal128`, `int64` and
-`decimal256` values.
+A unit test `test_generate_report_with_high_precision_aggs` covers `decimal128`, `int64`,
+`decimal256`, and extreme `float64` values.
 
 ## 3. Arrow does not promote decimal128 to decimal256
 

@@ -226,11 +226,12 @@ def join_and_unpivot(
                 pc.equal(difference, 0),
                 0.0,
                 pc.round(
-                    pc.divide(
-                        pc.multiply(
-                            100.0, pc.cast(difference, pa.float32(), safe=False)
+                    pc.multiply(
+                        100.0,
+                        pc.divide(
+                            difference,
+                            pc.if_else(pc.equal(src_num, 0), tgt_num, src_num),
                         ),
-                        pc.if_else(pc.equal(src_num, 0), tgt_num, src_num),
                     ),
                     ndigits=4,
                 ),

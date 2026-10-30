@@ -151,6 +151,29 @@ def test_generate_report_with_arrow_decimal(module_under_test):
             1.0,
             consts.VALIDATION_STATUS_SUCCESS,
         ),
+        # Difference > float32 max (~3.40e38) must not overflow pct_difference to inf.
+        (
+            decimal.Decimal("5" + "0" * 39),
+            decimal.Decimal("51" + "0" * 38),
+            pyarrow.decimal256(45, 0),
+            5.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            1e307,
+            1.02e307,
+            pyarrow.float64(),
+            5.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        # Tiny float64 difference (< float32 subnormal min ~1.4e-45) must not underflow to 0.0.
+        (
+            1e-46,
+            9e-46,
+            pyarrow.float64(),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
     ],
 )
 def test_generate_report_with_high_precision_aggs(
@@ -188,8 +211,9 @@ def test_generate_report_with_high_precision_aggs(
     report = module_under_test.generate_report(run_metadata, source, target)
 
     assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
-    assert report.loc[0, consts.SOURCE_AGG_VALUE].startswith(str(source_value))
-    assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
+    if pyarrow.types.is_integer(arrow_type) or pyarrow.types.is_decimal(arrow_type):
+        assert report.loc[0, consts.SOURCE_AGG_VALUE].startswith(str(source_value))
+        assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
 
 
 @pytest.mark.parametrize(
