@@ -137,9 +137,10 @@ An initial idea of treating all `pa.string()` columns as numeric in the combiner
   - `EXPECTED_NUM_YAML_LINES_WILDCARD`: 162 → 155
   - `EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR`: 54 → 53
   - `EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR`: 54 → 53
-
-`_decimal_column_too_big_for_pandas()` is still used by `_key_column_needs_casting_to_string()` for
-primary key/group-by columns. That use was not changed.
+- `_decimal_column_too_big_for_pandas()` was renamed to `_is_high_precision_decimal()`, dropping the
+  now-unused `margin` parameter and `dt.Int64` branches. It is still used by
+  `_key_column_needs_casting_to_string()` for primary key/group-by columns and for `std`/`avg` float64
+  casts.
 
 ## 2. Comparing high precision values via float64
 
@@ -203,7 +204,7 @@ approximate by nature and engines return them with different precision.
 **Fix (`177dec40`):** The exact comparison excludes `aggregation_type` `avg` and `std`, which use the
 percentage difference instead. Unit test `test_generate_report_with_approximate_decimal_aggs`.
 
-## 5. Unsafe decimal cast in _base_to_pyarrow
+## 5. Unsafe decimal/integer cast in _base_to_pyarrow
 
 **Test:** `test_column_validation_large_decimals_to_bigquery` (Oracle to BigQuery).
 
@@ -220,11 +221,17 @@ pa.array([Decimal("61728394506172839450617283945061728390")])  -> decimal128(38,
 pc.cast(..., decimal128(38, 2), safe=False)    -> 477568460403916027209854607343450327.92
 ```
 
-Previously this was hidden because the value was cast to string in SQL (problem 1).
+Similarly, on PostgreSQL (`SUM(bigint) -> numeric`) and MySQL (`SUM(bigint) -> DECIMAL`), SQL widens
+sums above $2^{63} - 1$ while Ibis statically types `t.col_int64.sum()` as `int64`; falling back to
+`pc.cast(..., pa.int64(), safe=False)` silently wraps modulo $2^{64}$.
 
-**Fix (`177dec40`):** In `_base_to_pyarrow()`, when both the expected type and the cursor type are
-decimal and the safe cast fails, the cursor's decimal type is kept. An unsafe cast is never used for
-decimals.
+Previously both cases were hidden because the values were cast to string in SQL (problem 1).
+
+**Fix (`177dec40` + follow-up):** In `_base_to_pyarrow()`, when the expected type is decimal or integer,
+the cursor type is decimal or integer, and the safe cast fails (apart from `int -> decimal`, which uses
+string conversion), the cursor's type is kept rather than falling back to `safe=False`. Unit test
+`test_base_to_pyarrow_preserves_overflowing_numerics` in
+[test_operations.py](../../../tests/unit/ibis_addon/test_operations.py).
 
 ## 6. NULL group-by keys do not join
 

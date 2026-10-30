@@ -657,13 +657,21 @@ def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
                 try:
                     cast_col = col.cast(target_type)
                 except Exception:
-                    if pa.types.is_decimal(target_type) and pa.types.is_decimal(
-                        col.type
+                    if (
+                        pa.types.is_decimal(target_type)
+                        and pa.types.is_decimal(col.type)
+                    ) or (
+                        pa.types.is_integer(target_type)
+                        and (
+                            pa.types.is_decimal(col.type)
+                            or pa.types.is_integer(col.type)
+                        )
                     ):
-                        # The cursor value does not fit the statically inferred decimal type,
+                        # The cursor value does not fit the statically inferred type,
                         # e.g. SUM(NUMBER(38)) returned as decimal128(38, 0) when the schema
-                        # says decimal128(38, 2). An unsafe cast would silently corrupt the
-                        # value so we keep the cursor's decimal type instead.
+                        # says decimal128(38, 2), or PostgreSQL/MySQL SUM(BIGINT) exceeding
+                        # int64 and returned as Decimal. An unsafe cast would silently
+                        # wrap/corrupt the value so we keep the cursor's type instead.
                         cast_col = col
                         target_type = col.type
                     else:

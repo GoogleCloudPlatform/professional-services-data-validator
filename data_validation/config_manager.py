@@ -986,39 +986,27 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def _decimal_column_too_big_for_pandas(
+    def _is_high_precision_decimal(
         self,
         source_column_ibis_type: dt.DataType,
         target_column_ibis_type: dt.DataType,
-        margin: int = 0,
     ) -> bool:
-        """Identifies numeric columns that will cause problems in a Pandas Dataframe.
+        """Identifies Decimal columns with greater precision than a 64-bit int/float (> 18 digits).
 
-        i.e. are of greater precision than a 64bit int/real can hold.
-
-        margin: Allows us to lower the precision threshold. This is helpful when summing column
-                values that are okay by themselves but cumulativaly could overflow a 64bit value.
+        Used to cast key columns to string (avoiding precision loss in Pandas-based
+        sampling/partitioning and scale mismatches in Arrow joins) and to cast std/avg
+        aggregates to float64.
         """
         return bool(
-            (
-                (isinstance(source_column_ibis_type, dt.Int64) and margin > 0)
-                or (
-                    isinstance(source_column_ibis_type, dt.Decimal)
-                    and (
-                        source_column_ibis_type.precision is None
-                        or source_column_ibis_type.precision > (18 - margin)
-                    )
-                )
-            )
+            isinstance(source_column_ibis_type, dt.Decimal)
             and (
-                (isinstance(target_column_ibis_type, dt.Int64) and margin > 0)
-                or (
-                    isinstance(target_column_ibis_type, dt.Decimal)
-                    and (
-                        target_column_ibis_type.precision is None
-                        or target_column_ibis_type.precision > (18 - margin)
-                    )
-                )
+                source_column_ibis_type.precision is None
+                or source_column_ibis_type.precision > 18
+            )
+            and isinstance(target_column_ibis_type, dt.Decimal)
+            and (
+                target_column_ibis_type.precision is None
+                or target_column_ibis_type.precision > 18
             )
         )
 
@@ -1033,7 +1021,7 @@ class ConfigManager(object):
             # stores UUIDs (GUID) in binary columns.
             return consts.CONFIG_CAST_UUID_STRING
         elif (
-            self._decimal_column_too_big_for_pandas(
+            self._is_high_precision_decimal(
                 source_column_ibis_type, target_column_ibis_type
             )
             or isinstance(source_column_ibis_type, dt.Binary)
@@ -1217,11 +1205,13 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
-                if self._decimal_column_too_big_for_pandas(
+                if agg_type in (
+                    consts.CONFIG_TYPE_STD,
+                    consts.CONFIG_TYPE_AVG,
+                ) and self._is_high_precision_decimal(
                     source_column_ibis_type,
                     target_column_ibis_type,
-                    margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),
-                ) and agg_type in (consts.CONFIG_TYPE_STD, consts.CONFIG_TYPE_AVG):
+                ):
                     # std and avg change the shape of the column result and we
                     # can't know how to format them reliably, float64 is our best bet.
                     # This may be lossy and generate false success validations.

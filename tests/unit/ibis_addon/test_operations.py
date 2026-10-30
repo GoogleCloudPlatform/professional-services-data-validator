@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import datetime
+import decimal
 import ibis
 import pandas
 import pytest
@@ -215,3 +216,82 @@ def test_floats_exactly_fit_integer_decimal(
         )
         is expected
     )
+
+
+class _FakeSQLBackend:
+    """Minimal SQL backend stub for exercising _sql_to_pyarrow_batches + _base_to_pyarrow."""
+
+    def __init__(self, rows):
+        self._rows = rows
+
+    def _import_pyarrow(self):
+        import pyarrow
+
+        return pyarrow
+
+    def _run_pre_execute_hooks(self, expr):
+        pass
+
+    def _cursor_batches(self, expr, params=None, limit=None, chunk_size=1_000_000):
+        yield self._rows
+
+    to_pyarrow_batches = operations._sql_to_pyarrow_batches
+    to_pyarrow = operations._base_to_pyarrow
+
+
+@pytest.mark.parametrize(
+    ("ibis_col_type", "agg_fn", "cursor_value", "expected_pa_type", "expected_py_val"),
+    [
+        # PostgreSQL/MySQL SUM(BIGINT) > 2^63 - 1 returned as Decimal: must not wrap int64.
+        (
+            "int64",
+            lambda c: c.sum(),
+            decimal.Decimal(2**63 + 100),
+            "decimal128(19, 0)",
+            decimal.Decimal(2**63 + 100),
+        ),
+        # Python int > 2^63 - 1 from cursor: _make_array converts to Decimal, preserved in Arrow.
+        (
+            "int64",
+            lambda c: c.sum(),
+            2**63 + 100,
+            "decimal128(19, 0)",
+            decimal.Decimal(2**63 + 100),
+        ),
+        # PostgreSQL/MySQL SUM(BIGINT) fitting in int64: cast cleanly to int64.
+        (
+            "int64",
+            lambda c: c.sum(),
+            decimal.Decimal(12345),
+            "int64",
+            12345,
+        ),
+        # Oracle SUM(NUMBER(38)) exceeding decimal128(38, 2) integer digits: keep decimal128(38, 0).
+        (
+            "decimal(38, 2)",
+            lambda c: c.sum(),
+            decimal.Decimal("61728394506172839450617283945061728390"),
+            "decimal128(38, 0)",
+            decimal.Decimal("61728394506172839450617283945061728390"),
+        ),
+        # Wider integer from cursor overflowing int32 target: keep int64 rather than wrapping.
+        (
+            "int32",
+            lambda c: c.min(),
+            2**31 + 5,
+            "int64",
+            2**31 + 5,
+        ),
+    ],
+)
+def test_base_to_pyarrow_preserves_overflowing_numerics(
+    ibis_col_type, agg_fn, cursor_value, expected_pa_type, expected_py_val
+):
+    t = ibis.table([("col", ibis_col_type)], name="t")
+    expr = t.aggregate(agg_val=agg_fn(t.col))
+    backend = _FakeSQLBackend([(cursor_value,)])
+
+    result = backend.to_pyarrow(expr)
+
+    assert str(result["agg_val"].type) == expected_pa_type
+    assert result["agg_val"][0].as_py() == expected_py_val
