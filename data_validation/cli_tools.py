@@ -1350,8 +1350,13 @@ def get_filters(filter_value: str) -> List[Dict]:
     A filter is the condition that is used in a SQL WHERE clause.
     If only one filter is specified, it applies to both source and target
     For a doc on regular expression for filters see docs/internal/filters_regex.md
+
+    The separator is a lone colon, matched with "(?<!:):(?!:)", so "::" type casts
+    (PostgreSQL, Redshift, Snowflake), e.g. "id::text = '5'", are not split.
+    Snowflake JSON path expressions such as "src_json:customer:age::INTEGER" are
+    still unsupported, because the single ":" path operator looks like a separator.
     """
-    filters = util.split_not_in_quotes(filter_value, ":")
+    filters = util.split_not_in_quotes(filter_value, "(?<!:):(?!:)")
     if len(filters) not in (1, 2):
         raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
     filters = [_.strip() for _ in filters]
