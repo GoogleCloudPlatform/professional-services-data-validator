@@ -807,6 +807,42 @@ def test_get_filters_fail(test_input: str):
 @pytest.mark.parametrize(
     "test_input,expected",
     [
+        # A "::" type cast is not the source/target separator.
+        (
+            "id::text = '5'",
+            [
+                {
+                    "type": "custom",
+                    "source": "id::text = '5'",
+                    "target": "id::text = '5'",
+                }
+            ],
+        ),
+        (
+            "created_at::date > '2024-01-01':CAST(created_at AS DATE) > '2024-01-01'",
+            [
+                {
+                    "type": "custom",
+                    "source": "created_at::date > '2024-01-01'",
+                    "target": "CAST(created_at AS DATE) > '2024-01-01'",
+                }
+            ],
+        ),
+        (
+            "a::int > 1:b::int > 1",
+            [{"type": "custom", "source": "a::int > 1", "target": "b::int > 1"}],
+        ),
+    ],
+)
+def test_get_filters_type_cast(test_input: str, expected: list):
+    """Test get filters with PostgreSQL style "::" type casts."""
+    res = cli_tools.get_filters(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
         # Timestamp related characters.
         (
             "col_ts >= '2024-04-01 16:00:00 UTC'",
