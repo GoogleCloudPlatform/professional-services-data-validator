@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [8.10.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.1...v8.10.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* Do not split --filters on PostgreSQL style :: type casts ([#1861](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1861)) ([8d20863](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8d20863055eaef5c12fcf9191e169581f51d9e62))
+
 ## [8.10.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.0...v8.10.1) (2026-10-23)
 
 
