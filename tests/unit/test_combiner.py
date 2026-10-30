@@ -468,6 +468,190 @@ def test_generate_report_with_empty_target(module_under_test):
     assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
 
 
+@pytest.mark.parametrize(
+    ("source_array", "target_array", "threshold", "expected_status"),
+    [
+        (
+            pyarrow.array(["6240b18a-88c2-410e-8aa4-e937cf073835"]),
+            pyarrow.array(["6240b18a-88c2-410e-8aa4-e937cf073835"]),
+            0.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array(["6240b18a-88c2-410e-8aa4-e937cf073835"]),
+            pyarrow.array(["ffffffff-ffff-ffff-ffff-ffffffffffff"]),
+            50.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            pyarrow.array(
+                ["6240b18a-88c2-410e-8aa4-e937cf073835"],
+                type=pyarrow.large_string(),
+            ),
+            pyarrow.array(["6240b18a-88c2-410e-8aa4-e937cf073835"]),
+            0.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array([None], type=pyarrow.string()),
+            pyarrow.array(["6240b18a-88c2-410e-8aa4-e937cf073835"]),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+    ],
+)
+def test_generate_report_with_string_aggregates(
+    module_under_test, source_array, target_array, threshold, expected_status
+):
+    """UUID min/max and legacy cast: string aggregates compare by equality with NULL diff."""
+    col_name = "min__cast_uuid_string__col_uuid"
+    run_metadata = metadata.RunMetadata(
+        validations={
+            col_name: metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col_uuid",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col_uuid",
+                validation_type="Column",
+                aggregation_type="min",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=threshold,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table({col_name: source_array})
+    target = pyarrow.table({col_name: target_array})
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert len(report) == 1
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+    assert pandas.isna(report.loc[0, consts.VALIDATION_DIFFERENCE])
+    assert pandas.isna(report.loc[0, consts.VALIDATION_PCT_DIFFERENCE])
+
+
+def test_generate_report_with_mixed_numeric_and_string_aggregates(module_under_test):
+    """Numeric differences must not bleed into adjacent string aggregate slices."""
+    uuid_col = "min__cast_uuid_string__col_uuid"
+    legacy_sum_col = "sum__col_dec_38"
+    run_metadata = metadata.RunMetadata(
+        validations={
+            col: metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name=col,
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name=col,
+                validation_type="Column",
+                aggregation_type=agg_type,
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=0.0,
+            )
+            for col, agg_type in [
+                ("count", "count"),
+                (uuid_col, "min"),
+                (legacy_sum_col, "sum"),
+                ("sum__col_int", "sum"),
+            ]
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table(
+        {
+            "grp": ["a", "b"],
+            "count": [10, 20],
+            uuid_col: [
+                "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222",
+            ],
+            legacy_sum_col: [
+                "61728394506172839450617283945061728390",
+                "99999999999999999999999999999999999999",
+            ],
+            "sum__col_int": [100, 200],
+        }
+    )
+    target = pyarrow.table(
+        {
+            "grp": ["a", "b"],
+            "count": [12, 20],
+            uuid_col: [
+                "11111111-1111-1111-1111-111111111111",
+                "99999999-9999-9999-9999-999999999999",
+            ],
+            legacy_sum_col: [
+                "61728394506172839450617283945061728390",
+                "99999999999999999999999999999999999999",
+            ],
+            "sum__col_int": [100, 250],
+        }
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata, source, target, join_on_fields=("grp",)
+    )
+
+    by_col = {
+        name: group.sort_values(consts.GROUP_BY_COLUMNS).reset_index(drop=True)
+        for name, group in report.groupby(consts.VALIDATION_NAME)
+    }
+
+    assert list(by_col["count"][consts.VALIDATION_DIFFERENCE]) == [2.0, 0.0]
+    assert list(by_col["count"][consts.VALIDATION_STATUS]) == [
+        consts.VALIDATION_STATUS_FAIL,
+        consts.VALIDATION_STATUS_SUCCESS,
+    ]
+
+    assert by_col[uuid_col][consts.VALIDATION_DIFFERENCE].isna().all()
+    assert by_col[uuid_col][consts.VALIDATION_PCT_DIFFERENCE].isna().all()
+    assert list(by_col[uuid_col][consts.VALIDATION_STATUS]) == [
+        consts.VALIDATION_STATUS_SUCCESS,
+        consts.VALIDATION_STATUS_FAIL,
+    ]
+
+    assert by_col[legacy_sum_col][consts.VALIDATION_DIFFERENCE].isna().all()
+    assert list(by_col[legacy_sum_col][consts.VALIDATION_STATUS]) == [
+        consts.VALIDATION_STATUS_SUCCESS,
+        consts.VALIDATION_STATUS_SUCCESS,
+    ]
+
+    assert list(by_col["sum__col_int"][consts.VALIDATION_DIFFERENCE]) == [0.0, 50.0]
+    assert list(by_col["sum__col_int"][consts.VALIDATION_STATUS]) == [
+        consts.VALIDATION_STATUS_SUCCESS,
+        consts.VALIDATION_STATUS_FAIL,
+    ]
+
+
+@pytest.mark.parametrize(
+    ("source_array", "target_array"),
+    [
+        (pyarrow.array(["10"]), pyarrow.array([10])),
+        (pyarrow.array([b"abc"]), pyarrow.array([b"abc"])),
+    ],
+)
+def test_generate_report_with_invalid_aggregate_types(
+    module_under_test, source_array, target_array
+):
+    source = pyarrow.table({"count": source_array})
+    target = pyarrow.table({"count": target_array})
+    with pytest.raises(
+        ValueError, match="Aggregate value of count must be numeric or string"
+    ):
+        module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+
+
 @freeze_time("1998-09-04 07:31:42")
 @pytest.mark.parametrize(
     ("input_df"),

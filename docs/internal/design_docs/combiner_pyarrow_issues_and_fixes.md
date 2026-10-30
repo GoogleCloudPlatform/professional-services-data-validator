@@ -46,7 +46,7 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | 9 | Join keys with different numeric types | Same as 8, `decimal128(5, 0)` vs `int64` | Fixed |
 | 10 | NULL in both source and target marked as fail | Row/column validations fail on NULL/NaN values | **Open (parked)** |
 | 11 | Floating point noise in `std`/`avg` | Oracle `7.07e-13` vs BigQuery `0.0` fails | **Open (parked)** |
-| 12 | String aggregates rejected by the combiner | `ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric` | **Open** |
+| 12 | String aggregates rejected by the combiner | `ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric` | Fixed |
 | 13 | Spanner backend cannot fetch results into PyArrow | `AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'` | **Open** |
 
 ## System test results
@@ -350,6 +350,39 @@ Oracle to BigQuery grouped validation or row validation with such a key hits thi
 Unit tests `test_generate_report_with_mismatched_key_types` and
 `test_generate_report_with_incompatible_key_types`.
 
+## 12. String aggregates rejected by the combiner
+
+**Tests:** `test_column_validation_pg_types` (PostgreSQL to PostgreSQL),
+`test_column_validation_oracle_to_postgres` and `test_column_validation_uuid_oracle_to_postgres`
+(Oracle to PostgreSQL).
+
+**Symptom:**
+
+```text
+ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric
+```
+
+**Root cause:** Not caused by the fixes in this document. UUID columns are cast to a string before
+aggregation (`append_pre_agg_calc_field()` uses `CONFIG_CAST_UUID_STRING`), so `min`/`max` of a UUID
+column is genuinely a string, e.g. `'6240b18a-88c2-410e-8aa4-e937cf073835'`. Other string columns are
+aggregated using their length, so UUIDs are the case seen in testing.
+
+On `develop`, `_calculate_difference()` handled string aggregates (`datatype.is_string()`) by
+comparing values for equality, with NULL `difference`/`pct_difference`. The PyArrow combiner from
+commit `2d4282c7` only accepted numeric aggregates in a column validation and raised for anything else.
+
+**Fix:** In `join_and_unpivot()` ([combiner.py](../../../data_validation/combiner.py)), when both sides
+are string types (`_is_string_type()`), values are compared by equality with `difference` and
+`pct_difference` set to float64 NULLs. This also preserves backward compatibility with stored YAML
+configs (`-c` / `configs run`) generated before `bb103562` that contain `cast: string` on numeric
+aggregates, matching `develop` behaviour without extra special-casing. Once problem 10 is resolved,
+its NULL handling should apply to this branch too.
+
+Unit tests `test_generate_report_with_string_aggregates`,
+`test_generate_report_with_mixed_numeric_and_string_aggregates` and
+`test_generate_report_with_invalid_aggregate_types` in
+[test_combiner.py](../../../tests/unit/test_combiner.py).
+
 ---
 
 ## Open problems
@@ -412,32 +445,6 @@ removed on this branch in commit `e0750d5b`.
 in the threshold comparison only, leaving exact integer/decimal comparisons untouched. Rounding to 4
 decimal places makes very small non-zero values compare equal, which is the same trade-off `develop`
 made.
-
-### 12. String aggregates rejected by the combiner
-
-**Tests:** `test_column_validation_pg_types` (PostgreSQL to PostgreSQL),
-`test_column_validation_oracle_to_postgres` and `test_column_validation_uuid_oracle_to_postgres`
-(Oracle to PostgreSQL).
-
-**Symptom:**
-
-```text
-ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric
-```
-
-**Root cause:** Not caused by the fixes in this document. UUID columns are cast to a string before
-aggregation (`append_pre_agg_calc_field()` uses `CONFIG_CAST_UUID_STRING`), so `min`/`max` of a UUID
-column is genuinely a string, e.g. `'6240b18a-88c2-410e-8aa4-e937cf073835'`. Other string columns are
-aggregated using their length, so UUIDs are the case seen in testing.
-
-On `develop`, `_calculate_difference()` handled string aggregates (`datatype.is_string()`) by
-comparing values for equality, with NULL `difference`/`pct_difference`. The PyArrow combiner from
-commit `2d4282c7` only accepts numeric aggregates in a column validation and raises for anything else.
-
-**Proposed fix:** In the column validation branch of `join_and_unpivot()`, when both sides are
-non-numeric (e.g. `pa.string()`), compare by equality as row validations do, leaving
-`difference`/`pct_difference` NULL. This is different from the rejected idea in problem 1 of treating
-strings as numeric. It should share the NULL handling proposed in problem 10.
 
 ### 13. Spanner backend cannot fetch results into PyArrow
 

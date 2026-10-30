@@ -38,6 +38,10 @@ def _is_numeric_type(data_type: pa.DataType) -> bool:
     )
 
 
+def _is_string_type(data_type: pa.DataType) -> bool:
+    return pa.types.is_string(data_type) or pa.types.is_large_string(data_type)
+
+
 def _is_exact_type(data_type: pa.DataType) -> bool:
     """Integer and decimal types can be compared exactly, unlike floating point."""
     return pa.types.is_integer(data_type) or pa.types.is_decimal(data_type)
@@ -172,10 +176,11 @@ def join_and_unpivot(
     else:
         group_by_cols = pa.nulls(num_rows, type=pa.string())
 
+    null_diff = pa.nulls(num_rows, type=pa.float64())
     # Row validations has nulls for differences and column validation has nulls for primary_keys.
     if is_value_comparison:
-        difference = pa.nulls(num_rows, type=pa.float64())
-        pct_difference = pa.nulls(num_rows, type=pa.float64())
+        difference = null_diff
+        pct_difference = null_diff
         primary_keys = pa.repeat(
             "{" + ", ".join(join_on_fields) + "}" if join_on_fields else None,
             num_rows,
@@ -251,8 +256,22 @@ def join_and_unpivot(
                 consts.VALIDATION_STATUS_SUCCESS,
                 consts.VALIDATION_STATUS_FAIL,
             )
+        elif _is_string_type(src_col.type) and _is_string_type(tgt_col.type):
+            # String aggregates (e.g. min/max of a UUID cast to string, or legacy
+            # cast: string configs) have no numeric difference and compare by equality.
+            difference = null_diff
+            pct_difference = null_diff
+            is_successful = pc.if_else(
+                pc.fill_null(pc.equal(src_col, tgt_col), False),
+                consts.VALIDATION_STATUS_SUCCESS,
+                consts.VALIDATION_STATUS_FAIL,
+            )
         else:
-            raise ValueError(f"Aggregate value of {col} must be numeric")
+            raise ValueError(
+                f"Aggregate value of {col} must be numeric or string, got "
+                f"{consts.RESULT_TYPE_SOURCE}: {src_col.type}, "
+                f"{consts.RESULT_TYPE_TARGET}: {tgt_col.type}"
+            )
 
         # 3. Cast display values to string so all slices share the same output schema
         validation_name_col = pa.repeat(col, num_rows)
