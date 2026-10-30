@@ -30,6 +30,24 @@ if TYPE_CHECKING:
     import ibis.expr.types.Table
 
 
+def check_mssql_random_row_batch_size(
+    batch_size: int,
+    primary_keys: list,
+    source_client_name: str = None,
+    target_client_name: str = None,
+) -> int:
+    """Cap random_row_batch_size if SQL Server is used, to avoid the 2,100 parameter limit."""
+    if source_client_name == "mssql" or target_client_name == "mssql":
+        num_pks = len(primary_keys) or 1
+        max_mssql_rows = max(1, 2000 // num_pks)
+        if batch_size > max_mssql_rows:
+            logging.warning(
+                f"Capping random_row_batch_size from {batch_size} to {max_mssql_rows} for SQL Server 2,100 parameter limit."
+            )
+            return max_mssql_rows
+    return batch_size
+
+
 class ConfigManager(object):
     _config: dict = None
     _source_conn = None
@@ -179,10 +197,23 @@ class ConfigManager(object):
 
     def random_row_batch_size(self):
         """Return batch size for random row filter."""
-        return int(
+        batch_size = int(
             self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
+        if self.use_random_rows():
+            source_name = getattr(self.source_client, "name", None)
+            target_name = getattr(self.target_client, "name", None)
+            capped_batch_size = check_mssql_random_row_batch_size(
+                batch_size,
+                self.primary_keys,
+                source_client_name=source_name,
+                target_client_name=target_name,
+            )
+            if capped_batch_size != batch_size:
+                self._config[consts.CONFIG_RANDOM_ROW_BATCH_SIZE] = capped_batch_size
+                batch_size = capped_batch_size
+        return batch_size
 
     def get_random_row_batch_size(self):
         """Return number of random rows or None."""

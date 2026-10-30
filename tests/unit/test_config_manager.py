@@ -747,3 +747,94 @@ def test_config_manager_lazy_state_manager(mock_state_manager, module_under_test
     mgr.get_source_connection()
     mgr.get_target_connection()
     assert mock_state_manager.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "source_client_name,target_client_name,num_pks,requested_batch_size,expected_batch_size",
+    [
+        ("mssql", "bigquery", 1, 5000, 2000),
+        ("bigquery", "mssql", 2, 5000, 1000),
+        ("mssql", "bigquery", 3, 3000, 666),
+        ("mssql", "bigquery", 4, 1000, 500),
+        ("mssql", "bigquery", 1, 2000, 2000),
+        ("mssql", "bigquery", 1, 2001, 2000),
+        ("mssql", "bigquery", 1, 500, 500),
+        ("mssql", "bigquery", 0, 5000, 2000),
+        ("postgres", "bigquery", 1, 5000, 5000),
+        ("bigquery", "postgres", 2, 5000, 5000),
+    ],
+)
+def test_check_mssql_random_row_batch_size(
+    module_under_test,
+    source_client_name,
+    target_client_name,
+    num_pks,
+    requested_batch_size,
+    expected_batch_size,
+):
+    """Verify helper check_mssql_random_row_batch_size caps batch size appropriately."""
+    pks = [
+        {"source_column": f"col_{i}", "target_column": f"col_{i}"}
+        for i in range(num_pks)
+    ]
+    result = module_under_test.check_mssql_random_row_batch_size(
+        requested_batch_size,
+        pks,
+        source_client_name=source_client_name,
+        target_client_name=target_client_name,
+    )
+    assert result == expected_batch_size
+
+
+def test_config_manager_random_row_batch_size_mutates_config(module_under_test):
+    """Verify random_row_batch_size mutates config arg so result handlers reflect change."""
+    source_client = mock.MagicMock()
+    source_client.name = "mssql"
+    target_client = mock.MagicMock()
+    target_client.name = "bigquery"
+
+    config = {
+        consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+        consts.CONFIG_USE_RANDOM_ROWS: True,
+        consts.CONFIG_RANDOM_ROW_BATCH_SIZE: 3000,
+        consts.CONFIG_PRIMARY_KEYS: [{"source_column": "id", "target_column": "id"}],
+    }
+
+    mgr = module_under_test.ConfigManager(
+        config,
+        source_client=source_client,
+        target_client=target_client,
+    )
+
+    assert mgr.random_row_batch_size() == 2000
+    # Verifying the underlying config was mutated as requested by maintainer
+    assert mgr._config[consts.CONFIG_RANDOM_ROW_BATCH_SIZE] == 2000
+    # Result handler pulls from get_random_row_batch_size()
+    assert mgr.get_random_row_batch_size() == 2000
+
+
+def test_config_manager_random_row_batch_size_when_random_rows_disabled(
+    module_under_test,
+):
+    """Verify random_row_batch_size does not cap or mutate when use_random_rows is False."""
+    source_client = mock.MagicMock()
+    source_client.name = "mssql"
+    target_client = mock.MagicMock()
+    target_client.name = "bigquery"
+
+    config = {
+        consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+        consts.CONFIG_USE_RANDOM_ROWS: False,
+        consts.CONFIG_RANDOM_ROW_BATCH_SIZE: 5000,
+        consts.CONFIG_PRIMARY_KEYS: [{"source_column": "id", "target_column": "id"}],
+    }
+
+    mgr = module_under_test.ConfigManager(
+        config,
+        source_client=source_client,
+        target_client=target_client,
+    )
+
+    assert mgr.random_row_batch_size() == 5000
+    assert mgr._config[consts.CONFIG_RANDOM_ROW_BATCH_SIZE] == 5000
+    assert mgr.get_random_row_batch_size() is None
