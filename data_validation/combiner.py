@@ -53,15 +53,30 @@ def _exact_equal(src_col, tgt_col):
     Arrow promotes both sides to a common decimal type, scale=max(s1, s2) and
     precision=max(p1-s1, p2-s2)+scale, but stays within decimal128 when both inputs are
     decimal128. For example decimal128(38, 2) vs decimal128(38, 9) needs precision 45 and
-    raises an error. Widening to decimal256 first is lossless and allows up to 76 digits.
+    raises an error. Widening decimal128 to decimal256 (and uint64 to decimal256(20, 0) so
+    values > 2^63 - 1 can compare against signed integers/decimals) is lossless and handles
+    up to 76 digits in C++. When combined precision exceeds 76 digits (e.g. Oracle
+    decimal256(39, 0) vs BigQuery BIGNUMERIC decimal256(76, 38)), fall back to exact Python
+    int/Decimal equality while preserving Arrow 3-valued null semantics.
     """
 
     def _widen(col):
         if pa.types.is_decimal128(col.type):
             return pc.cast(col, pa.decimal256(col.type.precision, col.type.scale))
+        if pa.types.is_uint64(col.type):
+            return pc.cast(col, pa.decimal256(20, 0))
         return col
 
-    return pc.equal(_widen(src_col), _widen(tgt_col))
+    try:
+        return pc.equal(_widen(src_col), _widen(tgt_col))
+    except pa.ArrowInvalid:
+        return pa.array(
+            [
+                None if a is None or b is None else a == b
+                for a, b in zip(src_col.to_pylist(), tgt_col.to_pylist())
+            ],
+            type=pa.bool_(),
+        )
 
 
 if TYPE_CHECKING:
@@ -201,8 +216,13 @@ def join_and_unpivot(
 
         if is_value_comparison:  # row validation - compare values for equality
             # Native type equality check (works on int64, decimal, string, timestamp, etc.)
+            equal_cond = (
+                _exact_equal(src_col, tgt_col)
+                if _is_exact_type(src_col.type) and _is_exact_type(tgt_col.type)
+                else pc.equal(src_col, tgt_col)
+            )
             is_successful = pc.if_else(
-                pc.fill_null(pc.equal(src_col, tgt_col), False),
+                pc.fill_null(equal_cond, False),
                 consts.VALIDATION_STATUS_SUCCESS,
                 consts.VALIDATION_STATUS_FAIL,
             )

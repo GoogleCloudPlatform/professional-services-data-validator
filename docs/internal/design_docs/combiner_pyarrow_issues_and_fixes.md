@@ -189,13 +189,21 @@ pyarrow.lib.ArrowInvalid: Decimal precision out of range [1, 38]: 45
 `decimal128(38, 9)`, which needs a precision of 36 + 9 = 45. Promotion to `decimal256` only happens
 when one input is already `decimal256`.
 
-**Fix (`177dec40`):** `_exact_equal()` in [combiner.py](../../../data_validation/combiner.py) widens any
-`decimal128` input to `decimal256` with the same precision and scale before calling `pc.equal()`. This
-is lossless and allows up to 76 digits. A fallback for common types needing more than 76 digits was
-considered and deliberately not implemented.
+**Fix (`177dec40`, refined):** `_exact_equal()` in [combiner.py](../../../data_validation/combiner.py)
+widens any `decimal128` input to `decimal256` with the same precision and scale, and widens `uint64` to
+`decimal256(20, 0)` (so unsigned values $> 2^{63} - 1$ can compare against signed integers and decimals
+without raising `ArrowInvalid`), before calling `pc.equal()`. This is lossless and handles up to 76
+digits in C++. When the combined precision exceeds 76 digits (for example Oracle `SUM(NUMBER(38, 0))`
+returning `decimal256(39, 0)` vs BigQuery `BIGNUMERIC` `decimal256(76, 38)`, which needs $39 + 38 = 77$
+digits, or wide PostgreSQL `NUMERIC`), `_exact_equal()` catches `pa.ArrowInvalid` and falls back to exact
+Python `int`/`Decimal` equality while preserving Arrow's 3-valued `NULL` semantics. Row validations
+(`--comp-fields`, `is_value_comparison=True`) also route exact integer/decimal columns through
+`_exact_equal()` rather than raw `pc.equal()`.
 
-Unit test `test_generate_report_with_mixed_exact_types` covers Oracle/BigQuery decimal mixes, `int64`
-vs decimal and `decimal128` vs `decimal256`.
+Unit tests `test_generate_report_with_mixed_exact_types` and
+`test_generate_report_row_validation_with_mixed_exact_types` cover Oracle/BigQuery decimal mixes,
+`>76`-digit combined precision, `uint64` vs `int64`/decimal, `int64` vs decimal, `decimal128` vs
+`decimal256`, and `--comp-fields` row validations.
 
 ## 4. Exact comparison applied to avg/std
 

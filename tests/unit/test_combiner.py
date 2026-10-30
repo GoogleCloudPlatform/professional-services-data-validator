@@ -261,6 +261,73 @@ def test_generate_report_with_high_precision_aggs(
             ),
             consts.VALIDATION_STATUS_SUCCESS,
         ),
+        # >76 combined precision: Oracle SUM(NUMBER(38, 0)) decimal256(39, 0) vs
+        # BigQuery BIGNUMERIC decimal256(76, 38) needs 39 + 38 = 77 digits.
+        (
+            pyarrow.array(
+                [decimal.Decimal("12345678901234567890123456789012345678")],
+                type=pyarrow.decimal256(39, 0),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("12345678901234567890123456789012345678")],
+                type=pyarrow.decimal256(76, 38),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array(
+                [decimal.Decimal("123456789012345678901234567890123456789")],
+                type=pyarrow.decimal256(39, 0),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("99999999999999999999999999999999999999")],
+                type=pyarrow.decimal256(76, 38),
+            ),
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        # >76 combined precision: decimal256(76, 0) vs decimal128(38, 9) needs 85 digits.
+        (
+            pyarrow.array(
+                [decimal.Decimal("42")],
+                type=pyarrow.decimal256(76, 0),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("42.000000000")],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        # >76 fallback preserves Arrow 3-valued NULL semantics (None vs value -> fail).
+        (
+            pyarrow.array(
+                [None],
+                type=pyarrow.decimal256(39, 0),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("1")],
+                type=pyarrow.decimal256(76, 38),
+            ),
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        # uint64 > 2^63 - 1 vs int64 / decimal without ArrowInvalid overflow.
+        (
+            pyarrow.array([2**63 + 5], type=pyarrow.uint64()),
+            pyarrow.array([5], type=pyarrow.int64()),
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            pyarrow.array([2**63 + 5], type=pyarrow.uint64()),
+            pyarrow.array(
+                [decimal.Decimal(2**63 + 5)],
+                type=pyarrow.decimal128(20, 0),
+            ),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            pyarrow.array([42], type=pyarrow.uint64()),
+            pyarrow.array([42], type=pyarrow.int64()),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
     ],
 )
 def test_generate_report_with_mixed_exact_types(
@@ -272,6 +339,114 @@ def test_generate_report_with_mixed_exact_types(
     report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
 
     assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+
+
+def test_generate_report_row_validation_with_mixed_exact_types(module_under_test):
+    """Row validation (--comp-fields) should use _exact_equal for exact types."""
+    source_table = pyarrow.table(
+        {
+            "id": [1, 2, 3, 4],
+            "dec_scale_mix": pyarrow.array(
+                [
+                    decimal.Decimal("4938271605061728382.00"),
+                    decimal.Decimal("4938271605061728383.00"),
+                    None,
+                    decimal.Decimal("1.00"),
+                ],
+                type=pyarrow.decimal128(38, 2),
+            ),
+            "dec_over_76": pyarrow.array(
+                [
+                    decimal.Decimal("12345678901234567890123456789012345678"),
+                    decimal.Decimal("123456789012345678901234567890123456789"),
+                    None,
+                    None,
+                ],
+                type=pyarrow.decimal256(39, 0),
+            ),
+            "uint_vs_int": pyarrow.array(
+                [42, 2**63 + 5, 10, None], type=pyarrow.uint64()
+            ),
+        }
+    )
+    target_table = pyarrow.table(
+        {
+            "id": [1, 2, 3, 4],
+            "dec_scale_mix": pyarrow.array(
+                [
+                    decimal.Decimal("4938271605061728382.000000000"),
+                    decimal.Decimal("4938271605061728382.000000000"),
+                    decimal.Decimal("1.000000000"),
+                    decimal.Decimal("1.000000000"),
+                ],
+                type=pyarrow.decimal128(38, 9),
+            ),
+            "dec_over_76": pyarrow.array(
+                [
+                    decimal.Decimal("12345678901234567890123456789012345678"),
+                    decimal.Decimal("99999999999999999999999999999999999999"),
+                    decimal.Decimal("1"),
+                    None,
+                ],
+                type=pyarrow.decimal256(76, 38),
+            ),
+            "uint_vs_int": pyarrow.array([42, 5, 10, None], type=pyarrow.int64()),
+        }
+    )
+    run_metadata = metadata.RunMetadata(
+        validations={
+            col: metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_schema",
+                source_column_name=col,
+                target_table_name="test_target",
+                target_table_schema="target_schema",
+                target_column_name=col,
+                validation_type="Row",
+                aggregation_type=None,
+                primary_keys=["id"],
+                num_random_rows=None,
+                threshold=0.0,
+            )
+            for col in ("dec_scale_mix", "dec_over_76", "uint_vs_int")
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+        labels=[],
+        run_id="test-run",
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source_table,
+        target_table,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+
+    by_col_and_id = {
+        (
+            row[consts.VALIDATION_NAME],
+            json.loads(row[consts.GROUP_BY_COLUMNS])["id"],
+        ): row[consts.VALIDATION_STATUS]
+        for _, row in report.iterrows()
+    }
+    assert by_col_and_id[("dec_scale_mix", "1")] == consts.VALIDATION_STATUS_SUCCESS
+    assert by_col_and_id[("dec_scale_mix", "2")] == consts.VALIDATION_STATUS_FAIL
+    assert by_col_and_id[("dec_scale_mix", "3")] == consts.VALIDATION_STATUS_FAIL
+    assert by_col_and_id[("dec_scale_mix", "4")] == consts.VALIDATION_STATUS_SUCCESS
+
+    assert by_col_and_id[("dec_over_76", "1")] == consts.VALIDATION_STATUS_SUCCESS
+    assert by_col_and_id[("dec_over_76", "2")] == consts.VALIDATION_STATUS_FAIL
+    assert by_col_and_id[("dec_over_76", "3")] == consts.VALIDATION_STATUS_FAIL
+    # Note: NULL vs NULL currently evaluates to fail until Open Problem #10 is resolved;
+    # this asserts the >76 Python fallback matches pc.equal's 3-valued NULL behavior.
+    assert by_col_and_id[("dec_over_76", "4")] == consts.VALIDATION_STATUS_FAIL
+
+    assert by_col_and_id[("uint_vs_int", "1")] == consts.VALIDATION_STATUS_SUCCESS
+    assert by_col_and_id[("uint_vs_int", "2")] == consts.VALIDATION_STATUS_FAIL
+    assert by_col_and_id[("uint_vs_int", "3")] == consts.VALIDATION_STATUS_SUCCESS
+    assert by_col_and_id[("uint_vs_int", "4")] == consts.VALIDATION_STATUS_FAIL
 
 
 @pytest.mark.parametrize("aggregation_type", ["avg", "std"])
