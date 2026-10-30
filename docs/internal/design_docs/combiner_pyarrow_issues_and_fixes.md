@@ -459,11 +459,47 @@ AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'. Did you mea
 
 Note that `raw_sql()` also returns the cursor after the `db.snapshot()` context has exited.
 
-**Proposed fix:** Give the Spanner backend a native `to_pyarrow()` (and `to_pyarrow_batches()`) that
-runs the query within the snapshot and builds Arrow columns from the streamed result, using the
-result's field metadata for types in the same way `to_pandas.py` does today. Adding `fetchmany()` to
-`SpannerCursor` would be a smaller change but keeps the snapshot lifetime issue and the generic
-`pa.array()` type inference.
+**Investigation:**
+
+- **Other backends:** BigQuery and Snowflake fetch Arrow tables natively from their drivers. Impala
+  and FileSystem/Pandas use upstream Ibis's `pa.Table.from_pandas(self.execute(...))` fallback,
+  which re-introduces Pandas type coercion issues. SQLAlchemy backends stream DB-API cursor batches
+  through DVT's patched `_sql_to_pyarrow_batches` and `_base_to_pyarrow` in
+  [operations.py](../../../third_party/ibis/ibis_addon/operations.py). Note that `client.execute()`
+  is still used outside `_execute_validation()` (random-row sampling, partition generation, `query`
+  CLI) and must remain functional.
+- **Spanner libraries (`google-cloud-spanner`):** Spanner's gRPC API (`ExecuteStreamingSql`) streams
+  `PartialResultSet` protobufs and provides no `.to_arrow()` method in either `spanner_v1` or the
+  bundled `spanner_dbapi`. Three `StreamedResultSet` behaviours need explicit handling:
+  1. *Snapshot lifetime:* `db.snapshot()` (`SnapshotCheckout`) returns its session to the pool on
+     `__exit__`, while `snapshot.execute_sql()` is lazy—rows must be streamed inside the `with
+     db.snapshot():` block.
+  2. *`TypeCode.BYTES`:* Decoded as UTF-8 bytes of the base64 string (`string_value.encode("utf8")`,
+     same in `spanner_dbapi`). Generic `pa.array()` infers `pa.binary()` and would silently pass
+     base64-encoded bytes instead of raw bytes into comparisons.
+  3. *`TypeCode.JSON`:* Decoded as `JsonObject` (a `dict` subclass). Generic `pa.array()` infers
+     `pa.struct`, which fails to cast to Ibis's `dt.json` (`pa.string()`); values need
+     `.serialize()`.
+- **External packages:** `adbc-driver-spanner` (community Rust ADBC driver) requires Python >= 3.11
+  and `glibc >= 2.35` (vs DVT's Python >= 3.9), cannot consume DVT's `google.auth.credentials`
+  objects directly, and is a single-maintainer `0.x` native binary. `sqlalchemy-spanner` and
+  `spanner_dbapi` wrap the same `StreamedResultSet` (no Arrow support, still base64 `BYTES` and
+  `JsonObject`), and `connectorx` only supports Spanner's PostgreSQL dialect via PGAdapter.
+
+**Plan:**
+
+1. Implement `to_pyarrow_batches()` in `third_party/ibis/ibis_cloud_spanner/to_pyarrow.py` and wire
+   it onto Spanner `Backend`, keeping `with db.snapshot() as snapshot:` open across batch iteration
+   and building typed Arrow columns from `result.fields` (`TypeCode` → `pa.DataType`, NULL-safe
+   `base64.b64decode` for `BYTES`, NULL-safe `.serialize()` for `JSON`, `pa.decimal128(38, 9)` for
+   `NUMERIC`, and empty-result schema fallback). Inherit DVT's `_base_to_pyarrow()` for column
+   renaming and safe schema alignment.
+2. Fix `_safe_raw_sql()` to keep `db.snapshot()` open for the cursor's lifetime, add `fetchone()` /
+   `fetchmany()` to `SpannerCursor`, keep `execute()` intact (making `to_pandas.py`'s
+   `base64.b64decode` NULL-safe), and tidy `datatypes.py` (`FLOAT32` and `ARRAY` mapping).
+3. Add unit tests with a mocked `StreamedResultSet` covering all Spanner `TypeCode`s, NULLs, 0-row
+   results, multi-batch chunking, and snapshot lifetime, then rerun `test_spanner.py` to check for
+   any remaining combiner issues (e.g. #10 or #11).
 
 ---
 
