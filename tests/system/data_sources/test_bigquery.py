@@ -311,7 +311,7 @@ CLI_WILDCARD_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 162
+EXPECTED_NUM_YAML_LINES_WILDCARD = 155
 
 CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "validate",
@@ -349,7 +349,7 @@ CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 54
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 53
 
 CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
     "validate",
@@ -369,7 +369,7 @@ CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 54
+EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 53
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -472,7 +472,10 @@ def test_grouped_count_validator():
     partitions = frozenset(df[consts.GROUP_BY_COLUMNS])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df[consts.SOURCE_AGG_VALUE].sum() == df[consts.TARGET_AGG_VALUE].sum()
+    assert (
+        df[consts.SOURCE_AGG_VALUE].astype(float).sum()
+        == df[consts.TARGET_AGG_VALUE].astype(float).sum()
+    )
 
     for _, row in rows:
         assert float(row[consts.SOURCE_AGG_VALUE]) > 0

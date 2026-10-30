@@ -498,54 +498,49 @@ def test__get_comparison_max_col_length(module_under_test):
     ), f"Column name should contain ID 902: {new_identifier}"
 
 
-def test__decimal_column_too_big_for_pandas(module_under_test):
+def test__is_high_precision_decimal(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    # Both smaller is ok for Pandas.
+    # Both <= 18 digits (or integer types).
     c1 = dt.Decimal(1, 0)
     c2 = dt.Decimal(1, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
+    c1 = dt.Decimal(18, 0)
+    c2 = dt.Decimal(18, 0)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int32()
     c2 = dt.Int32()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int64()
     c2 = dt.Int64()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
 
-    # Either smaller means the actual data must be ok for Pandas.
+    # Either <= 18 digits (or integer) means not both high-precision decimals.
     c1 = dt.Decimal(20, 0)
     c2 = dt.Decimal(1, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(1, 0)
     c2 = dt.Decimal(20, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int64()
     c2 = dt.Decimal(20, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(20, 0)
     c2 = dt.Int64()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
-    # Both unsuitable for Pandas.
+    assert not config_manager._is_high_precision_decimal(c1, c2)
+
+    # Both > 18 digits (or unconstrained precision).
     c1 = dt.Decimal(20, 0)
     c2 = dt.Decimal(20, 0)
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(38, 10)
     c2 = dt.Decimal(38, 10)
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
-
-
-def test__decimal_column_too_big_for_pandas_margin(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    # Both smaller means the actual data must be ok for Pandas.
-    c1 = dt.Decimal(16, 0)
-    c2 = dt.Decimal(16, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
-    # Same inputs but with margin to spot precision might be an issue for Pandas.
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2, margin=5)
+    assert config_manager._is_high_precision_decimal(c1, c2)
+    c1 = dt.Decimal(None, None)
+    c2 = dt.Decimal(38, 0)
+    assert config_manager._is_high_precision_decimal(c1, c2)
 
 
 def test_build_dependent_aliases(module_under_test):
