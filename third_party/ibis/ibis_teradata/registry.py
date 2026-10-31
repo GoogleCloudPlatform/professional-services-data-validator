@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import decimal
 import itertools
 import locale
 import platform
@@ -350,10 +351,14 @@ def _string_literal_format(translator, op):
 
 def _literal(t, op):
     dtype = op.dtype
-    if dtype.is_string():
+    if op.value is None:
+        return "NULL"
+    elif dtype.is_string():
         return _string_literal_format(t, op)
     elif dtype.is_time():  # The base backend does not have a renderer for TIME Literals
         return f"TIME '{op.value.isoformat()}'"
+    elif dtype.is_decimal() or isinstance(op.value, decimal.Decimal):
+        return format(op.value, "f")
     else:
         return ibis_literal(t, op)
 

@@ -477,11 +477,16 @@ def test_row_validation_large_decimals_to_bigquery():
 
     Sybase does not have a SHA256 hash function therefore this test uses concat.
     """
-    row_validation_test(
+    df = row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         concat="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+        filter_status=None,
+        use_random_row=True,
+        random_row_batch_size=3,
     )
+    assert len(df) == 3
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
 
 
 @mock.patch(

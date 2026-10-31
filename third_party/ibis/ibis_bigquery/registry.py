@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibis.expr.datatypes as dt
-
 
 def format_hashbytes(translator, op):
     arg = translator.translate(op.arg)
@@ -72,3 +70,43 @@ def extract_epoch_seconds(translator, op):
     if arg.dtype.is_date() or (arg.dtype.is_timestamp() and arg.dtype.timezone is None):
         return f"UNIX_SECONDS(CAST({arg_formatted} AS TIMESTAMP))"
     return f"UNIX_SECONDS({arg_formatted})"
+
+
+def format_literal(translator, op):
+    """Format literals for BigQuery SQL.
+
+    Fixes Decimal literal rendering in BigQuery by:
+    1. Using standard fixed-point string representation (format(v, 'f')) instead of
+       scientific notation strings (e.g. 3.23E+29) which BigQuery cannot parse.
+    2. Choosing BIGNUMERIC when precision > 38, scale > 9, or integer digits > 29,
+       which exceed standard BigQuery NUMERIC bounds.
+    """
+    import ibis.backends.bigquery.registry as orig_bqr
+
+    dtype = op.dtype
+    value = op.value
+
+    if dtype.is_decimal() and value is not None:
+        if value.is_nan():
+            return "CAST('NaN' AS FLOAT64)"
+        elif value.is_infinite():
+            prefix = "-" * value.is_signed()
+            return f"CAST('{prefix}inf' AS FLOAT64)"
+        else:
+            val_str = format(value, "f")
+            parts = val_str.lstrip("-").split(".")
+            int_len = len(parts[0])
+            frac_len = len(parts[1]) if len(parts) > 1 else 0
+
+            if (
+                int_len > 29
+                or frac_len > 9
+                or (getattr(dtype, "precision", None) and dtype.precision > 38)
+                or (getattr(dtype, "scale", None) and dtype.scale > 9)
+            ):
+                bq_type = "BIGNUMERIC"
+            else:
+                bq_type = "NUMERIC"
+            return f"{bq_type} '{val_str}'"
+
+    return orig_bqr._literal(translator, op)
