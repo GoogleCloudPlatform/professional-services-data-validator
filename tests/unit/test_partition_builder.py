@@ -674,6 +674,10 @@ def test_class_object_creation(module_under_test):
             "SELECT t0.\"WHERE\" FROM (\n  select * from sch.tbl where b = 1\n) t0\nWHERE t0.\"WHERE\" IN ('(', 't0.x')",
             "\"WHERE\" IN ('(', 't0.x')",
         ),
+        (
+            "SELECT t0.* FROM sch.tbl t0\nWHERE (t0.id IN (select id from sch.other where flag = 1)) AND (t0.id < 5)",
+            "(id IN (select id from sch.other where flag = 1)) AND (id < 5)",
+        ),
     ],
 )
 @mock.patch("data_validation.util.ibis_table_to_sql")
