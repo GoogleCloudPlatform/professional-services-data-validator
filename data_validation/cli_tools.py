@@ -1326,6 +1326,12 @@ def list_validations(config_dir="./"):
 
 def print_validations_in_dir(config_dir="./"):
     validations = list_validations(config_dir=config_dir)
+    if not validations:
+        # A misspelt Cloud Storage prefix matches no objects rather than raising an
+        # error, so treat "nothing found" as an error, as configs run does.
+        raise ValueError(
+            f"No validation YAML files found in config directory: {config_dir}"
+        )
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
         logging.info(validation_name)
