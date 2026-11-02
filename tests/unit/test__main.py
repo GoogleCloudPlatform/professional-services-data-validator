@@ -14,6 +14,7 @@
 
 import argparse
 import io
+import logging
 import sys
 from unittest import mock
 import pytest
@@ -616,3 +617,43 @@ def test_use_utf8_stdout_not_windows(monkeypatch, platform):
     monkeypatch.setattr(sys, "stdout", stdout)
     main._use_utf8_stdout()
     stdout.reconfigure.assert_not_called()
+
+
+@pytest.fixture
+def restore_root_logger():
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    yield
+    root.handlers[:] = handlers
+    root.setLevel(level)
+
+
+@mock.patch("data_validation.__main__.validate")
+def test_deprecated_option_does_not_suppress_logging(
+    mock_validate, monkeypatch, restore_root_logger
+):
+    """A deprecated option logs a warning while parsing arguments, which must
+    not stop main() from applying the requested log level (issue 1548)."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "data-validation",
+            "validate",
+            "row",
+            "-sc",
+            TEST_CONN,
+            "-tc",
+            TEST_CONN,
+            "-tbls",
+            "my_schema.my_table",
+            "--hash",
+            "*",
+            "-pk",
+            "id",
+            "-tsp",
+        ],
+    )
+    main.main()
+    mock_validate.assert_called_once()
+    assert logging.getLogger().getEffectiveLevel() == logging.INFO

@@ -581,10 +581,13 @@ def main():
     _use_utf8_stdout()
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
+    # force=True because a warning logged while parsing arguments (e.g. for a
+    # deprecated option) has already configured the root logger with defaults.
     logging.basicConfig(
         level=LOG_LEVEL_MAP[args.log_level],
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
+        force=True,
     )
     if args.command == "connections":
         run_connections(args)
