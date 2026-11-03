@@ -189,7 +189,7 @@ class Backend(BaseSQLBackend):
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
-            df = pandas.read_sql(sql, self.client, params=params)
+            df = pandas.read_sql(sql, self.client, params=params, coerce_float=False)
 
         if results:
             return df
@@ -242,7 +242,7 @@ class Backend(BaseSQLBackend):
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
-            df = pandas.read_sql(sql, self.client)
+            df = pandas.read_sql(sql, self.client, coerce_float=False)
 
             for col in schema.names:
                 if schema.fields[col].is_date():
@@ -251,8 +251,10 @@ class Backend(BaseSQLBackend):
                     dtype_mapping = {col: "datetime64[ns]"}
                     try:
                         df = df.astype(dtype_mapping)
-                    except pandas._libs.tslibs.np_datetime.OutOfBoundsDatetime as e:
+                    except pandas._libs.tslibs.np_datetime.OutOfBoundsDatetime:
                         pass
+                elif schema.fields[col].is_floating():
+                    df[col] = df[col].astype("float64")
 
         if df.empty:
             # Empty df infers an 'object' data type, update to float64 and datetime64.

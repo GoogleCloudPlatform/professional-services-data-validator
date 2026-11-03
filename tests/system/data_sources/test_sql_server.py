@@ -795,11 +795,16 @@ def test_row_validation_large_decimals_to_bigquery():
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
-    row_validation_test(
+    df = row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+        filter_status=None,
+        use_random_row=True,
+        random_row_batch_size=3,
     )
+    assert len(df) == 3
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
 
 
 @mock.patch(

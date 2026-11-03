@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
 import textwrap
 
 import pytest
@@ -99,3 +100,35 @@ def test_hashbytes_bigquery_binary(bigquery_client):
       TO_HEX(SHA256(FROM_HEX(t0.`start_station_name`))) AS `station_hash`
     FROM `bigquery-public-data`.new_york_citibike.citibike_trips AS t0
     """).strip()
+
+
+def test_decimal_literal_bigquery(bigquery_client):
+    schema = ibis.schema(
+        {
+            "id": dt.Decimal(76, 38),
+            "small_dec": dt.Decimal(38, 9),
+        }
+    )
+    t = ibis.table(schema, name="dvt_large_decimals")
+
+    large_vals = [
+        decimal.Decimal("323456789012345678901234567890"),
+        decimal.Decimal("223456789012345678901234567890"),
+    ]
+    small_vals = [
+        decimal.Decimal("123.456"),
+        decimal.Decimal("789.012"),
+    ]
+
+    expr_large = t.filter(t.id.isin(large_vals))
+    expr_small = t.filter(t.small_dec.isin(small_vals))
+
+    sql_large = bigquery_client.compile(expr_large)
+    sql_small = bigquery_client.compile(expr_small)
+
+    assert "323456789012345678901234567890" in sql_large
+    assert "BIGNUMERIC" in sql_large
+    assert "E+" not in sql_large
+
+    assert "123.456" in sql_small
+    assert "NUMERIC" in sql_small
