@@ -155,6 +155,7 @@ GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 PROJECT_ID = "project_id"
 API_ENDPOINT = "api_endpoint"
 STORAGE_API_ENDPOINT = "storage_api_endpoint"
+STORAGE_API_INSECURE_CHANNEL = "storage_api_insecure_channel"
 CLIENT_PROJECT_ID = "client_project_id"
 BILLING_PROJECT_ID = "billing_project_id"
 

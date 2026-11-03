@@ -134,6 +134,11 @@ data-validation connections add
                                                         "bigquerystorage-mypsc.p.googleapis.com)
                                                         Note this is a GRPC endpoint and does not
                                                         include a URI scheme.
+    [--storage-api-insecure-channel]                    (Optional) Connect to storage-api-endpoint
+                                                        over an insecure (no TLS) gRPC channel -
+                                                        for a local BigQuery emulator that serves
+                                                        its Storage API port without TLS. Has no
+                                                        effect without --storage-api-endpoint.
 ```
 BigQuery is a [Client based API](https://docs.cloud.google.com/docs/quotas/quota-project#project-client-based). If the connection is being made by the user who has authenticated using gcloud CLI, the billing project is set by the user's gcloud configuration. Users can change the billing project by using `gcloud config set project <billing-project-id>`. If the connection is being made by a Service Account, the default billing project is the project where the Service Account resides. The option `--billing-project-id` can be used to override the default billing project.
 ### User/Service account needs following BigQuery permissions to run DVT
