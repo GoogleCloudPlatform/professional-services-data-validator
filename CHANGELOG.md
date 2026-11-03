@@ -2,6 +2,14 @@
 
 ## Untagged
 
+## [8.10.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.1...v8.10.2) (2026-11-03)
+
+
+### Bug Fixes
+
+* cap SQL Server random row batch size to avoid parameter limit ([#1835](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1835)) ([#1863](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1863)) ([0b676f7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0b676f76a113ac06621d9dfd3571a151fc016162))
+* Do not split --filters on PostgreSQL style :: type casts ([#1861](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1861)) ([8d20863](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8d20863055eaef5c12fcf9191e169581f51d9e62))
+
 ## [8.10.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.0...v8.10.1) (2026-10-23)
 
 
