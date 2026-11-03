@@ -536,6 +536,8 @@ def test_row_validation_decimals_to_bigquery():
 def test_row_validation_large_decimals_to_bigquery():
     """Db2 to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    Using Decimals as primary keys with random rows does not work as outlined in
+    https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1822.
     This is testing large decimals for the primary key join column plus the hash columns.
     Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
     """
@@ -544,8 +546,6 @@ def test_row_validation_large_decimals_to_bigquery():
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_dec_18",
-        use_random_row=True,
-        random_row_batch_size=5,
     )
 
 
