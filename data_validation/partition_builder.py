@@ -122,26 +122,34 @@ class PartitionBuilder:
         Returns:
             String with the where condition
         """
-        # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
-        # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
-        sql_where_expr = re.split(
-            r"\sWHERE\s", util.ibis_table_to_sql(table_expr, client), flags=re.I
-        )[-1]
+        # Split the SQL into quoted strings/identifiers (odd indexes) and other SQL text
+        # (even indexes) so that keywords and "t0." inside quotes are left alone.
+        parts = re.split(
+            r"""('(?:''|\\'|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`)""",
+            util.ibis_table_to_sql(table_expr, client),
+        )
 
-        sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
-        sql_not_string_re = re.compile(r"[^']+")
-        sql_where_less_ws = ""
-        # Remove references to t0 and extra whitespace, but only outside quoted strings.
-        while sql_where_expr:
-            if match_obj := sql_not_string_re.match(
-                sql_where_expr
-            ):  # Not a quoted string
-                repl_str = re.sub(r"\s\s+", r" ", match_obj.group(0)).replace("t0.", "")
-            else:  # quoted strings should not be substituted
-                repl_str = (match_obj := sql_string_re.match(sql_where_expr)).group(0)
-            sql_where_less_ws += repl_str
-            sql_where_expr = sql_where_expr[match_obj.end() :]
-        return sql_where_less_ws
+        # The filter follows the last WHERE that is outside quotes and outside
+        # parentheses, i.e. not a WHERE in a subquery.
+        depth = 0
+        where_part, where_end = 0, 0
+        for i in range(0, len(parts), 2):
+            for match_obj in re.finditer(r"[()]|\bWHERE\b", parts[i], flags=re.I):
+                if match_obj.group(0) == "(":
+                    depth += 1
+                elif match_obj.group(0) == ")":
+                    depth -= 1
+                elif depth == 0:
+                    where_part, where_end = i, match_obj.end()
+
+        parts = [parts[where_part][where_end:]] + parts[where_part + 1 :]
+        sql_where = ""
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                # Remove references to t0 and extra whitespace outside quotes.
+                part = re.sub(r"\s\s+", " ", re.sub(r"\bt0\.", "", part))
+            sql_where += part
+        return sql_where.strip()
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
         """The PartitionBuilder object contains the configuration of the table pairs (source and target)
