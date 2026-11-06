@@ -13,11 +13,12 @@
 # limitations under the License.
 
 import json
+import logging
 from unittest import mock
-
+    
 import pytest
 
-from data_validation import exceptions, validation_runner
+from data_validation import consts, exceptions, validation_runner
 
 
 @mock.patch("data_validation.validation_runner.util.print_output")
@@ -42,9 +43,6 @@ def test_dry_run_uses_serialized_output(mock_validation, mock_sql, mock_print):
 
 @mock.patch("data_validation.validation_runner.DataValidation")
 def test_run_validation_logs_run_id_with_config_file(mock_data_validation, caplog):
-    import logging
-    from data_validation import consts
-
     validator = mock.Mock()
     validator.run_metadata.run_id = "run-123"
     mock_data_validation.return_value.__enter__.return_value = validator
