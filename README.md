@@ -613,10 +613,10 @@ can be interleaved; validation-start logs include the run ID and config file.
 Concurrent CSV/JSON reports retain the existing per-validation format, rather
 than becoming a single combined CSV or JSON document.
 
-Choose the worker count based on database query and connection limits and local
-memory. Source and target queries can already run concurrently within a
-validation, and large row validations can consume substantial memory. This
-option controls files, not the total number of connections or queries.
+Choose the worker count based on database query, connection limits and local memory
+and CPU. Source and target queries can already run concurrently within a validation,
+and large row validations can consume substantial memory and CPU resources.
+This option controls files, not the total number of connections or queries.
 Values greater than 1 require `--config-dir` and cannot be combined with
 `--kube-completions`; indexed Kubernetes and Cloud Run jobs still select one
 file per task. See [Config Directory Concurrency](docs/internal/config_concurrency.md)
