@@ -16,6 +16,7 @@ import importlib.metadata
 
 import ibis
 import pytest
+from data_validation import consts
 from ibis.backends.bigquery.compiler import BigQueryCompiler
 from ibis.backends.impala.compiler import ImpalaCompiler
 from ibis.backends.mssql.compiler import MsSqlCompiler
@@ -341,3 +342,29 @@ def test_mssql_fillna_empty_string_inlined():
     sql = _compile(MsSqlCompiler, TABLE.s.fillna("").name("ifnull_s"))
 
     assert "coalesce(t0.s, '')" in sql
+
+
+@pytest.mark.skipif(OracleCompiler is None, reason=ORACLE_SKIP_REASON)
+def test_oracle_binary_uuid_string_cast_keeps_null():
+    """A NULL binary UUID must stay NULL (issue 1716).
+
+    Oracle treats NULL as an empty string in concatenation, so injecting the
+    hyphens without a NULL check turned a NULL UUID into "----".
+    """
+    sql = _compile(
+        OracleCompiler,
+        TABLE.b.force_cast(consts.CONFIG_CAST_UUID_STRING).name("u"),
+    )
+    case_start = sql.find("CASE WHEN (t0.b IS NULL) THEN ")
+    assert case_start != -1
+    # All the hyphen concatenation must be inside the CASE expression.
+    assert sql.find("concat(") > case_start
+
+
+def test_string_uuid_string_cast_unchanged():
+    sql = _compile(
+        PostgreSQLCompiler,
+        TABLE.s.force_cast(consts.CONFIG_CAST_UUID_STRING).name("u"),
+    )
+    assert "lower(CAST(t0.s AS TEXT))" in sql
+    assert "CASE" not in sql
