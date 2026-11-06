@@ -42,8 +42,8 @@ from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
 import third_party.ibis.ibis_pandas
+from third_party.ibis.ibis_addon.api import check_ifnull_default_literal
 
-# In Ibis 7.1.0, BigQueryType handles type conversion natively.
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import bigquery_cast
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -320,6 +320,27 @@ def _sa_whitespace_rstrip(t, op):
     return sa.func.rtrim(sa_arg, string.whitespace)
 
 
+def _sa_coalesce_with_literal(t, op):
+    """Inline literal default value in COALESCE to prevent parameterization.
+
+    Used by engines that either do not support query parameters in this context
+    (Db2 z/OS) or have strict parameter count limits (SQL Server).
+    """
+    sa_args = []
+    for arg in op.arg:
+        if (
+            isinstance(arg, ops.Literal)
+            and arg.dtype.is_string()
+            and arg.value is not None
+        ):
+            check_ifnull_default_literal(arg.value)
+            sa_args.append(sa.literal_column(f"'{arg.value}'"))
+        else:
+            sa_args.append(t.translate(arg))
+
+    return sa.func.coalesce(*sa_args)
+
+
 execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
@@ -403,6 +424,7 @@ MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch
 MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
 MsSqlExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
 MsSqlExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
+MsSqlExprTranslator._registry[ops.Coalesce] = _sa_coalesce_with_literal
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
 ]
@@ -431,6 +453,7 @@ if Db2ExprTranslator:
 if Db2zOSExprTranslator:
     Db2zOSExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2zOSExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    Db2zOSExprTranslator._registry[ops.Coalesce] = _sa_coalesce_with_literal
     Db2zOSExprTranslator._registry[PaddedCharLength] = Db2zOSExprTranslator._registry[
         ops.StringLength
     ]
