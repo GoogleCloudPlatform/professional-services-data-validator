@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import pytest
+from unittest import mock
 
 from pandas import DataFrame
 
@@ -70,6 +71,16 @@ def test_basic_result_handler(module_under_test):
 
     handler_output = result_handler.execute(result_df)
     assert handler_output["A"].sum() == result_df["A"].sum()
+
+
+def test_result_handler_uses_serialized_output(module_under_test):
+    result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+    result_handler = module_under_test.TextResultHandler(consts.FORMAT_TYPE_CSV)
+    with mock.patch(
+        "data_validation.result_handlers.text.util.print_output"
+    ) as mock_print:
+        result_handler.execute(result_df)
+    mock_print.assert_called_once_with(result_handler._get_formatted(result_df))
 
 
 def test_basic_result_handler_filtered_results(module_under_test):

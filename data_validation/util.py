@@ -17,6 +17,7 @@ import logging
 import re
 import time
 import uuid
+from threading import Lock
 
 from data_validation import exceptions
 
@@ -25,6 +26,14 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ibis.expr.types.relations import Table as IbisTable
     from ibis.backends.base import BaseBackend
+
+
+_OUTPUT_LOCK = Lock()
+
+
+def print_output(message: str) -> None:
+    with _OUTPUT_LOCK:
+        print(message)
 
 
 def timed_call(log_txt, fn, *args, **kwargs):

@@ -72,7 +72,7 @@ class TextResultHandler(object):
         if self.status_list is not None:
             result_df = filter_validation_status(self.status_list, result_df)
 
-        print(self._get_formatted(result_df))
+        util.print_output(self._get_formatted(result_df))
 
         if self.format not in consts.FORMAT_TYPES:
             error_msg = (
