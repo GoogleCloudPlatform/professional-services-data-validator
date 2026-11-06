@@ -1324,14 +1324,24 @@ def list_validations(config_dir="./"):
     return [file_name for file_name in files if file_name.endswith(".yaml")]
 
 
-def print_validations_in_dir(config_dir="./"):
-    validations = list_validations(config_dir=config_dir)
-    if not validations:
-        # A misspelt Cloud Storage prefix matches no objects rather than raising an
-        # error, so treat "nothing found" as an error, as configs run does.
+def list_validation_files(config_dir: str) -> list:
+    """Return the sorted validation YAML file names found in config_dir.
+
+    An empty directory is treated as an error rather than as zero work to do. This
+    matters most for Cloud Storage, where a misspelt prefix such as
+    gs://my-bucket/typo-dir/ is not an error in itself, it simply matches no objects.
+    Without this check DVT would report a successful run having validated nothing.
+    """
+    config_file_names = sorted(list_validations(config_dir=config_dir))
+    if not config_file_names:
         raise ValueError(
             f"No validation YAML files found in config directory: {config_dir}"
         )
+    return config_file_names
+
+
+def print_validations_in_dir(config_dir="./"):
+    validations = list_validation_files(config_dir)
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
         logging.info(validation_name)
