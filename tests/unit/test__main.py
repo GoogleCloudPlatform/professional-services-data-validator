@@ -619,19 +619,25 @@ def test_use_utf8_stdout_not_windows(monkeypatch, platform):
     stdout.reconfigure.assert_not_called()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def restore_root_logger():
+    """Isolate the root logger's handlers and level for each test.
+
+    main() calls logging.basicConfig(force=True), which removes and closes
+    every root handler. Swapping in a fresh handler list keeps the handlers
+    that existed before the test out of reach, and they are put back
+    afterwards so no logging state leaks into later tests.
+    """
     root = logging.getLogger()
-    handlers, level = root.handlers[:], root.level
+    saved_handlers, saved_level = root.handlers, root.level
+    root.handlers = []
     yield
-    root.handlers[:] = handlers
-    root.setLevel(level)
+    root.handlers = saved_handlers
+    root.setLevel(saved_level)
 
 
 @mock.patch("data_validation.__main__.validate")
-def test_deprecated_option_does_not_suppress_logging(
-    mock_validate, monkeypatch, restore_root_logger
-):
+def test_deprecated_option_does_not_suppress_logging(mock_validate, monkeypatch):
     """A deprecated option logs a warning while parsing arguments, which must
     not stop main() from applying the requested log level (issue 1548)."""
     monkeypatch.setattr(
@@ -654,6 +660,12 @@ def test_deprecated_option_does_not_suppress_logging(
             "-tsp",
         ],
     )
+    # pytest attaches its capture handlers when the test body starts, after
+    # fixtures run. Remove them to simulate a fresh CLI process.
+    logging.root.handlers.clear()
+    logging.root.setLevel(logging.WARNING)
+
     main.main()
+
     mock_validate.assert_called_once()
-    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+    assert logging.getLogger().level == logging.INFO
