@@ -15,7 +15,7 @@
 import json
 import logging
 from unittest import mock
-    
+
 import pytest
 
 from data_validation import consts, exceptions, validation_runner
