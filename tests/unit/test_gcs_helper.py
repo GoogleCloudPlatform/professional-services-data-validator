@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
@@ -49,3 +50,31 @@ def test_get_gcs_file_path():
         "gs://my-bucket/state/file/path/name.json"
     )
     assert result_path == "state/file/path/name.json"
+
+
+OBJECTS = ["dir/a.yaml", "dir/b.connection.json", "dir/sub/c.yaml", "other/d.yaml"]
+
+
+def _fake_bucket():
+    """Mimic Cloud Storage list_blobs(prefix, delimiter="/") semantics."""
+
+    def list_blobs(prefix, delimiter):
+        for name in OBJECTS:
+            if name.startswith(prefix) and delimiter not in name[len(prefix) :]:
+                yield SimpleNamespace(name=name)
+
+    return SimpleNamespace(list_blobs=list_blobs)
+
+
+@pytest.mark.parametrize("directory_path", ["gs://bucket/dir", "gs://bucket/dir/"])
+def test_list_gcs_directory_with_or_without_trailing_slash(directory_path):
+    with mock.patch.object(gcs_helper, "get_gcs_bucket", return_value=_fake_bucket()):
+        assert gcs_helper.list_gcs_directory(directory_path) == [
+            "a.yaml",
+            "b.connection.json",
+        ]
+
+
+def test_list_gcs_directory_bucket_root():
+    with mock.patch.object(gcs_helper, "get_gcs_bucket", return_value=_fake_bucket()):
+        assert gcs_helper.list_gcs_directory("gs://bucket") == []
