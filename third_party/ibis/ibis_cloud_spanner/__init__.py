@@ -19,7 +19,6 @@ from google.api_core import client_options
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
-from google.cloud.spanner_admin_database_v1.types import DatabaseDialect
 from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
@@ -29,6 +28,12 @@ from third_party.ibis.ibis_cloud_spanner.datatypes import (
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
+
+SPANNER_DIALECT_QUERY = (
+    "SELECT option_value FROM information_schema.database_options"
+    " WHERE option_name = 'database_dialect'"
+)
+SPANNER_DIALECT_POSTGRESQL = "POSTGRESQL"
 
 
 class Backend(BaseSQLBackend):
@@ -63,9 +68,16 @@ class Backend(BaseSQLBackend):
         """Raise a clear exception if the database is not a GoogleSQL dialect database.
 
         The Spanner backend generates GoogleSQL, it does not support PostgreSQL dialect databases.
+
+        The dialect is read with a data query rather than Database.database_dialect because
+        that property calls Database.reload() which makes two Admin API calls (GetDatabaseDdl
+        and GetDatabase). Those calls consume Admin API quota and require extra permissions.
+        The query below is valid in both GoogleSQL and PostgreSQL dialects.
         """
-        dialect = self.database_name.database_dialect
-        if dialect == DatabaseDialect.POSTGRESQL:
+        with self.database_name.snapshot() as snapshot:
+            rows = list(snapshot.execute_sql(SPANNER_DIALECT_QUERY))
+        dialect = rows[0][0] if rows else None
+        if dialect == SPANNER_DIALECT_POSTGRESQL:
             raise NotImplementedError(
                 f"Spanner database {self.database_name.database_id} uses the PostgreSQL dialect "
                 "which is not supported, only GoogleSQL dialect databases are supported"

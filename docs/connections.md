@@ -150,6 +150,8 @@ BigQuery is a [Client based API](https://docs.cloud.google.com/docs/quotas/quota
 
 ## Google Spanner
 
+Only GoogleSQL dialect databases are supported, PostgreSQL dialect databases are not supported.
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
