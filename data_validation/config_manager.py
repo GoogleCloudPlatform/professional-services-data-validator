@@ -1604,6 +1604,8 @@ class ConfigManager(object):
         """Returns a list of primary key columns based on the source/target table.
 
         If neither source nor target systems have a primary key defined then [] is returned.
+        The target primary key is also ignored if any of its columns is missing from the
+        source table, e.g. the rowid column that GCP DMS adds to tables without a key.
         """
         assert (
             self.validation_type != consts.CUSTOM_QUERY
@@ -1615,4 +1617,17 @@ class ConfigManager(object):
             primary_keys = self.target_client.list_primary_key_columns(
                 self.target_schema, self.target_table
             )
+            if primary_keys:
+                source_columns = {
+                    _.casefold() for _ in self.get_source_ibis_table().columns
+                }
+                missing = [
+                    _ for _ in primary_keys if _.casefold() not in source_columns
+                ]
+                if missing:
+                    logging.warning(
+                        "Ignoring the target table primary key because these columns are not in the source table: %s",
+                        ", ".join(missing),
+                    )
+                    primary_keys = []
         return primary_keys or []

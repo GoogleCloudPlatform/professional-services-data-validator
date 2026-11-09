@@ -62,7 +62,7 @@ CREATE TABLE dvt_core_types (
 ,   col_dec_20      NUMERIC
 ,   col_dec_38      NUMERIC
 ,   col_dec_10_2    NUMERIC
-,   col_float32     FLOAT64
+,   col_float32     FLOAT32
 ,   col_float64     FLOAT64
 ,   col_varchar_30  STRING(30)
 ,   col_char_2      STRING(2)
