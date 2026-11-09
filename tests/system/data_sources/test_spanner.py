@@ -227,6 +227,7 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        wildcard_include_timestamp=True,
     )
 
 
@@ -236,15 +237,21 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Spanner to BigQuery dvt_core_types column validation"""
+    # col_datetime is excluded from aggregations because Spanner has no DATETIME
+    # data type, the Spanner TIMESTAMP test data does not match BigQuery DATETIME.
+    agg_cols = (
+        "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,"
+        "col_float32,col_float64,col_date,col_tstz"
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         grouped_columns="col_varchar_30",
-        sum_cols="*",
+        sum_cols=agg_cols,
         min_cols="*",
         max_cols="*",
-        avg_cols="*",
-        std_cols="*",
+        avg_cols=agg_cols,
+        std_cols=agg_cols,
     )
 
 
