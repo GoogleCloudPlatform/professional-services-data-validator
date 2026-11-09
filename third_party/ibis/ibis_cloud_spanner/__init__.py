@@ -19,6 +19,7 @@ from google.api_core import client_options
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
+from google.cloud.spanner_admin_database_v1.types import DatabaseDialect
 from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
@@ -56,6 +57,19 @@ class Backend(BaseSQLBackend):
             self.data_instance,
             self.dataset,
         ) = parse_instance_and_dataset(instance_id, database_id)
+        self._check_database_dialect()
+
+    def _check_database_dialect(self) -> None:
+        """Raise a clear exception if the database is not a GoogleSQL dialect database.
+
+        The Spanner backend generates GoogleSQL, it does not support PostgreSQL dialect databases.
+        """
+        dialect = self.database_name.database_dialect
+        if dialect == DatabaseDialect.POSTGRESQL:
+            raise NotImplementedError(
+                f"Spanner database {self.database_name.database_id} uses the PostgreSQL dialect "
+                "which is not supported, only GoogleSQL dialect databases are supported"
+            )
 
     def _parse_instance_and_dataset(self, dataset):
         if not dataset and not self.dataset:
