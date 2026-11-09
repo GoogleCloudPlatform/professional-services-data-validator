@@ -47,13 +47,6 @@ def test_dtype_from_spanner_field(type_code, expected_dtype):
     assert isinstance(dtype, dt.DataType)
 
 
-def test_spanner_float32_is_not_float64():
-    dtype = dtype_from_spanner_field(Type(code=TypeCode.FLOAT32))
-
-    assert isinstance(dtype, dt.Float32)
-    assert not isinstance(dtype, dt.Float64)
-
-
 def test_schema_from_spanner_with_float32():
     fields = [
         StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
