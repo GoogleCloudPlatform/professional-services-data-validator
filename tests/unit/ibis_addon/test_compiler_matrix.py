@@ -320,6 +320,16 @@ def test_bigquery_epoch_seconds_compiles_timestamp_cast():
             id="string_cast_timestamp",
         ),
         pytest.param(
+            SPANNER_TABLE.i.cast("timestamp"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("timestamp('UTC')"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_utc_timestamp",
+        ),
+        pytest.param(
             SPANNER_TABLE.i.cast("int64"),
             ["CAST(t0.`i` AS INT64)"],
             id="int_cast_int64",
