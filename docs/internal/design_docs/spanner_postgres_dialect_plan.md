@@ -1,7 +1,11 @@
 # Spanner PostgreSQL Dialect: Replan (issue #1725)
 
 > [!IMPORTANT]
-> **Decision (2026-11-09): Option B, native Spanner client with dialect auto-detection.** See [§7](#7-decision-option-b-design-and-revised-plan) for the design and revised phases. §3–§4 are kept as the record of the options considered.
+> **Decision (2026-11-09): Option B, native Spanner client with dialect auto-detection.** See [§7](#7-decision-option-b-design-and-revised-plan) for the design and revised phases. §3–§4 are kept as the record of the options considered. The §6 decisions are all made, and §5 shows a status for each question. The current phase list with exit criteria is [§8.5](#85-updated-phase-list).
+>
+> **FLOAT32 split out (2026-11-09):** the `FLOAT32` → `dt.float32` mapping fix is tracked as **issue #1875** (branch `1875-spanner-float32-signaturevalidationerror`) and is being worked on independently. It is **out of scope** for this branch: don't carry the prototype's `FLOAT32` change over.
+>
+> **Clear error split out (2026-11-09):** the clear error for a PG-dialect database on the existing `Spanner` connection is tracked as **issue #1877** (separate small PR off `develop`).
 
 Current branch: `1725-spanner-postgresql-dialect` (= `develop` @ `9669eef0`, Ibis 7.1.0, SQLAlchemy 2.0.51, google-cloud-spanner 3.69.0)
 
@@ -25,7 +29,7 @@ Current branch: `1725-spanner-postgresql-dialect` (= `develop` @ `9669eef0`, Ibi
 | Custom query types | `raw_column_metadata` uses `cursor.description` OIDs | Written, not tested end-to-end |
 | Registry | `StringJoin` → `\|\|`, `Count(numeric/jsonb)` → cast to text, timestamp casts → `timestamptz`, drop `AT TIME ZONE`, `RawSQL`, `BinaryLength`, `PaddedCharLength`, epoch seconds | Works |
 | Hash/bytea | `HashBytes` raises an error, `to_hex`/`from_hex` casts are knowingly broken | **Blocked: Spanner PG has no `encode(...,'hex')` or `to_hex`** |
-| Other bits | `FLOAT32` mapping in `ibis_cloud_spanner/datatypes.py` (a real fix for GoogleSQL Spanner too); a whitespace-only Oracle change | Unrelated to the feature, can land on their own |
+| Other bits | `FLOAT32` mapping in `ibis_cloud_spanner/datatypes.py` (a real fix for GoogleSQL Spanner too); a whitespace-only Oracle change | Unrelated to the feature. `FLOAT32` is now tracked separately as #1875; drop the Oracle whitespace change |
 | Tests | `test_spanner_pg.py`: schema, column (no stddev: `stddev_samp(bigint)` unsupported), row concat, auto-pks, find-tables, raw query, connections add | Passed against a live PGAdapter |
 
 **Not covered by the prototype:** generate-table-partitions, comparison-fields, random rows, custom-query validations, row hash, bytea columns in row validation, `--std`.
@@ -56,8 +60,8 @@ The rule: **anything that generates SQL or reads metadata can go ahead now. Anyt
 
 | Work item | Now? | Why |
 |---|---|---|
-| Fail clearly when the existing `Spanner` connection hits a PG-dialect database (`Database.database_dialect == POSTGRESQL`). This is the exact #1725 report (backtick error) | ✅ Now | Small, helps users straight away, no fetch-path dependency |
-| `FLOAT32` mapping fix in `ibis_cloud_spanner/datatypes.py` | ✅ Now | Separate bug fix |
+| Fail clearly when the existing `Spanner` connection hits a PG-dialect database (`Database.database_dialect == POSTGRESQL`). This is the exact #1725 report (backtick error) | ✅ Now (**#1877**) | Small, helps users straight away, no fetch-path dependency |
+| `FLOAT32` mapping fix in `ibis_cloud_spanner/datatypes.py` | ✅ Now (**#1875**, in progress separately) | Separate bug fix, not part of this branch |
 | Connection plumbing: `consts`, `cli_tools`, `clients.CLIENT_LOOKUP`, secret manager, docs, unit tests | ✅ Now | Same under either option (see §3) |
 | SQL generation: compiler and registry (`StringJoin`, `Count` casts, timestamptz casts, stddev cast, epoch seconds, padded char, `RawSQL`), with unit tests in `tests/unit/ibis_addon/test_compiler_matrix.py` style | ✅ Now | Compile-only, no execution path involved |
 | Metadata: column reflection without `format_type`, PK detection, `raw_column_metadata` for custom queries, list schemas/tables for find-tables | ✅ Now | Doesn't go through the combiner |
@@ -85,14 +89,14 @@ The rule: **anything that generates SQL or reads metadata can go ahead now. Anyt
 | Connection type | New `SpannerPostgres` (host/port) | New `SpannerPostgres` (project/instance/database + PGAdapter host/port; DB passed as `projects/p/instances/i/databases/d`) | **Existing `Spanner`**, the dialect is detected | Existing `Spanner` | n/a |
 | Fixes #1725 as reported (same connection, no extra steps) | No | No | **Yes** | Yes | n/a |
 | Reuses prototype registry | Yes | Yes | Yes (compile with the SQLAlchemy PG dialect and send the SQL string to `snapshot.execute_sql`) | Yes | n/a |
-| Reflection | pg_catalog emulation workarounds (`format_type` missing) | Same | Spanner's own schema API / `information_schema` (typed, already mapped in `ibis_cloud_spanner/datatypes.py` incl. `PG_NUMERIC`/`PG_JSONB` annotations) | pg_catalog through dbapi | n/a |
+| Reflection | pg_catalog emulation workarounds (`format_type` missing) | Same | Spanner's own schema API / `information_schema` (typed result fields, mapped by `ibis_cloud_spanner/datatypes.py`; that mapping ignores `type_annotation` today, so `PG_NUMERIC`/`PG_JSONB` handling has to be added, see §7.2) | pg_catalog through dbapi | n/a |
 | Blocked by 1702 | Partly (results/compare) | Partly | **Mostly** (execution path) | — | — |
 | Survives an Ibis 9/10 upgrade | **Poorly**: `dialect.py` and SQLAlchemy reflection go away (Ibis 9+ Postgres is sqlglot + psycopg directly) | Poorly | Better: only the compiler needs porting (to a sqlglot `PostgresCompiler` subclass); fetch/metadata stay native | — | — |
 | Viability | Proven | Proven plus small changes | Needs a spike: an Ibis 7.1 `AlchemyCompiler` working from a hand-built `sa.Table` with no live engine | **Rejected**: the installed `spanner_dbapi` has no dialect awareness (rewrites params to GoogleSQL `@a0`) | **Rejected**: GoogleSQL only |
 
 ### Recommendation
 
-1. **Ship the "now" items whichever option wins:** the #1725 clear error, the FLOAT32 fix, registry/compiler with unit tests, the hex spike, test DDL/infra.
+1. **Ship the "now" items whichever option wins:** the #1725 clear error (now #1877), the FLOAT32 fix (now #1875), registry/compiler with unit tests, the hex spike, test DDL/infra.
 2. **Choose between A+ and B before writing the backend.**
    - **B** is the better product (no sidecar, works with the connection users already create, fewer workarounds, holds up better through the Ibis upgrade the combiner review already expects). It depends more on 1702, and it carries one technical risk (compile-only Alchemy) that a ~1-day spike can settle.
    - **A+** can deliver schema validation, find-tables and query **now**, and column/row once 1702 lands. Its weak point is that the reflection layer gets rewritten at the next Ibis upgrade.
@@ -104,7 +108,7 @@ The rule: **anything that generates SQL or reads metadata can go ahead now. Anyt
 
 ```mermaid
 flowchart LR
-  P0["Phase 0 (now)<br/>#1725 clear error<br/>FLOAT32 fix<br/>Spikes: hex in SQL, compile-only Alchemy"]
+  P0["Phase 0 (now)<br/>Clear error (#1877)<br/>FLOAT32 fix (#1875)<br/>Spikes: hex in SQL, compile-only Alchemy"]
   P1["Phase 1 (now)<br/>Transport-independent compiler/registry<br/>Metadata + PK + custom-query types<br/>Unit tests"]
   P2["Phase 2 (now)<br/>Connection + backend (A+ or B-stub)<br/>Schema validation, find-tables, query<br/>System tests + CI infra"]
   M{{"issue-1702 merged"}}
@@ -117,18 +121,24 @@ flowchart LR
 
 ## 5. Spikes / open technical questions
 
-1. **Hex encoding in Spanner PG.** Check `CAST(sha256(x) AS text)` / `varchar` output (PG `\x…` format, base64, or an error?), any `spanner.*` hex/base64 function, and a `get_byte`-based expression. If none work: the hash column returns raw bytea and DVT hex-encodes it client-side before `pc.equal` (needs 1702). bytea columns *inside* concat/hash stay unsupported unless SQL hex exists.
-2. **Compile-only Alchemy (Option B).** Can Ibis 7.1 compile row-hash and aggregate queries from a `sa.Table` built from Spanner schema metadata, using `SpannerPostgresDialect` with `literal_binds`, without a connection?
-3. **`stddev_samp(bigint)`, `count(numeric)`.** Confirm the cast workarounds produce identical results to other engines.
-4. **Schema semantics.** In GoogleSQL Spanner, DVT treats the "schema" part of `schema.table` as the database. In PG-dialect Spanner, real named schemas exist (default `public`). Decide the table-naming rules, especially for Option B on the shared `Spanner` connection type.
-5. **numeric precision reporting.** Is `numeric(38,9)` acceptable, or should it map to an unbounded decimal?
-6. **1702 + native Spanner.** Confirm whether `to_pyarrow()` works for the GoogleSQL Spanner backend on the 1702 branch (`SpannerCursor` has no `fetchmany`). If not, it's a 1702 bug, and fixing it is a prerequisite for Option B.
+> [!NOTE]
+> Status as of 2026-11-09: **open:** 1, 2, 3. **Partly decided:** 5. **Decided:** 4, 6. Each item has a status line.
+
+1. **Hex encoding in Spanner PG.** *Status: open, Phase 0 spike.* Check `CAST(sha256(x) AS text)` / `varchar` output (PG `\x…` format, base64, or an error?), any `spanner.*` hex/base64 function, and a `get_byte`-based expression. If none work: the hash column returns raw bytea and DVT hex-encodes it client-side before `pc.equal` (needs 1702). bytea columns *inside* concat/hash stay unsupported unless SQL hex exists.
+2. **Compile-only Alchemy (Option B).** *Status: open, Phase 0 spike, and it gates the Phase 1 compiler code.* Can Ibis 7.1 compile row-hash and aggregate queries from a `sa.Table` built from Spanner schema metadata, using `SpannerPostgresDialect` with `literal_binds`, without a connection? Promising sign: `tests/unit/ibis_addon/test_compiler_matrix.py` already compiles with `PostgreSQLCompiler` and no connection. Known catch (noted in that file for Db2): compiling an `UnboundTable` goes through sqlglot to resolve the table name, and sqlglot raises "Unknown dialect" for dialect names it doesn't know. The spike must check this for a `spanner_postgres` dialect name (bind real `sa.Table`s, or keep the sqlglot dialect as `postgres`).
+3. **`stddev_samp(bigint)`, `count(numeric)`.** *Status: open, needs a live Spanner PG database (Phase 0 test database, confirmed in Phase 3).* Confirm the cast workarounds produce identical results to other engines.
+4. **Schema semantics.** *Status: decided (§7.2): for the PG backend, `schema.table` means a real PG schema, default `public` (`Database.default_schema_name`). GoogleSQL Spanner behaviour is unchanged.* In GoogleSQL Spanner, DVT treats the "schema" part of `schema.table` as the database. In PG-dialect Spanner, real named schemas exist (default `public`).
+5. **numeric precision reporting.** *Status: partly decided (§7.2): `PG_NUMERIC` maps to an arbitrary-precision decimal, not `numeric(38,9)`. Still open: how schema validation should compare that unbounded decimal with fixed-precision targets (BigQuery `NUMERIC`/`BIGNUMERIC`, Postgres `numeric(p,s)`). Decide in Phase 2 with the annotation-aware types.* Is `numeric(38,9)` acceptable, or should it map to an unbounded decimal?
+6. **1702 + native Spanner.** *Status: decided (§8): GoogleSQL Spanner `to_pyarrow` is fixed on 1702. As of `origin/issue-1702-using-duckdb` @ `39b562f4` (2026-11-09) that branch doesn't touch `ibis_cloud_spanner/` or `test_spanner.py` yet.* Confirm whether `to_pyarrow()` works for the GoogleSQL Spanner backend on the 1702 branch (`SpannerCursor` has no `fetchmany`). If not, it's a 1702 bug, and fixing it is a prerequisite for Option B.
 
 ## 6. Decisions needed
 
-- **Option A+ vs B** (or both, sharing one compiler).
-- **Merge order** with the 1702 owner: does Spanner PG column/row support wait for 1702, or land first so 1702 has to cover it?
-- Is a **PGAdapter dependency** acceptable for DVT's deployment targets (Cloud Run / Functions / containers)?
+> [!NOTE]
+> All decided on 2026-11-09. Kept as the record.
+
+- ~~**Option A+ vs B** (or both, sharing one compiler).~~ **Decided:** Option B (§7).
+- ~~**Merge order** with the 1702 owner: does Spanner PG column/row support wait for 1702, or land first so 1702 has to cover it?~~ **Decided:** this branch waits for 1702, and 1702 implements GoogleSQL Spanner `to_pyarrow` (§8). The fallback if 1702 is slow is in §8.4.
+- ~~Is a **PGAdapter dependency** acceptable for DVT's deployment targets (Cloud Run / Functions / containers)?~~ **Decided:** moot. The PGAdapter path is dropped (§8).
 
 ---
 
@@ -172,7 +182,7 @@ Key design points:
 - **Types.** Extend `ibis_cloud_spanner/datatypes.py` to respect `type_annotation` (`PG_NUMERIC` → arbitrary-precision decimal instead of `NUMERIC(38,9)`, `PG_JSONB` → json). Custom-query column types come from `result.fields`, so the psycopg2 OID map isn't needed.
 - **Schemas.** PG dialect has real schemas (`Database.default_schema_name == "public"`). `schema.table` in DVT means a real PG schema for this backend, not the database as it does for GoogleSQL Spanner.
 - **Prototype pieces to carry over:** the registry deltas (`StringJoin`, `Count` casts, timestamptz casts, no `AT TIME ZONE`, `RawSQL`, `BinaryLength`, `PaddedCharLength`, epoch seconds), the PK query against `information_schema.index_columns`, the test DDL, and `test_spanner_pg.py` (with the PGAdapter config replaced by Spanner instance/database config).
-- **Prototype pieces to drop:** PGAdapter, psycopg2 dialect registration, `dialect.py`, the OID map, `StaticPool`/`SET TIMEZONE` (Spanner timestamps are UTC through the native API), and the `SpannerPostgres` connection type/CLI/docs.
+- **Prototype pieces to drop:** PGAdapter, psycopg2 dialect registration, `dialect.py`, the OID map, `StaticPool`/`SET TIMEZONE` (Spanner timestamps are UTC through the native API), and the `SpannerPostgres` connection type/CLI/docs. Also leave out the `FLOAT32` mapping change: #1875 owns it.
 
 ### 7.3 Revised phases
 
@@ -182,7 +192,7 @@ Key design points:
 ```mermaid
 flowchart LR
   S["Phase 0: spikes (now)<br/>1 compile-only Alchemy<br/>2 dialect detection + IAM<br/>3 hex in Spanner PG SQL"]
-  Q["Phase 1: quick wins (now)<br/>Clear error for PG dialect on 'Spanner' (#1725)<br/>FLOAT32 mapping fix"]
+  Q["Phase 1: quick wins (now)<br/>Clear error for PG dialect on 'Spanner' (#1877)<br/>FLOAT32 mapping fix (#1875)"]
   F["Phase 2: foundation (now)<br/>Native mixin refactor of ibis_cloud_spanner (no behaviour change)<br/>Annotation-aware types<br/>SQL-text unit tests for registry deltas"]
   B["Phase 3: backend (now)<br/>SpannerPostgresBackend + dialect routing<br/>Schema validation, find-tables, query, custom-query types<br/>Column validation on current pandas path"]
   M{{"issue-1702 merged"}}
@@ -196,7 +206,7 @@ flowchart LR
 | Phase | Scope | Blocked by 1702? | Exit criteria |
 |---|---|---|---|
 | 0 Spikes | (1) Compile a row-hash and an aggregate query against a hand-built `sa.Table` with no engine. (2) `database_dialect` with `databaseReader`-only credentials, plus the probe-query fallback. (3) Hex encoding options in Spanner PG | No | Go/no-go on compile-only. Detection method chosen. Hash design chosen |
-| 1 Quick wins | Clear error when the existing `Spanner` connection hits a PG database. `FLOAT32` mapping | No | Separate small PRs merged |
+| 1 Quick wins | Clear error when the existing `Spanner` connection hits a PG database (#1877). `FLOAT32` mapping (#1875, separate) | No | Separate small PRs merged |
 | 2 Foundation | Pull client/snapshot/raw_sql/execute/type mapping out of `ibis_cloud_spanner.Backend` into a mixin with no behaviour change. Annotation-aware types. Registry deltas with SQL-text tests | No | `test_spanner.py` and unit tests unchanged and green |
 | 3 Backend | `SpannerPostgresBackend`, routing in `spanner_connect`, metadata, PK detection, schema/find-tables/query/custom-query types, column validation via the shared pandas `execute()` | No (column test baselines will move after 1702) | `test_spanner_pg.py` schema/column/find-tables/query tests green |
 | 4 Arrow | Implement `to_pyarrow` for the shared mixin (fixes GoogleSQL Spanner on the 1702 path too). Re-baseline column tests | **Yes** | Both Spanner suites green on the Arrow path |
@@ -233,8 +243,8 @@ flowchart LR
 
 | Item | Where | Why it's safe |
 |---|---|---|
-| Clear error when the existing `Spanner` connection hits a PG-dialect database (#1725) | **Separate small PR off `develop`** | ~10 lines in `do_connect`. A trivial conflict at worst. Turns today's confusing backtick error into a clear message |
-| `FLOAT32` → `dt.float32` mapping | **Separate small PR off `develop`** | One-line bug fix for GoogleSQL Spanner |
+| Clear error when the existing `Spanner` connection hits a PG-dialect database (spin-off from #1725) | **Issue #1877**, separate small PR off `develop` | ~10 lines in `do_connect`. A trivial conflict at worst. Turns today's confusing backtick error into a clear message. If the dialect lookup fails (e.g. `PermissionDenied` on the admin `GetDatabase` RPC), DVT logs it and connects as before |
+| `FLOAT32` → `dt.float32` mapping | **Issue #1875**, separate PR off `develop` (branch `1875-spanner-float32-signaturevalidationerror`), worked on independently | One-line bug fix for GoogleSQL Spanner. Not a dependency of this branch; if PG `float4` columns are tested here before #1875 merges, expect the same failure |
 | Spikes: compile-only Alchemy, dialect detection IAM / probe query, hex in Spanner PG SQL | Scratch / this branch | No production code |
 | Compiler + registry deltas + SQL-text unit tests | This branch (new files only) | Doesn't touch 1702's files. This is also the acceptance suite for the later sqlglot port |
 | Test DDL for the Spanner PG test database, creating the test database | This branch / test project | Independent |
@@ -262,11 +272,11 @@ flowchart LR
 
 ### 8.5 Updated phase list
 
-| # | Phase | When |
-|---|---|---|
-| 0 | Quick-win PRs (#1725 clear error, FLOAT32) + spikes | Now |
-| 1 | Compiler/registry deltas + SQL-text unit tests, test DDL (new files on this branch) | Now |
-| — | **1702 merged** (includes GoogleSQL Spanner `to_pyarrow`) | — |
-| 2 | Rebase. Pull out the shared native fetch/metadata helpers. Annotation-aware types | After 1702 |
-| 3 | `SpannerPostgresBackend` + dialect routing. Schema, find-tables, query, custom-query types, column validation | After 1702 |
-| 4 | Row validation (concat, comparison-fields, random rows), row hash, generate-table-partitions | After 1702 |
+| # | Phase | When | Exit criteria |
+|---|---|---|---|
+| 0 | Quick-win PRs (clear error is #1877; FLOAT32 is #1875, tracked separately) + spikes | Now | #1877 clear-error PR merged, with unit tests that mock `database_dialect` (`POSTGRESQL` → error, `GOOGLE_STANDARD_SQL` → OK, `PermissionDenied` → OK). Spike results written up in this doc: go/no-go on compile-only Alchemy (including the sqlglot dialect-name check, §5.2); detection method chosen, tested with `roles/spanner.databaseReader`-only credentials; row-hash design chosen (SQL hex or client-side hex) |
+| 1 | Compiler/registry deltas + SQL-text unit tests, test DDL (new files on this branch) | Now, after the compile-only go/no-go | One SQL-text unit test per registry delta in §7.2, green under `pytest tests/unit`. No changes to existing files except test registration. Test DDL applied to the Spanner PG test database, with its env vars documented |
+| — | **1702 merged** (includes GoogleSQL Spanner `to_pyarrow`) | — | — |
+| 2 | Rebase. Pull out the shared native fetch/metadata helpers. Annotation-aware types | After 1702 | `tests/system/data_sources/test_spanner.py` and unit tests green with no behaviour change. Unit tests for the `PG_NUMERIC` / `PG_JSONB` type mapping. The §5.5 numeric comparison rule decided |
+| 3 | `SpannerPostgresBackend` + dialect routing. Schema, find-tables, query, custom-query types, column validation | After 1702 | `test_spanner_pg.py` schema, column, find-tables, query and custom-query-type tests green on the Arrow path. Every `client.name == "spanner"` branch reviewed for a `spanner_postgres` case. Connection docs updated (same `Spanner` connection, dialect auto-detected) |
+| 4 | Row validation (concat, comparison-fields, random rows), row hash, generate-table-partitions | After 1702 | `test_spanner_pg.py` at parity with `test_spanner.py`. Any limitation (e.g. bytea inside concat/hash with no SQL hex) documented in user docs |
