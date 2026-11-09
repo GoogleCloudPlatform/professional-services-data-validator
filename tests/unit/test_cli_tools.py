@@ -1441,3 +1441,30 @@ def test_get_pre_build_configs_lazy_base_columns(
         mock_query_schema.assert_called_once_with(
             mock_client, "SELECT id, col1 FROM s.t"
         )
+
+
+def test_print_validations_in_dir(tmp_path, caplog):
+    caplog.set_level(logging.INFO)
+    (tmp_path / "b.yaml").write_text("")
+    (tmp_path / "a.yaml").write_text("")
+    (tmp_path / "notes.txt").write_text("")
+    cli_tools.print_validations_in_dir(config_dir=str(tmp_path))
+    messages = [record.getMessage() for record in caplog.records]
+    assert "a.yaml" in messages
+    assert "b.yaml" in messages
+    assert "notes.txt" not in messages
+
+
+def test_print_validations_in_dir_no_yaml_files(tmp_path):
+    """configs list must not report success when there is nothing to list (issue 1597)."""
+    (tmp_path / "notes.txt").write_text("")
+    with pytest.raises(ValueError, match="No validation YAML files found"):
+        cli_tools.print_validations_in_dir(config_dir=str(tmp_path))
+
+
+@mock.patch("data_validation.gcs_helper.list_gcs_directory", return_value=[])
+def test_print_validations_in_dir_empty_gcs_prefix(mock_list_gcs):
+    """A misspelt GCS prefix matches no objects, which must be reported as an error."""
+    with pytest.raises(ValueError, match="No validation YAML files found"):
+        cli_tools.print_validations_in_dir(config_dir="gs://my-bucket/typo-dir")
+    mock_list_gcs.assert_called_once_with("gs://my-bucket/typo-dir/")

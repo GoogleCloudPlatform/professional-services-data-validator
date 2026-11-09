@@ -19,6 +19,7 @@ from google.cloud.spanner_v1.types import Type, TypeCode, StructType
 
 _DTYPE_TO_IBIS_TYPE = {
     TypeCode.INT64: dt.int64,
+    TypeCode.FLOAT32: dt.float32,
     TypeCode.FLOAT64: dt.double,
     TypeCode.BOOL: dt.boolean,
     TypeCode.STRING: dt.string,
