@@ -21,6 +21,7 @@ import pytest
 
 from data_validation import cli_tools, consts, data_validation, find_tables
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     connections_add_test,
@@ -236,15 +237,44 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Spanner to BigQuery dvt_core_types column validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
+    # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
+    # (see issue-1061).
+    min_max_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_datetime")
+        ]
+    )
+    # TODO Include col_date and col_tstz in sum/avg/std when issue-1876 is complete.
+    # Excluded date/timestamp columns from sum/avg/std because Spanner fails on
+    # DVT's pre-agg CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
+    sum_avg_std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "id",
+                "col_float32",
+                "col_date",
+                "col_datetime",
+                "col_tstz",
+            )
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         grouped_columns="col_varchar_30",
-        sum_cols="*",
-        min_cols="*",
-        max_cols="*",
-        avg_cols="*",
-        std_cols="*",
+        sum_cols=sum_avg_std_cols,
+        min_cols=min_max_cols,
+        max_cols=min_max_cols,
+        avg_cols=sum_avg_std_cols,
+        std_cols=sum_avg_std_cols,
     )
 
 
