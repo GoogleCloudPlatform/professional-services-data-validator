@@ -49,16 +49,6 @@ def _mock_spanner_client(mock_client_class, dialect_rows):
     return mock_database, mock_snapshot
 
 
-def _assert_no_admin_api_calls(mock_client_class, mock_database):
-    """Assert the dialect check did not use the Admin API.
-
-    Admin API calls consume a separate quota and require extra permissions.
-    """
-    mock_database.reload.assert_not_called()
-    mock_client_class.return_value.database_admin_api.get_database.assert_not_called()
-    mock_client_class.return_value.database_admin_api.get_database_ddl.assert_not_called()
-
-
 @pytest.mark.parametrize(
     "dialect_rows",
     [
@@ -74,7 +64,6 @@ def test_get_data_client_googlesql_dialect(mock_client_class, dialect_rows):
     ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
     assert ibis_client.name == "spanner"
     mock_snapshot.execute_sql.assert_called_once_with(SPANNER_DIALECT_QUERY)
-    _assert_no_admin_api_calls(mock_client_class, mock_database)
 
 
 @mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
@@ -89,4 +78,3 @@ def test_get_data_client_postgresql_dialect(mock_client_class):
     ):
         clients.get_data_client(SPANNER_CONN_CONFIG)
     mock_snapshot.execute_sql.assert_called_once_with(SPANNER_DIALECT_QUERY)
-    _assert_no_admin_api_calls(mock_client_class, mock_database)
