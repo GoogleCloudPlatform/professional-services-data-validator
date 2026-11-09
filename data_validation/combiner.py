@@ -256,14 +256,16 @@ def _calculate_difference(
         source_value = field_differences["differences_source_value"].cast("boolean")
         target_value = field_differences["differences_target_value"].cast("boolean")
     elif datatype.is_decimal() or datatype.is_float64():
+        # float32 only has about 7 significant digits, so casting to it made
+        # sums such as 123456789.01 and 123456789.02 compare as equal.
         source_value = (
             field_differences["differences_source_value"]
-            .cast("float32")
+            .cast("float64")
             .round(digits=4)
         )
         target_value = (
             field_differences["differences_target_value"]
-            .cast("float32")
+            .cast("float64")
             .round(digits=4)
         )
     else:
