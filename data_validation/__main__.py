@@ -301,7 +301,7 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
             primary_keys = config_manager.auto_list_primary_keys()
         if not primary_keys:
             raise ValueError(
-                "No primary keys were provided and neither the source or target tables have primary keys. Please include --primary-keys argument"
+                "No primary keys were provided and neither the source or target tables have usable primary keys. Please include --primary-keys argument"
             )
         primary_keys = [_.casefold() for _ in primary_keys]
         config_manager.append_primary_keys(
