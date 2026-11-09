@@ -16,12 +16,13 @@ import importlib.metadata
 
 import ibis
 import pytest
-from data_validation import consts
 from ibis.backends.bigquery.compiler import BigQueryCompiler
 from ibis.backends.impala.compiler import ImpalaCompiler
 from ibis.backends.mssql.compiler import MsSqlCompiler
 from ibis.backends.mysql.compiler import MySQLCompiler
 from ibis.backends.postgres.compiler import PostgreSQLCompiler
+
+from data_validation import consts
 
 # Import required in order to register DVT operations.
 import third_party.ibis.ibis_addon.operations  # noqa: F401
@@ -355,10 +356,13 @@ def test_oracle_binary_uuid_string_cast_keeps_null():
         OracleCompiler,
         TABLE.b.force_cast(consts.CONFIG_CAST_UUID_STRING).name("u"),
     )
-    case_start = sql.find("CASE WHEN (t0.b IS NULL) THEN ")
+    case_start = sql.find("CASE WHEN (t0.b IS NULL) THEN NULL ELSE concat(")
     assert case_start != -1
     # All the hyphen concatenation must be inside the CASE expression.
-    assert sql.find("concat(") > case_start
+    assert sql.find("concat(") == case_start + len(
+        "CASE WHEN (t0.b IS NULL) THEN NULL ELSE "
+    )
+    assert sql.split("\n")[0].strip().endswith("END AS u")
 
 
 def test_string_uuid_string_cast_unchanged():
