@@ -37,7 +37,7 @@ def _mock_spanner_client(mock_client_class, dialect_rows):
         dialect_rows: Rows to be returned by the dialect query, e.g. [["POSTGRESQL"]].
 
     Returns:
-        A tuple of the mocked Database and the mocked Snapshot.
+        The mocked Snapshot.
     """
     mock_database = mock.MagicMock()
     mock_database.database_id = SPANNER_CONN_CONFIG["database_id"]
@@ -46,7 +46,7 @@ def _mock_spanner_client(mock_client_class, dialect_rows):
     mock_client_class.return_value.instance.return_value.database.return_value = (
         mock_database
     )
-    return mock_database, mock_snapshot
+    return mock_snapshot
 
 
 @pytest.mark.parametrize(
@@ -60,7 +60,7 @@ def _mock_spanner_client(mock_client_class, dialect_rows):
 @mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
 def test_get_data_client_googlesql_dialect(mock_client_class, dialect_rows):
     """A GoogleSQL dialect database connects successfully using a data query only."""
-    mock_database, mock_snapshot = _mock_spanner_client(mock_client_class, dialect_rows)
+    mock_snapshot = _mock_spanner_client(mock_client_class, dialect_rows)
     ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
     assert ibis_client.name == "spanner"
     mock_snapshot.execute_sql.assert_called_once_with(SPANNER_DIALECT_QUERY)
@@ -69,9 +69,7 @@ def test_get_data_client_googlesql_dialect(mock_client_class, dialect_rows):
 @mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
 def test_get_data_client_postgresql_dialect(mock_client_class):
     """A PostgreSQL dialect database raises a clear DataClientConnectionFailure."""
-    mock_database, mock_snapshot = _mock_spanner_client(
-        mock_client_class, [["POSTGRESQL"]]
-    )
+    mock_snapshot = _mock_spanner_client(mock_client_class, [["POSTGRESQL"]])
     with pytest.raises(
         exceptions.DataClientConnectionFailure,
         match=r"Spanner database my-database uses the PostgreSQL dialect which is not supported",
