@@ -202,6 +202,9 @@ def test_grouped_count_validator(grouped_config):
         assert row["source_agg_value"] == row[consts.TARGET_AGG_VALUE]
 
 
+###############################
+# SCHEMA VALIDATION
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -214,6 +217,27 @@ def test_schema_validation_core_types():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # BigQuery does not have a float32 type.
+            "float32:float64,"
+            # Spanner does not have a timezone-naive datetime type.
+            "timestamp('UTC'):timestamp"
+        ),
+    )
+
+
+###############################
+# COLUMN VALIDATION
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -278,6 +302,9 @@ def test_column_validation_core_types_to_bigquery():
     )
 
 
+###############################
+# ROW VALIDATION
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -301,6 +328,39 @@ def test_row_validation_core_types_to_bigquery():
         tc="bq-conn",
         # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types():
+    """Spanner to Spanner dvt_core_types row validation with --comparison-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types row validation with --comparison-fields"""
+    # TODO Include col_datetime when issue-1061 is complete.
+    # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
+    # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
+    # (see issue-1061).
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_datetime")]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -342,20 +402,6 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
         tc="bq-conn",
         primary_keys="int_id",
         comp_fields="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_custom_query_validation_core_types():
-    """Spanner to Spanner dvt_core_types custom-query validation"""
-    custom_query_validation_test(
-        tc="mock-conn",
-        source_query="select * from dvt_core_types",
-        target_query="select * from dvt_core_types",
-        count_cols="*",
     )
 
 
@@ -417,6 +463,23 @@ def test_row_validation_vol_composite_pk_to_bigquery():
         random_row_batch_size=5000,
     )
     assert len(df) == 0
+
+
+###############################
+# CUSTOM QUERY VALIDATIONS
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """Spanner to Spanner dvt_core_types custom-query validation"""
+    custom_query_validation_test(
+        tc="mock-conn",
+        source_query="select * from dvt_core_types",
+        target_query="select * from dvt_core_types",
+        count_cols="*",
+    )
 
 
 @mock.patch(
