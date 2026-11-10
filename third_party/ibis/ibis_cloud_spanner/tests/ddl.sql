@@ -556,3 +556,12 @@ CREATE TABLE dvt_tricky_dates (
 , col_ts_high   TIMESTAMP
 , col_ts_4712   TIMESTAMP
 ) PRIMARY KEY (id);
+
+-- Nullable integration test table, Spanner is assumed to be a DVT source (not target).
+-- Spanner requires a primary key, an empty key keeps the column list the same as other engines.
+CREATE TABLE dvt_null_not_null (
+  col_nn            TIMESTAMP NOT NULL
+, col_nullable      TIMESTAMP
+, col_src_nn_trg_n  TIMESTAMP NOT NULL
+, col_src_n_trg_nn  TIMESTAMP
+) PRIMARY KEY ();
