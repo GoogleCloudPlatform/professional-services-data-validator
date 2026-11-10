@@ -519,7 +519,10 @@ def test_spanner_dry_run(capsys):
     out, err = capsys.readouterr()
     assert err == ""
     dry_run = json.loads(out)
-    assert dry_run["target_query"] == dry_run["source_query"]
+    assert (
+        dry_run["source_query"]
+        == "WITH t0 AS (\n  SELECT t5.*, t5.`col_string` AS `cast__col_string`\n  FROM dvt_core_types t5\n),\nt1 AS (\n  SELECT t0.*,\n         coalesce(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT t4.`hash__all`, t4.`id`\nFROM (\n  SELECT t3.*, TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) t4"
+    )
 
 
 @mock.patch(
