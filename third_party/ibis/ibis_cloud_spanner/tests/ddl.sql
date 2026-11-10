@@ -521,3 +521,24 @@ CREATE TABLE test_generate_partitions_v2 (
 , approved           BOOL
 , grade              NUMERIC
 ) PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved);
+
+-- Decimals integration test table.
+-- Spanner NUMERIC has a fixed precision/scale of (38,9) so we cannot declare NUMERIC(16,8).
+CREATE TABLE dvt_decimals (
+  id            INT64 NOT NULL
+, col_dec_16_8  NUMERIC
+) PRIMARY KEY (id);
+
+-- Large decimals integration test table.
+-- Spanner NUMERIC is fixed at (38,9), max 29 integer digits and 9 decimal places, therefore:
+--   - col_dec_38 and col_dec_38_30 are omitted because their values do not fit.
+--   - id values are one digit shorter than other engines so they fit in NUMERIC.
+CREATE TABLE dvt_large_decimals (
+  id                NUMERIC NOT NULL
+, col_data          STRING(10)
+, col_dec_18        NUMERIC
+, col_dec_38_9      NUMERIC
+-- Columns with mismatched data for intentional fail status.
+, col_dec_18_fail   NUMERIC
+, col_dec_18_1_fail NUMERIC
+) PRIMARY KEY (id);

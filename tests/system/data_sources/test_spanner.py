@@ -324,6 +324,66 @@ def test_column_validation_many_columns():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery():
+    """Spanner to BigQuery dvt_large_decimals column validation."""
+    # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
+    # col_dec_38 and col_dec_38_30 do not exist in the Spanner table because the values
+    # do not fit in Spanner NUMERIC(38,9).
+    cols = "col_dec_18,col_dec_38_9"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Spanner to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
 ###############################
 # ROW VALIDATION
 ###############################
@@ -410,6 +470,40 @@ def test_row_validation_comp_fields_core_types_to_bigquery():
         tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_large_decimals_to_bigquery():
+    """Spanner to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals in the hash columns.
+    Spanner NUMERIC(38,9) cannot hold the 30 digit id values used by other engines, therefore
+    the Spanner id values are one digit shorter and we join on col_data instead of id.
+    col_dec_38 and col_dec_38_30 do not exist in the Spanner table for the same reason.
+    """
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        primary_keys="col_data",
+        hash="col_dec_18,col_dec_38_9",
     )
 
 
