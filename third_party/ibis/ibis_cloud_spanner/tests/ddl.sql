@@ -510,3 +510,14 @@ CREATE TABLE dvt_vol_composite_pk (
 , key3 INT64 NOT NULL
 , val  INT64
 ) PRIMARY KEY (key1, key2, key3);
+
+-- Table for testing generate table partitions, consists of 32 rows with a composite primary key.
+-- Quoted strings are handled correctly.
+CREATE TABLE test_generate_partitions_v2 (
+  course_id          STRING(24)
+, quarter_id         INT64
+, recd_timestamp     TIMESTAMP
+, registration_date  DATE
+, approved           BOOL
+, grade              NUMERIC
+) PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved);

@@ -15,6 +15,7 @@
 import datetime
 import json
 import os
+import pathlib
 from unittest import mock
 
 import pytest
@@ -27,6 +28,7 @@ from tests.system.data_sources.common_functions import (
     connections_add_test,
     custom_query_validation_test,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -536,6 +538,23 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(validation_type="custom-query", schema=None)
 
 
+############################
+# GENERATE PARTITIONS TESTS
+############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions(tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="mock-conn",
+        tc="bq-conn",
+    )
+
+
 ##################
 # RAW QUERY TESTS
 ##################
@@ -576,6 +595,16 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
 def test_find_tables():
     """Spanner test of find-tables command."""
     find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_views_and_tables():
+    """Spanner to BigQuery test of find-tables command including views."""
+    pytest.skip("Skipping test_find_views_and_tables due to issue-1888.")
+    find_tables_test(include_views=True)
 
 
 @mock.patch(
