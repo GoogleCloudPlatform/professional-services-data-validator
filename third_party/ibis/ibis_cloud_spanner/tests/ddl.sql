@@ -542,3 +542,17 @@ CREATE TABLE dvt_large_decimals (
 , col_dec_18_fail   NUMERIC
 , col_dec_18_1_fail NUMERIC
 ) PRIMARY KEY (id);
+
+-- Integration test table used to test potentially difficult Timestamps.
+-- Spanner has no timezone-naive DATETIME type therefore col_ts_* columns are TIMESTAMP.
+CREATE TABLE dvt_tricky_dates (
+  id            INT64 NOT NULL
+, col_dt_low    DATE
+, col_dt_epoch  DATE
+, col_dt_high   DATE
+, col_dt_4712   DATE
+, col_ts_low    TIMESTAMP
+, col_ts_epoch  TIMESTAMP
+, col_ts_high   TIMESTAMP
+, col_ts_4712   TIMESTAMP
+) PRIMARY KEY (id);

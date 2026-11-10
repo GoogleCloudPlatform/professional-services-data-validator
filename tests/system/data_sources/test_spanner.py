@@ -30,6 +30,7 @@ from data_validation import (
 )
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     connections_add_test,
@@ -384,6 +385,27 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    # TODO Change sum_cols to include date/timestamp columns when issue-1876 is complete.
+    # Excluded date/timestamp columns from sum because Spanner fails on DVT's pre-agg
+    # CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols="id",
+        grouped_columns="id",
+        wildcard_include_timestamp=True,
+    )
+
+
 ###############################
 # ROW VALIDATION
 ###############################
@@ -504,6 +526,34 @@ def test_row_validation_large_decimals_to_bigquery():
         tc="bq-conn",
         primary_keys="col_data",
         hash="col_dec_18,col_dec_38_9",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 

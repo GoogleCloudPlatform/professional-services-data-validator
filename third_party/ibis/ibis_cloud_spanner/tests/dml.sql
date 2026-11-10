@@ -213,3 +213,15 @@ VALUES
 ,(NUMERIC '52345678901234567890123456789','Row 5',NUMERIC '987654321012345678'
  ,NUMERIC '12345678901234567890123456789.123456789'
  ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1');
+
+-- Timestamps include an explicit +00 offset because Spanner interprets timestamp
+-- literals without an offset in America/Los_Angeles.
+INSERT INTO dvt_tricky_dates
+(id, col_dt_low, col_dt_epoch, col_dt_high, col_dt_4712,
+ col_ts_low, col_ts_epoch, col_ts_high, col_ts_4712)
+VALUES
+(1,DATE '1000-01-01',DATE '1970-01-01',DATE '9999-12-31',DATE '4712-12-31'
+,TIMESTAMP '1000-01-01 00:00:00+00',TIMESTAMP '1970-01-01 00:00:00+00'
+,TIMESTAMP '9999-12-31 23:59:59+00',TIMESTAMP '4712-12-31 23:23:59+00');
+-- NULL in all columns.
+INSERT INTO dvt_tricky_dates (id) VALUES (2);
