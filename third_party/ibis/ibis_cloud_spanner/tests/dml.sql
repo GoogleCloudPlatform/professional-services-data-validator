@@ -227,3 +227,16 @@ VALUES
 INSERT INTO dvt_tricky_dates (id) VALUES (2);
 
 INSERT INTO dvt_reserved_word_columns (id) VALUES (1);
+
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO dvt_pangrams (id, lang, words, words_en) VALUES
+(1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי',
+ 'A bunny ate some lettuce-flavored carrots, and he had enough'),
+(2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+ 'Push a hedgehog or eight crates of figs in this boat'),
+(3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю',
+ 'Eat more of these soft French loaves and drink a tea'),
+(4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn',
+ 'Switzerland brings luxury feather on branch behind oven'),
+(5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
+ 'The sick person in pyjamas quickly trusted the swarthy driver');

@@ -37,6 +37,7 @@ from tests.system.data_sources.common_functions import (
     custom_query_validation_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
+    id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
     row_validation_many_columns_test,
@@ -457,6 +458,23 @@ def test_column_validation_reserved_words():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """Spanner to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
+    )
+
+
 ###############################
 # ROW VALIDATION
 ###############################
@@ -632,6 +650,30 @@ def test_row_validation_comp_fields_reserved_words():
         tc="mock-conn",
         comp_fields="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """Spanner to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=spanner-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
 
 
 @mock.patch(

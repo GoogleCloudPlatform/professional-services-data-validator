@@ -579,3 +579,11 @@ CREATE TABLE dvt_reserved_word_columns (
 , `NUMBER`   STRING(MAX)
 , `STRING`   STRING(MAX)
 ) PRIMARY KEY (id);
+
+-- Integration test table used to test unicode characters.
+CREATE TABLE dvt_pangrams (
+  id        INT64
+, lang      STRING(100)
+, words     STRING(1000)
+, words_en  STRING(1000)
+) PRIMARY KEY (id);
