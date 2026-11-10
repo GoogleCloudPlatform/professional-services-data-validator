@@ -20,7 +20,14 @@ from unittest import mock
 
 import pytest
 
-from data_validation import cli_tools, consts, data_validation, find_tables
+from data_validation import __main__ as main
+from data_validation import (
+    cli_tools,
+    consts,
+    data_validation,
+    find_tables,
+    validation_runner,
+)
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
@@ -320,6 +327,33 @@ def test_column_validation_many_columns():
 ###############################
 # ROW VALIDATION
 ###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_spanner_dry_run(capsys):
+    """Test Spanner dry run mode and validate the generated SQL."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--hash=col_string",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    validation_runner.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    assert dry_run["target_query"] == dry_run["source_query"]
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
