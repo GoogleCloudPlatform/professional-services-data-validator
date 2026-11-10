@@ -302,6 +302,19 @@ def test_column_validation_core_types_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_many_columns():
+    """dvt_many_cols column validation."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_many_cols",
+        count_cols="*",
+    )
+
+
 ###############################
 # ROW VALIDATION
 ###############################
@@ -479,6 +492,36 @@ def test_custom_query_validation_core_types():
         source_query="select * from dvt_core_types",
         target_query="select * from dvt_core_types",
         count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_column_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types custom-query column validation"""
+    # Spanner queries do not use a schema prefix, BigQuery requires the dataset.
+    custom_query_validation_test(
+        tc="bq-conn",
+        source_query="select * from dvt_core_types",
+        target_query="select * from pso_data_validator.dvt_core_types",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    custom_query_validation_test(
+        validation_type="row",
+        tc="bq-conn",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        comp_fields="col_int64,col_varchar_30,col_date",
     )
 
 
