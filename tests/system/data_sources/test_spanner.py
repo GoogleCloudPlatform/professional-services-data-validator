@@ -543,7 +543,7 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    """Spanner to BigQuery dvt_core_types column validation"""
+    """Spanner to BigQuery dvt_core_types row validation"""
     row_validation_test(
         tc="bq-conn",
         # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
@@ -623,7 +623,8 @@ def test_row_validation_large_decimals_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    """Spanner to BigQuery dvt_tricky_dates row validation using --hash.
+    Tests date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
@@ -637,7 +638,8 @@ def test_row_validation_tricky_dates_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    """Spanner to BigQuery dvt_tricky_dates row validation using --comparison-fields.
+    Tests date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
@@ -651,7 +653,7 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
+    """Test row validation using --hash on a table with reserved words in column names."""
     row_validation_test(
         tables="pso_data_validator.dvt_reserved_word_columns",
         tc="mock-conn",
@@ -664,7 +666,7 @@ def test_row_validation_reserved_words():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
+    """Test row validation using --comparison-fields on a table with reserved words in column names."""
     row_validation_test(
         tables="pso_data_validator.dvt_reserved_word_columns",
         tc="mock-conn",
