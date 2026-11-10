@@ -39,6 +39,10 @@
 
 - Requires the `snowflake-sqlalchemy` package to be installed as an extra dependency.
 
+## Spanner
+
+- Only GoogleSQL dialect databases are supported. Connecting to a PostgreSQL dialect database fails with an error. See [issue-1877](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1877) for details.
+
 ## SQL Server
 
 - Requires the `pyodbc` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
