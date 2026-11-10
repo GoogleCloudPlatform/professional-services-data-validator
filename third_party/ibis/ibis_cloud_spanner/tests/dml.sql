@@ -240,3 +240,20 @@ INSERT INTO dvt_pangrams (id, lang, words, words_en) VALUES
  'Switzerland brings luxury feather on branch behind oven'),
 (5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
  'The sick person in pyjamas quickly trusted the swarthy driver');
+
+-- 'DVT-key-4 ' intentionally has a trailing blank.
+INSERT INTO dvt_varchar_id (id, other_data) VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4 ', 'Row 4'),
+('DVT-key-5', 'Row 5');
+
+-- Timestamps include an explicit +00 offset because Spanner interprets timestamp
+-- literals without an offset in America/Los_Angeles.
+INSERT INTO dvt_datetime_id (id, other_data) VALUES
+(TIMESTAMP '2020-01-01 12:00:00+00', 'Row 1'),
+(TIMESTAMP '2020-02-01 12:00:00+00', 'Row 2'),
+(TIMESTAMP '2020-03-01 12:00:00+00', 'Row 3'),
+(TIMESTAMP '2020-04-01 12:00:00+00', 'Row 4'),
+(TIMESTAMP '2020-05-01 12:00:00+00', 'Row 5');

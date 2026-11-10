@@ -37,6 +37,8 @@ from tests.system.data_sources.common_functions import (
     custom_query_validation_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
+    id_column_query_row_validation_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -680,6 +682,31 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    pytest.skip(
+        "Skipping test_row_validation_datetime_pk_to_bigquery due to issue-1891."
+    )
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_binary_pk_to_bigquery():
     """Spanner to BigQuery dvt_binary row validation.
     This is testing binary primary key join columns.
@@ -821,6 +848,18 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         source_query="select id,col_int64,COL_VARCHAR_30,col_date from dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    # Spanner queries do not use a schema prefix, BigQuery requires the dataset.
+    id_column_query_row_validation_test(
+        "dvt_varchar_id=pso_data_validator.dvt_varchar_id"
     )
 
 

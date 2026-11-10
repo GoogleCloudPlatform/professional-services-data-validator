@@ -587,3 +587,16 @@ CREATE TABLE dvt_pangrams (
 , words     STRING(1000)
 , words_en  STRING(1000)
 ) PRIMARY KEY (id);
+
+-- Integration test table used to test varchar pk matching. Trailing blanks are significant.
+CREATE TABLE dvt_varchar_id (
+  id          STRING(15) NOT NULL
+, other_data  STRING(100)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test datetime pk matching.
+-- Spanner has no timezone-naive DATETIME type therefore id is TIMESTAMP.
+CREATE TABLE dvt_datetime_id (
+  id          TIMESTAMP NOT NULL
+, other_data  STRING(MAX)
+) PRIMARY KEY (id);
