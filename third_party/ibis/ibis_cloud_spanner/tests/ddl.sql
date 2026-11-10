@@ -565,3 +565,17 @@ CREATE TABLE dvt_null_not_null (
 , col_src_nn_trg_n  TIMESTAMP NOT NULL
 , col_src_n_trg_nn  TIMESTAMP
 ) PRIMARY KEY ();
+
+-- Integration test table used to test potentially difficult column names.
+CREATE TABLE dvt_reserved_word_columns (
+  id         INT64
+-- SQL tokens
+, `SELECT`   STRING(MAX)
+, `COLUMN`   STRING(MAX)
+, `FROM`     STRING(MAX)
+, `WHERE`    STRING(MAX)
+-- Data types
+, `DATE`     STRING(MAX)
+, `NUMBER`   STRING(MAX)
+, `STRING`   STRING(MAX)
+) PRIMARY KEY (id);

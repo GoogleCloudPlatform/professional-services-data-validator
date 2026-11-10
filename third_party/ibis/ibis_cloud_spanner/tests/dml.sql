@@ -225,3 +225,5 @@ VALUES
 ,TIMESTAMP '9999-12-31 23:59:59+00',TIMESTAMP '4712-12-31 23:23:59+00');
 -- NULL in all columns.
 INSERT INTO dvt_tricky_dates (id) VALUES (2);
+
+INSERT INTO dvt_reserved_word_columns (id) VALUES (1);
