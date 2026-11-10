@@ -257,3 +257,7 @@ INSERT INTO dvt_datetime_id (id, other_data) VALUES
 (TIMESTAMP '2020-03-01 12:00:00+00', 'Row 3'),
 (TIMESTAMP '2020-04-01 12:00:00+00', 'Row 4'),
 (TIMESTAMP '2020-05-01 12:00:00+00', 'Row 5');
+
+INSERT INTO dvt_uuid_id (id, col_uuid, col_data) VALUES
+(CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'A'),
+(CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'B');

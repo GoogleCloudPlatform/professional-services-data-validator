@@ -600,3 +600,10 @@ CREATE TABLE dvt_datetime_id (
   id          TIMESTAMP NOT NULL
 , other_data  STRING(MAX)
 ) PRIMARY KEY (id);
+
+-- Integration test table used to test UUID data type as a primary key.
+CREATE TABLE dvt_uuid_id (
+  id        UUID NOT NULL
+, col_uuid  UUID
+, col_data  STRING(10)
+) PRIMARY KEY (id);
