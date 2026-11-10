@@ -40,7 +40,7 @@ BLACK_PATHS = (
     "noxfile.py",
     "setup.py",
 )
-LINT_PACKAGES = ["flake8", "black==26.5.1"]
+LINT_PACKAGES = ["flake8", "black==26.10.1"]
 UNIT_PACKAGES = [
     "pyfakefs",
     "freezegun",
