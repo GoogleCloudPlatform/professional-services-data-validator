@@ -52,7 +52,14 @@ def test_get_gcs_file_path():
     assert result_path == "state/file/path/name.json"
 
 
-OBJECTS = ["dir/a.yaml", "dir/b.connection.json", "dir/sub/c.yaml", "other/d.yaml"]
+OBJECTS = [
+    "dir/",
+    "dir/a.yaml",
+    "dir/b.connection.json",
+    "dir/sub/c.yaml",
+    "other/d.yaml",
+    "empty/",
+]
 
 
 def _fake_bucket():
@@ -78,3 +85,18 @@ def test_list_gcs_directory_with_or_without_trailing_slash(directory_path):
 def test_list_gcs_directory_bucket_root():
     with mock.patch.object(gcs_helper, "get_gcs_bucket", return_value=_fake_bucket()):
         assert gcs_helper.list_gcs_directory("gs://bucket") == []
+
+
+@pytest.mark.parametrize(
+    "directory_path",
+    [
+        "gs://bucket/empty",
+        "gs://bucket/empty/",
+        "gs://bucket/missing",
+        "gs://bucket/missing/",
+    ],
+)
+def test_list_gcs_directory_empty_or_missing(directory_path):
+    """An empty folder placeholder object ("empty/") is not a file in the folder."""
+    with mock.patch.object(gcs_helper, "get_gcs_bucket", return_value=_fake_bucket()):
+        assert gcs_helper.list_gcs_directory(directory_path) == []
