@@ -119,9 +119,18 @@ def delete_file(file_path: str, include_log: bool = True):
 
 def list_gcs_directory(directory_path: str) -> List[str]:
     gcs_prefix = _get_gcs_file_path(directory_path)
+    # Cloud Storage prefixes are plain strings. Without the trailing slash,
+    # "dir" with delimiter "/" matches the "dir/" folder itself rather than the
+    # files inside it, so a directory given as gs://bucket/dir looked empty.
+    if gcs_prefix and not gcs_prefix.endswith("/"):
+        gcs_prefix += "/"
     gcs_bucket = get_gcs_bucket(directory_path)
+    # A folder created in the console or with gsutil is stored as an empty
+    # object named "dir/". It is the folder itself, not a file in it, so it must
+    # not make an otherwise empty directory look populated.
     blobs = [
-        f.name.replace(gcs_prefix, "")
+        f.name[len(gcs_prefix) :]
         for f in gcs_bucket.list_blobs(prefix=gcs_prefix, delimiter="/")
+        if f.name != gcs_prefix
     ]
     return blobs
