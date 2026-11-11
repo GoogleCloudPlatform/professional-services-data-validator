@@ -192,6 +192,12 @@ class PartitionBuilder:
             if isinstance(target_count, pandas.DataFrame):
                 target_count = target_count.values[0][0]
 
+            if source_count < 2:
+                raise exceptions.PartitionBuilderException(
+                    f"Source table has {source_count} row(s); it must have at least 2 rows "
+                    "to be split into partitions."
+                )
+
             if abs(source_count - target_count) > source_count * 0.1:
                 logging.warning(
                     "Source and Target table row counts vary by more than 10%,"
