@@ -1453,7 +1453,9 @@ def get_arg_list(arg_value, default_value=None):
     if not arg_value:
         return default_value
 
-    return _read_json_value(arg_value) or arg_value.split(",")
+    # Trim each item so "col_a, col_b" is the same as "col_a,col_b". Column names
+    # with surrounding spaces are not something we need to support.
+    return _read_json_value(arg_value) or [_.strip() for _ in arg_value.split(",")]
 
 
 def _read_json_value(arg_value: str) -> list:

@@ -429,7 +429,9 @@ def _literal(t, op):
     dtype = op.dtype
     value = op.value
 
-    if dtype.is_interval():
+    if value is None:
+        return sa.null()
+    elif dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
     elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
