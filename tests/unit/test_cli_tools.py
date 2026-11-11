@@ -656,12 +656,21 @@ def test_get_tables_list_err(test_input):
         ("col_a,col_b", ["col_a", "col_b"]),
         ("col_a", ["col_a"]),
         ("col a,col b", ["col a", "col b"]),
+        ("col_a, col_b ,  col_c", ["col_a", "col_b", "col_c"]),
     ],
 )
 def test_get_arg_list(test_input, expected):
     """Test get aggregations list of columns."""
     res = cli_tools.get_arg_list(test_input)
     assert res == expected
+
+
+def test_pre_build_configs_exclude_columns_with_spaces():
+    """A space after the comma must not stop a column being excluded."""
+    cols = cli_tools._get_pre_build_configs_cols_from_arg(
+        "col_b, col_c", ["col_a", "col_b", "col_c"], True
+    )
+    assert cols == ["col_a"]
 
 
 @pytest.mark.parametrize(
