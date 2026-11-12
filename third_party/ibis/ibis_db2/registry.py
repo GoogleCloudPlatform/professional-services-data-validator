@@ -316,10 +316,13 @@ def _reduce_tokens(tokens, arg, allow_query_params=True):
                     literal_arg(" "),
                 )
 
-            reduced += [
-                sa.func.to_char(arg, literal_arg("".join(curtokens))),
-                sa.cast(value, sa.TEXT),
-            ]
+            # Only format the preceding tokens if there are any. Db2 caches the
+            # plan for to_char(x, ?) with an empty format string bound to the
+            # parameter and then returns an empty string for any subsequent
+            # format string bound to the same statement text.
+            if curtokens:
+                reduced.append(sa.func.to_char(arg, literal_arg("".join(curtokens))))
+            reduced.append(sa.cast(value, sa.TEXT))
 
             # empty current token list in case there are more tokens
             del curtokens[:]
