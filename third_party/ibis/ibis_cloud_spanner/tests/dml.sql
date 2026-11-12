@@ -261,3 +261,7 @@ INSERT INTO dvt_datetime_id (id, other_data) VALUES
 INSERT INTO dvt_uuid_id (id, col_uuid, col_data) VALUES
 (CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'A'),
 (CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'B');
+
+INSERT INTO dvt_bool (id, col_bool_dec, col_bool_int, col_bool_ch1, col_bool_chy) VALUES
+(1, TRUE, TRUE, TRUE, TRUE),
+(2, FALSE, FALSE, FALSE, FALSE);

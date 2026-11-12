@@ -607,3 +607,12 @@ CREATE TABLE dvt_uuid_id (
 , col_uuid  UUID
 , col_data  STRING(10)
 ) PRIMARY KEY (id);
+
+-- Integration test table used to test boolean data type.
+CREATE TABLE dvt_bool (
+  id            INT64 NOT NULL
+, col_bool_dec  BOOL
+, col_bool_int  BOOL
+, col_bool_ch1  BOOL
+, col_bool_chy  BOOL
+) PRIMARY KEY (id);

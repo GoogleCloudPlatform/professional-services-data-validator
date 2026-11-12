@@ -286,6 +286,15 @@ def test_schema_validation_reserved_words():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_bool():
+    """Spanner to Spanner dvt_bool schema validation"""
+    schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
+
+
 ###############################
 # COLUMN VALIDATION
 ###############################
@@ -671,6 +680,32 @@ def test_row_validation_comp_fields_reserved_words():
         tables="pso_data_validator.dvt_reserved_word_columns",
         tc="mock-conn",
         comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_to_bigquery():
+    """Test row validation using --hash on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_bool_to_bigquery():
+    """Test row validation using --comparison-fields on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
     )
 
 
