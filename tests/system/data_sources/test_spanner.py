@@ -426,15 +426,12 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
-    # TODO Change sum_cols to include date/timestamp columns when issue-1876 is complete.
-    # Excluded date/timestamp columns from sum because Spanner fails on DVT's pre-agg
-    # CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
         min_cols=cols,
         max_cols=cols,
-        sum_cols="id",
+        sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
     )
