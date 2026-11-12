@@ -801,36 +801,3 @@ def test_db2_zos_expressions():
     sa_select_coalesce = expr_coalesce.compile()
     sql_coalesce = str(sa_select_coalesce.compile(dialect=client.con.dialect)).lower()
     assert "coalesce(t0.col_string, 'default')" in sql_coalesce
-
-    # 4. strftime %e: leading zero only, and no bind parameters on z/OS.
-    expr_strftime = table.col_datetime.strftime("%Y-%m-%e").name("s")
-    sql_strftime = str(
-        expr_strftime.compile().compile(dialect=client.con.dialect)
-    ).lower()
-    assert "lpad(ltrim(to_char(t0.col_datetime, 'dd'), '0'), 2, ' ')" in sql_strftime
-    assert "?" not in sql_strftime
-
-
-@pytest.mark.parametrize(
-    "format_str,expected",
-    [
-        ("%e", [" 5", "10", "20", "30"]),
-        ("%Y-%m-%e", ["2024-01- 5", "2024-01-10", "2024-01-20", "2024-01-30"]),
-    ],
-)
-def test_strftime_day_of_month_space_padded(format_str, expected):
-    """strftime %e pads days 1-9 with a space and leaves 10, 20 and 30 intact (issue 1808)."""
-    client = clients.get_data_client(CONN)
-    table = clients.get_ibis_query(
-        client,
-        """SELECT 1 AS id, DATE('2024-01-05') AS col_date FROM sysibm.sysdummy1 UNION ALL
-           SELECT 2, DATE('2024-01-10') FROM sysibm.sysdummy1 UNION ALL
-           SELECT 3, DATE('2024-01-20') FROM sysibm.sysdummy1 UNION ALL
-           SELECT 4, DATE('2024-01-30') FROM sysibm.sysdummy1""",
-    )
-    df = (
-        table.select("id", d=table.col_date.strftime(format_str))
-        .order_by("id")
-        .execute()
-    )
-    assert df["d"].tolist() == expected

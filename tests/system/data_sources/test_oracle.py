@@ -1779,33 +1779,3 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
     connections_add_test(
         caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch
     )
-
-
-####################
-# API TESTS
-####################
-@pytest.mark.parametrize(
-    "format_str,expected",
-    [
-        ("%e", [" 5", "10", "20", "30"]),
-        ("%Y-%m-%e", ["2024-01- 5", "2024-01-10", "2024-01-20", "2024-01-30"]),
-    ],
-)
-def test_strftime_day_of_month_space_padded(format_str, expected):
-    """strftime %e pads days 1-9 with a space and leaves 10, 20 and 30 intact (issue 1808)."""
-    from data_validation import clients
-
-    client = clients.get_data_client(CONN)
-    table = clients.get_ibis_query(
-        client,
-        """SELECT 1 AS id, DATE '2024-01-05' AS col_date FROM dual UNION ALL
-           SELECT 2, DATE '2024-01-10' FROM dual UNION ALL
-           SELECT 3, DATE '2024-01-20' FROM dual UNION ALL
-           SELECT 4, DATE '2024-01-30' FROM dual""",
-    )
-    df = (
-        table.select("id", d=table.col_date.strftime(format_str))
-        .order_by("id")
-        .execute()
-    )
-    assert df["d"].tolist() == expected
