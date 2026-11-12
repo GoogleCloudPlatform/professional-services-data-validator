@@ -313,6 +313,8 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
         wildcard_include_timestamp=True,
     )
 

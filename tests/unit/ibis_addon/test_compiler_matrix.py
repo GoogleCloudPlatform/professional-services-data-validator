@@ -354,6 +354,15 @@ def test_spanner_epoch_seconds_and_timestamp_casts(expr, expected_fragments):
     )
 
 
+def test_spanner_cast_non_utc_timestamp_raises():
+    """Spanner TIMESTAMP casts only support naive or UTC targets."""
+    with pytest.raises(TypeError, match="other than 'UTC'"):
+        _compile(
+            SpannerCompiler,
+            SPANNER_TABLE.d.cast("timestamp('Europe/London')").name("x"),
+        )
+
+
 def test_postgres_decimal_string_cast_compiles_to_char():
     sql = _compile(PostgreSQLCompiler, TABLE.d.cast("string").name("dstr"))
 
