@@ -144,3 +144,124 @@ SELECT
     x AS key3,
     x * 10 AS val
 FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;
+
+-- Timestamps include an explicit +00 offset because Spanner interprets timestamp
+-- literals without an offset in America/Los_Angeles, BigQuery uses UTC.
+INSERT INTO test_generate_partitions_v2
+(course_id, quarter_id, recd_timestamp, registration_date, approved, grade)
+VALUES
+('ALG001', 1234, '2023-08-26 16:00:00+00', '1969-07-20', TRUE, 3.5),
+('ALG001', 1234, '2023-08-26 16:00:00+00', '1969-07-20', FALSE, 2.8),
+('ALG001', 5678, '2023-08-26 16:00:00+00', '2023-08-23', TRUE, 2.1),
+('ALG001', 5678, '2023-08-26 16:00:00+00', '2023-08-23', FALSE, 3.5),
+('ALG003', 1234, '2023-08-27 15:00:00+00', '1969-07-20', TRUE, 3.5),
+('ALG003', 1234, '2023-08-27 15:00:00+00', '1969-07-20', FALSE, 2.8),
+('ALG003', 5678, '2023-08-27 15:00:00+00', '2023-08-23', TRUE, 2.1),
+('ALG003', 5678, '2023-08-27 15:00:00+00', '2023-08-23', FALSE, 3.5),
+('ALG002', 1234, '2023-08-26 16:00:00+00', '1969-07-20', TRUE, 3.5),
+('ALG002', 1234, '2023-08-26 16:00:00+00', '1969-07-20', FALSE, 2.8),
+('ALG002  t0.', 5678, '2023-08-26 16:00:00+00', '2023-08-23', TRUE, 2.1),
+('ALG002', 5678, '2023-08-26 16:00:00+00', '2023-08-23', FALSE, 3.5),
+('ALG004', 1234, '2023-08-27 15:00:00+00', '1969-07-20', TRUE, 3.5),
+('ALG004', 1234, '2023-08-27 15:00:00+00', '1969-07-20', FALSE, 2.8),
+('ALG004', 5678, '2023-08-27 15:00:00+00', '2023-08-23', TRUE, 2.1),
+('ALG004', 5678, '2023-08-27 15:00:00+00', '2023-08-23', FALSE, 3.5),
+("St. John''s", 1234, '2023-08-26 16:00:00+00', '1969-07-20', TRUE, 3.5),
+("St. John''s", 1234, '2023-08-26 16:00:00+00', '1969-07-20', FALSE, 2.8),
+("St. John''s", 5678, '2023-08-26 16:00:00+00', '2023-08-23', TRUE, 2.1),
+("St. John''s", 5678, '2023-08-26 16:00:00+00', '2023-08-23', FALSE, 3.5),
+("St. Jude''s", 1234, '2023-08-27 15:00:00+00', '1969-07-20', TRUE, 3.5),
+("St. Jude''s", 1234, '2023-08-27 15:00:00+00', '1969-07-20', FALSE, 2.8),
+("St. Jude''s", 5678, '2023-08-27 15:00:00+00', '2023-08-23', TRUE, 2.1),
+("St. Jude''s", 5678, '2023-08-27 15:00:00+00', '2023-08-23', FALSE, 3.5),
+("St. Edward''s", 1234, '2023-08-26 16:00:00+00', '1969-07-20', TRUE, 3.5),
+("St. Edward''s", 1234, '2023-08-26 16:00:00+00', '1969-07-20', FALSE, 2.8),
+("St. Edward''s", 5678, '2023-08-26 16:00:00+00', '2023-08-23', TRUE, 2.1),
+("St. Edward''s", 5678, '2023-08-26 16:00:00+00', '2023-08-23', FALSE, 3.5),
+("St. Paul''s", 1234, '2023-08-27 15:00:00+00', '1969-07-20', TRUE, 3.5),
+("St. Paul''s", 1234, '2023-08-27 15:00:00+00', '1969-07-20', FALSE, 2.8),
+("St. Paul''s", 5678, '2023-08-27 15:00:00+00', '2023-08-23', TRUE, 2.1),
+("St. Paul''s", 5678, '2023-08-27 15:00:00+00', '2023-08-23', FALSE, 3.5);
+
+-- NUMERIC literals are used to avoid any FLOAT64 to NUMERIC coercion.
+INSERT INTO dvt_decimals (id, col_dec_16_8) VALUES
+ (1,NULL),(2,NUMERIC '0'),(3,NUMERIC '1'),(4,NUMERIC '-1')
+,(5,NUMERIC '0.1'),(6,NUMERIC '-0.1'),(7,NUMERIC '0.01'),(8,NUMERIC '-0.01')
+,(9,NUMERIC '0.00000001'),(10,NUMERIC '-0.00000001')
+,(11,NUMERIC '0.00010001'),(12,NUMERIC '-0.00010001')
+,(13,NUMERIC '123.01'),(14,NUMERIC '-123.01')
+,(15,NUMERIC '12345678.12345678'),(16,NUMERIC '-12345678.12345678')
+,(17,NUMERIC '99999999.99999999'),(18,NUMERIC '-99999999.99999999');
+
+-- id values are one digit shorter than other engines to fit in Spanner NUMERIC.
+-- col_dec_18_fail/col_dec_18_1_fail in row 5 intentionally differ from the BigQuery target.
+INSERT INTO dvt_large_decimals
+(id, col_data, col_dec_18, col_dec_38_9, col_dec_18_fail, col_dec_18_1_fail)
+VALUES
+ (NUMERIC '12345678901234567890123456789','Row 1',NUMERIC '987654321012345678'
+ ,NUMERIC '12345678901234567890123456789.123456789'
+ ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1')
+,(NUMERIC '22345678901234567890123456789','Row 2',NUMERIC '987654321012345678'
+ ,NUMERIC '12345678901234567890123456789.123456789'
+ ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1')
+,(NUMERIC '32345678901234567890123456789','Row 3',NUMERIC '987654321012345678'
+ ,NUMERIC '12345678901234567890123456789.123456789'
+ ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1')
+,(NUMERIC '42345678901234567890123456789','Row 4',NUMERIC '987654321012345678'
+ ,NUMERIC '12345678901234567890123456789.123456789'
+ ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1')
+,(NUMERIC '52345678901234567890123456789','Row 5',NUMERIC '987654321012345678'
+ ,NUMERIC '12345678901234567890123456789.123456789'
+ ,NUMERIC '987654321012345678',NUMERIC '12345678901234567.1');
+
+-- Timestamps include an explicit +00 offset because Spanner interprets timestamp
+-- literals without an offset in America/Los_Angeles.
+INSERT INTO dvt_tricky_dates
+(id, col_dt_low, col_dt_epoch, col_dt_high, col_dt_4712,
+ col_ts_low, col_ts_epoch, col_ts_high, col_ts_4712)
+VALUES
+(1,DATE '1000-01-01',DATE '1970-01-01',DATE '9999-12-31',DATE '4712-12-31'
+,TIMESTAMP '1000-01-01 00:00:00+00',TIMESTAMP '1970-01-01 00:00:00+00'
+,TIMESTAMP '9999-12-31 23:59:59+00',TIMESTAMP '4712-12-31 23:23:59+00');
+-- NULL in all columns.
+INSERT INTO dvt_tricky_dates (id) VALUES (2);
+
+INSERT INTO dvt_reserved_word_columns (id) VALUES (1);
+
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO dvt_pangrams (id, lang, words, words_en) VALUES
+(1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי',
+ 'A bunny ate some lettuce-flavored carrots, and he had enough'),
+(2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+ 'Push a hedgehog or eight crates of figs in this boat'),
+(3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю',
+ 'Eat more of these soft French loaves and drink a tea'),
+(4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn',
+ 'Switzerland brings luxury feather on branch behind oven'),
+(5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
+ 'The sick person in pyjamas quickly trusted the swarthy driver');
+
+-- 'DVT-key-4 ' intentionally has a trailing blank.
+INSERT INTO dvt_varchar_id (id, other_data) VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4 ', 'Row 4'),
+('DVT-key-5', 'Row 5');
+
+-- Timestamps include an explicit +00 offset because Spanner interprets timestamp
+-- literals without an offset in America/Los_Angeles.
+INSERT INTO dvt_datetime_id (id, other_data) VALUES
+(TIMESTAMP '2020-01-01 12:00:00+00', 'Row 1'),
+(TIMESTAMP '2020-02-01 12:00:00+00', 'Row 2'),
+(TIMESTAMP '2020-03-01 12:00:00+00', 'Row 3'),
+(TIMESTAMP '2020-04-01 12:00:00+00', 'Row 4'),
+(TIMESTAMP '2020-05-01 12:00:00+00', 'Row 5');
+
+INSERT INTO dvt_uuid_id (id, col_uuid, col_data) VALUES
+(CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'A'),
+(CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),CAST('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1' AS UUID),'B');
+
+INSERT INTO dvt_bool (id, col_bool_dec, col_bool_int, col_bool_ch1, col_bool_chy) VALUES
+(1, TRUE, TRUE, TRUE, TRUE),
+(2, FALSE, FALSE, FALSE, FALSE);
