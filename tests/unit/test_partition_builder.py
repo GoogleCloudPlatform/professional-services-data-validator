@@ -839,3 +839,23 @@ def test_definitely_no_time_part_false_hour():
     """Test _definitely_no_time_part returns False when hour is present."""
     dt = datetime(2023, 10, 27, 1, 0, 0, 0)
     assert PartitionBuilder._definitely_no_time_part(dt) is False
+
+
+@pytest.mark.parametrize("rows", [0, 1])
+@mock.patch("data_validation.partition_builder.ValidationBuilder")
+@mock.patch("data_validation.partition_builder.PartitionRowBuilder")
+def test_get_partition_key_filters_too_few_rows(
+    mock_row_builder, _mock_validation_builder, rows, module_under_test
+):
+    """A source table with fewer than two rows cannot be split into partitions.
+
+    This should raise a clear PartitionBuilderException rather than an IndexError.
+    """
+    mock_row_builder.return_value.get_count.return_value = rows
+    config_manager = _generate_config_manager()
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(TABLE_PART_ARGS)
+
+    builder = module_under_test.PartitionBuilder([config_manager], mock_args)
+    with pytest.raises(exceptions.PartitionBuilderException, match="at least 2 rows"):
+        builder._get_partition_key_filters()
