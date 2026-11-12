@@ -62,7 +62,7 @@ CREATE TABLE dvt_core_types (
 ,   col_dec_20      NUMERIC
 ,   col_dec_38      NUMERIC
 ,   col_dec_10_2    NUMERIC
-,   col_float32     FLOAT64
+,   col_float32     FLOAT32
 ,   col_float64     FLOAT64
 ,   col_varchar_30  STRING(30)
 ,   col_char_2      STRING(2)
@@ -510,3 +510,109 @@ CREATE TABLE dvt_vol_composite_pk (
 , key3 INT64 NOT NULL
 , val  INT64
 ) PRIMARY KEY (key1, key2, key3);
+
+-- Table for testing generate table partitions, consists of 32 rows with a composite primary key.
+-- Quoted strings are handled correctly.
+CREATE TABLE test_generate_partitions_v2 (
+  course_id          STRING(24)
+, quarter_id         INT64
+, recd_timestamp     TIMESTAMP
+, registration_date  DATE
+, approved           BOOL
+, grade              NUMERIC
+) PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved);
+
+-- Decimals integration test table.
+-- Spanner NUMERIC has a fixed precision/scale of (38,9) so we cannot declare NUMERIC(16,8).
+CREATE TABLE dvt_decimals (
+  id            INT64 NOT NULL
+, col_dec_16_8  NUMERIC
+) PRIMARY KEY (id);
+
+-- Large decimals integration test table.
+-- Spanner NUMERIC is fixed at (38,9), max 29 integer digits and 9 decimal places, therefore:
+--   - col_dec_38 and col_dec_38_30 are omitted because their values do not fit.
+--   - id values are one digit shorter than other engines so they fit in NUMERIC.
+CREATE TABLE dvt_large_decimals (
+  id                NUMERIC NOT NULL
+, col_data          STRING(10)
+, col_dec_18        NUMERIC
+, col_dec_38_9      NUMERIC
+-- Columns with mismatched data for intentional fail status.
+, col_dec_18_fail   NUMERIC
+, col_dec_18_1_fail NUMERIC
+) PRIMARY KEY (id);
+
+-- Integration test table used to test potentially difficult Timestamps.
+-- Spanner has no timezone-naive DATETIME type therefore col_ts_* columns are TIMESTAMP.
+CREATE TABLE dvt_tricky_dates (
+  id            INT64 NOT NULL
+, col_dt_low    DATE
+, col_dt_epoch  DATE
+, col_dt_high   DATE
+, col_dt_4712   DATE
+, col_ts_low    TIMESTAMP
+, col_ts_epoch  TIMESTAMP
+, col_ts_high   TIMESTAMP
+, col_ts_4712   TIMESTAMP
+) PRIMARY KEY (id);
+
+-- Nullable integration test table, Spanner is assumed to be a DVT source (not target).
+-- Spanner requires a primary key, an empty key keeps the column list the same as other engines.
+CREATE TABLE dvt_null_not_null (
+  col_nn            TIMESTAMP NOT NULL
+, col_nullable      TIMESTAMP
+, col_src_nn_trg_n  TIMESTAMP NOT NULL
+, col_src_n_trg_nn  TIMESTAMP
+) PRIMARY KEY ();
+
+-- Integration test table used to test potentially difficult column names.
+CREATE TABLE dvt_reserved_word_columns (
+  id         INT64
+-- SQL tokens
+, `SELECT`   STRING(MAX)
+, `COLUMN`   STRING(MAX)
+, `FROM`     STRING(MAX)
+, `WHERE`    STRING(MAX)
+-- Data types
+, `DATE`     STRING(MAX)
+, `NUMBER`   STRING(MAX)
+, `STRING`   STRING(MAX)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test unicode characters.
+CREATE TABLE dvt_pangrams (
+  id        INT64
+, lang      STRING(100)
+, words     STRING(1000)
+, words_en  STRING(1000)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test varchar pk matching. Trailing blanks are significant.
+CREATE TABLE dvt_varchar_id (
+  id          STRING(15) NOT NULL
+, other_data  STRING(100)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test datetime pk matching.
+-- Spanner has no timezone-naive DATETIME type therefore id is TIMESTAMP.
+CREATE TABLE dvt_datetime_id (
+  id          TIMESTAMP NOT NULL
+, other_data  STRING(MAX)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test UUID data type as a primary key.
+CREATE TABLE dvt_uuid_id (
+  id        UUID NOT NULL
+, col_uuid  UUID
+, col_data  STRING(10)
+) PRIMARY KEY (id);
+
+-- Integration test table used to test boolean data type.
+CREATE TABLE dvt_bool (
+  id            INT64 NOT NULL
+, col_bool_dec  BOOL
+, col_bool_int  BOOL
+, col_bool_ch1  BOOL
+, col_bool_chy  BOOL
+) PRIMARY KEY (id);

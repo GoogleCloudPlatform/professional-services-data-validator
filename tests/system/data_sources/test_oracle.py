@@ -424,11 +424,9 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_oracle_to_postgres():
-    # TODO Change count_cols below to include col_uuid when issue-1716 is complete.
     # TODO Change min/max_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change min/max_cols below to include col_json/col_jsonb when issue-1338 is complete.
-    # TODO Change min_cols below to include col_uuid when issue-1716 is complete.
-    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_uuid",)])
+    count_cols = ",".join(ORA2PG_COLUMNS)
     sum_cols = ",".join(ORA2PG_COLUMNS)
     min_cols = ",".join(
         [
@@ -439,7 +437,6 @@ def test_column_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
-                "col_uuid",
             )
         ]
     )
@@ -481,7 +478,6 @@ def test_column_validation_all_null_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
-                "col_uuid",
             )
         ]
     )
@@ -627,7 +623,7 @@ def test_column_validation_pangrams_to_bigquery():
     This is testing comparisons across a wider set of characters than standard test data.
     """
     column_validation_test(
-        tc="mock-conn",
+        tc="bq-conn",
         tables="pso_data_validator.dvt_pangrams",
         sum_cols="words",
         min_cols="words",
@@ -808,7 +804,6 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
-    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     hash_cols = ",".join(
         [
@@ -826,7 +821,6 @@ def test_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
-                "col_uuid",
             )
         ]
     )
@@ -882,7 +876,6 @@ def test_row_validation_vol_composite_pk_to_postgres():
 def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_num_38 when issue-1454 is complete.
     # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
-    # TODO Change cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     cols = ",".join(
         [
@@ -895,7 +888,6 @@ def test_row_validation_comp_fields_oracle_to_postgres():
                 "col_num_38",
                 "col_json",
                 "col_jsonb",
-                "col_uuid",
             )
         ]
     )
@@ -1289,7 +1281,6 @@ def test_custom_query_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
-    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     hash_cols = ",".join(
         [
@@ -1307,7 +1298,6 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
-                "col_uuid",
             )
         ]
     )

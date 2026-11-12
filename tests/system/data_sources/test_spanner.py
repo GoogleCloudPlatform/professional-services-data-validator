@@ -15,17 +15,33 @@
 import datetime
 import json
 import os
+import pathlib
 from unittest import mock
 
 import pytest
 
-from data_validation import cli_tools, consts, data_validation, find_tables
+from data_validation import __main__ as main
+from data_validation import (
+    cli_tools,
+    consts,
+    data_validation,
+    exceptions,
+    find_tables,
+    validation_runner,
+)
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     connections_add_test,
     custom_query_validation_test,
     find_tables_test,
+    generate_and_run_table_partitions_test,
+    id_column_query_row_validation_test,
+    id_column_row_validation_test,
+    id_type_test_assertions,
+    null_not_null_assertions,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -201,6 +217,9 @@ def test_grouped_count_validator(grouped_config):
         assert row["source_agg_value"] == row[consts.TARGET_AGG_VALUE]
 
 
+###############################
+# SCHEMA VALIDATION
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -213,6 +232,73 @@ def test_schema_validation_core_types():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # BigQuery does not have a float32 type.
+            "float32:float64,"
+            # Spanner does not have a timezone-naive datetime type.
+            "timestamp('UTC'):timestamp"
+        ),
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
+    pytest.skip(
+        "Skipping test_schema_validation_not_null_vs_nullable due to issue-1889."
+    )
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_null_not_null",
+            # Spanner does not have a timezone-naive datetime type.
+            "--allow-list=timestamp('UTC'):timestamp,!timestamp('UTC'):!timestamp",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    null_not_null_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_bool():
+    """Spanner to Spanner dvt_bool schema validation"""
+    schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
+
+
+###############################
+# COLUMN VALIDATION
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -237,21 +323,198 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Spanner to BigQuery dvt_core_types column validation"""
-    # col_datetime is excluded from aggregations because Spanner has no DATETIME
-    # data type, the Spanner TIMESTAMP test data does not match BigQuery DATETIME.
-    agg_cols = (
-        "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,"
-        "col_float32,col_float64,col_date,col_tstz"
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
+    # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
+    # (see issue-1061).
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_datetime")
+        ]
     )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         grouped_columns="col_varchar_30",
-        sum_cols=agg_cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_many_columns():
+    """dvt_many_cols column validation."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_many_cols",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery():
+    """Spanner to BigQuery dvt_large_decimals column validation."""
+    # col_dec_38 and col_dec_38_30 do not exist in the Spanner table because the values
+    # do not fit in Spanner NUMERIC(38,9).
+    cols = "col_dec_18,col_dec_38_9"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Spanner to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    # TODO Change sum_cols to include date/timestamp columns when issue-1876 is complete.
+    # Excluded date/timestamp columns from sum because Spanner fails on DVT's pre-agg
+    # CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols="id",
+        grouped_columns="id",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """Spanner to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_to_bigquery():
+    """Test column validation with UUID column and primary key to BigQuery"""
+    pytest.skip("Skipping test_column_validation_uuid_to_bigquery due to issue-1881.")
+    column_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
         min_cols="*",
-        max_cols="*",
-        avg_cols=agg_cols,
-        std_cols=agg_cols,
+    )
+
+
+###############################
+# ROW VALIDATION
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_spanner_dry_run(capsys):
+    """Test Spanner dry run mode and validate the generated SQL."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--hash=col_string",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    validation_runner.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    assert (
+        dry_run["source_query"]
+        == "WITH t0 AS (\n  SELECT t5.*, t5.`col_string` AS `cast__col_string`\n  FROM dvt_core_types t5\n),\nt1 AS (\n  SELECT t0.*,\n         coalesce(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT t4.`hash__all`, t4.`id`\nFROM (\n  SELECT t3.*, TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) t4"
     )
 
 
@@ -273,11 +536,243 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    """Spanner to BigQuery dvt_core_types column validation"""
+    """Spanner to BigQuery dvt_core_types row validation"""
     row_validation_test(
         tc="bq-conn",
         # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_auto_pks():
+    """Test auto population of -pks from Spanner - expect an exception.
+
+    Expects:
+      ValueError: No primary keys were provided and neither the source or target tables
+      have usable primary keys. Please include --primary-keys argument
+
+    TODO Update to expect success when issue-1890 is complete.
+    """
+    with pytest.raises(exceptions.BuildConfigException):
+        row_validation_test(
+            tc="mock-conn",
+            hash="col_int8,col_int16",
+            primary_keys=None,
+        )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types():
+    """Spanner to Spanner dvt_core_types row validation with --comparison-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types row validation with --comparison-fields"""
+    # TODO Include col_datetime when issue-1061 is complete.
+    # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
+    # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
+    # (see issue-1061).
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_datetime")]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_large_decimals_to_bigquery():
+    """Spanner to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals in the hash columns.
+    Spanner NUMERIC(38,9) cannot hold the 30 digit id values used by other engines, therefore
+    the Spanner id values are one digit shorter and we join on col_data instead of id.
+    col_dec_38 and col_dec_38_30 do not exist in the Spanner table for the same reason.
+    """
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        primary_keys="col_data",
+        hash="col_dec_18,col_dec_38_9",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Spanner to BigQuery dvt_tricky_dates row validation using --hash.
+    Tests date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Spanner to BigQuery dvt_tricky_dates row validation using --comparison-fields.
+    Tests date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation using --hash on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation using --comparison-fields on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_to_bigquery():
+    """Test row validation using --hash on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_bool_to_bigquery():
+    """Test row validation using --comparison-fields on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """Spanner to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=spanner-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_to_bigquery():
+    """Test row validation with UUID column and primary key to BigQuery"""
+    pytest.skip("Skipping test_row_validation_uuid_hash_to_bigquery due to issue-1881.")
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    pytest.skip(
+        "Skipping test_row_validation_datetime_pk_to_bigquery due to issue-1891."
+    )
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_random_row=False,
     )
 
 
@@ -319,20 +814,6 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
         tc="bq-conn",
         primary_keys="int_id",
         comp_fields="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_custom_query_validation_core_types():
-    """Spanner to Spanner dvt_core_types custom-query validation"""
-    custom_query_validation_test(
-        tc="mock-conn",
-        source_query="select * from dvt_core_types",
-        target_query="select * from dvt_core_types",
-        count_cols="*",
     )
 
 
@@ -396,6 +877,65 @@ def test_row_validation_vol_composite_pk_to_bigquery():
     assert len(df) == 0
 
 
+###############################
+# CUSTOM QUERY VALIDATIONS
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """Spanner to Spanner dvt_core_types custom-query validation"""
+    custom_query_validation_test(
+        tc="mock-conn",
+        source_query="select * from dvt_core_types",
+        target_query="select * from dvt_core_types",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_column_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types custom-query column validation"""
+    # Spanner queries do not use a schema prefix, BigQuery requires the dataset.
+    custom_query_validation_test(
+        tc="bq-conn",
+        source_query="select * from dvt_core_types",
+        target_query="select * from pso_data_validator.dvt_core_types",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_core_types_to_bigquery():
+    """Spanner to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    custom_query_validation_test(
+        validation_type="row",
+        tc="bq-conn",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        comp_fields="col_int64,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    # Spanner queries do not use a schema prefix, BigQuery requires the dataset.
+    id_column_query_row_validation_test(
+        "dvt_varchar_id=pso_data_validator.dvt_varchar_id"
+    )
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -405,6 +945,26 @@ def test_custom_query_row_validation_many_columns():
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test(validation_type="custom-query", schema=None)
+
+
+############################
+# GENERATE PARTITIONS TESTS
+############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions(tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    # Spanner does not support ROW_NUMBER() which is used by generate-table-partitions on
+    # the source connection (issue-1059). Instead we run end-to-end partition tests using
+    # BigQuery as the source with Spanner as the target, the same as Sybase.
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="bq-conn",
+        tc="mock-conn",
+    )
 
 
 ##################
@@ -447,6 +1007,16 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
 def test_find_tables():
     """Spanner test of find-tables command."""
     find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_views_and_tables():
+    """Spanner to BigQuery test of find-tables command including views."""
+    pytest.skip("Skipping test_find_views_and_tables due to issue-1888.")
+    find_tables_test(include_views=True)
 
 
 @mock.patch(
