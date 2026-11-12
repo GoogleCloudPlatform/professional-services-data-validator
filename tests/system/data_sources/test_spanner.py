@@ -399,7 +399,6 @@ def test_column_validation_decimals_to_bigquery():
 )
 def test_column_validation_large_decimals_to_bigquery():
     """Spanner to BigQuery dvt_large_decimals column validation."""
-    # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
     # col_dec_38 and col_dec_38_30 do not exist in the Spanner table because the values
     # do not fit in Spanner NUMERIC(38,9).
     cols = "col_dec_18,col_dec_38_9"
