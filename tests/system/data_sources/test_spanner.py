@@ -952,10 +952,13 @@ def test_custom_query_row_validation_many_columns():
 def test_generate_and_run_partitions(tmp_path: pathlib.Path):
     """Test generate and execute partition configs."""
     pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    # Spanner does not support ROW_NUMBER() which is used by generate-table-partitions on
+    # the source connection (issue-1059). Instead we run end-to-end partition tests using
+    # BigQuery as the source with Spanner as the target, the same as Sybase.
     generate_and_run_table_partitions_test(
         tmp_path,
-        sc="mock-conn",
-        tc="bq-conn",
+        sc="bq-conn",
+        tc="mock-conn",
     )
 
 
