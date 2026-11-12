@@ -356,6 +356,36 @@ TimestampValue.to_char = compile_to_char
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
+
+class _TupleRows:
+    """Yield cursor rows as plain tuples, keeping close() for Ibis' error handling."""
+
+    def __init__(self, cursor):
+        self._cursor = cursor
+        self._rows = iter(cursor)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return tuple(next(self._rows))
+
+    def close(self):
+        self._cursor.close()
+
+
+_alchemy_fetch_from_cursor = BaseAlchemyBackend.fetch_from_cursor
+
+
+def _fetch_from_cursor(self, cursor, schema):
+    # pandas.DataFrame.from_records() treats a first row with a "dtype" attribute
+    # as a NumPy record. SQLAlchemy rows expose each column as an attribute, so a
+    # column named dtype broke every fetch. Plain tuples avoid that.
+    return _alchemy_fetch_from_cursor(self, _TupleRows(cursor), schema)
+
+
+BaseAlchemyBackend.fetch_from_cursor = _fetch_from_cursor
+
 # Default to False for native SQL tuple/struct IN expression support.
 # Backends supporting native tuple IN (e.g., PostgreSQL, MySQL, Snowflake, Oracle, Db2)
 # override this method to return True in their respective packages.
