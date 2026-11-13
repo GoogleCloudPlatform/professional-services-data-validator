@@ -1312,3 +1312,46 @@ def test_generate_report_with_binary_data(module_under_test):
     assert consts.TARGET_AGG_VALUE in report.columns
     assert report[consts.SOURCE_AGG_VALUE].iloc[0] == "aced0005"
     assert report[consts.TARGET_AGG_VALUE].iloc[0] == "aced0005"
+
+
+@pytest.mark.parametrize(
+    "source_value,target_value,expected_status",
+    [
+        # These only differ beyond the 7 significant digits a float32 can hold.
+        (decimal.Decimal("123456789.01"), decimal.Decimal("123456789.02"), "fail"),
+        (123456789.01, 123456789.02, "fail"),
+        (decimal.Decimal("123456789.01"), decimal.Decimal("123456789.01"), "success"),
+        (100.01, 100.01, "success"),
+    ],
+)
+def test_generate_report_numeric_sum_precision(
+    module_under_test, source_value, target_value, expected_status
+):
+    """A difference of 0.01 on a large sum must not be rounded away."""
+    validations = {
+        "sum__amt": metadata.ValidationMetadata(
+            source_table_name="test_source",
+            source_table_schema="source_dataset",
+            source_column_name="amt",
+            target_table_name="test_target",
+            target_table_schema="target_dataset",
+            target_column_name="amt",
+            validation_type="Column",
+            aggregation_type="sum",
+            primary_keys=[],
+            num_random_rows=None,
+            threshold=0.0,
+        )
+    }
+    run_metadata = metadata.RunMetadata(
+        validations=validations,
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+    )
+    report = module_under_test.generate_report(
+        run_metadata,
+        pandas.DataFrame({"sum__amt": [source_value]}),
+        pandas.DataFrame({"sum__amt": [target_value]}),
+    )
+    assert list(report[consts.VALIDATION_STATUS]) == [expected_status]
