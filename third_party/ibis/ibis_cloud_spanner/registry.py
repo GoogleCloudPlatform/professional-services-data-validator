@@ -14,7 +14,8 @@
 
 import ibis.expr.operations as ops
 import ibis.expr.datatypes as dt
-from ibis.backends.bigquery.registry import OPERATION_REGISTRY
+from ibis.backends.base.sql import compiler as sql_compiler
+from ibis.backends.bigquery.registry import OPERATION_REGISTRY, bigquery_cast
 
 _registry = OPERATION_REGISTRY.copy()
 
@@ -62,8 +63,79 @@ def _compiles_strftime(translator, op):
         )
 
 
+def _date_to_utc_timestamp(arg_formatted: str) -> str:
+    """Convert a Spanner DATE expression to a TIMESTAMP at midnight UTC.
+
+    A bare CAST(date AS TIMESTAMP) in Spanner uses the default time zone
+    (America/Los_Angeles) rather than UTC, therefore we specify UTC explicitly.
+    """
+    return f"TIMESTAMP({arg_formatted}, 'UTC')"
+
+
+def _cast(translator: sql_compiler.ExprTranslator, op: ops.Cast) -> str:
+    """Compile a Cast operation with Spanner-specific TIMESTAMP handling.
+
+    Spanner GoogleSQL has no DATETIME type, so casts to a timezone-naive or UTC
+    timestamp map to Spanner TIMESTAMP (converting DATE values at midnight UTC).
+    All other casts delegate to bigquery_cast.
+
+    Note: Casting a timezone-naive STRING expression to TIMESTAMP uses Spanner's
+    default time zone (America/Los_Angeles) rather than UTC.
+
+    Args:
+        translator: The Spanner SQL expression translator.
+        op: The Ibis Cast operation node.
+
+    Returns:
+        Compiled GoogleSQL expression string.
+
+    Raises:
+        TypeError: If casting to a Timestamp with a non-UTC timezone.
+    """
+    arg, target_type = op.arg, op.to
+    arg_formatted = translator.translate(arg)
+    if not target_type.is_timestamp():
+        return bigquery_cast(arg_formatted, arg.dtype, target_type)
+    if target_type.timezone not in (None, "UTC"):
+        raise TypeError(
+            "DVT Spanner backend does not support casting to timestamps with "
+            "timezones other than 'UTC'"
+        )
+    if arg.dtype.is_date():
+        return _date_to_utc_timestamp(arg_formatted)
+    if arg.dtype.is_timestamp():
+        # All Spanner timestamps are TIMESTAMP, no cast required.
+        return arg_formatted
+    # Preserve BigQuery special cases (e.g. INT64 -> TIMESTAMP_SECONDS).
+    return bigquery_cast(arg_formatted, arg.dtype, dt.Timestamp(timezone="UTC"))
+
+
+def _extract_epoch_seconds(
+    translator: sql_compiler.ExprTranslator, op: ops.ExtractEpochSeconds
+) -> str:
+    """Compile ExtractEpochSeconds to Spanner UNIX_SECONDS.
+
+    Spanner UNIX_SECONDS only accepts TIMESTAMP, so DATE inputs are first
+    converted to midnight UTC TIMESTAMP expressions.
+
+    Args:
+        translator: The Spanner SQL expression translator.
+        op: The Ibis ExtractEpochSeconds operation node.
+
+    Returns:
+        Compiled GoogleSQL UNIX_SECONDS(...) expression string.
+    """
+    arg = op.arg
+    arg_formatted = translator.translate(arg)
+    if arg.dtype.is_date():
+        arg_formatted = _date_to_utc_timestamp(arg_formatted)
+    return f"UNIX_SECONDS({arg_formatted})"
+
+
 _registry.update(
     {
+        ops.Cast: _cast,
+        ops.ExtractEpochSeconds: _extract_epoch_seconds,
         ops.Strftime: _compiles_strftime,
     }
 )

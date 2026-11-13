@@ -313,6 +313,9 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
+        wildcard_include_timestamp=True,
     )
 
 
@@ -327,39 +330,22 @@ def test_column_validation_core_types_to_bigquery():
     # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
     # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
     # (see issue-1061).
-    min_max_cols = ",".join(
+    cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
             if _ not in ("id", "col_float32", "col_datetime")
         ]
     )
-    # TODO Include col_date and col_tstz in sum/avg/std when issue-1876 is complete.
-    # Excluded date/timestamp columns from sum/avg/std because Spanner fails on
-    # DVT's pre-agg CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
-    sum_avg_std_cols = ",".join(
-        [
-            _
-            for _ in DVT_CORE_TYPES_COLUMNS
-            if _
-            not in (
-                "id",
-                "col_float32",
-                "col_date",
-                "col_datetime",
-                "col_tstz",
-            )
-        ]
-    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         grouped_columns="col_varchar_30",
-        sum_cols=sum_avg_std_cols,
-        min_cols=min_max_cols,
-        max_cols=min_max_cols,
-        avg_cols=sum_avg_std_cols,
-        std_cols=sum_avg_std_cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -442,15 +428,12 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
-    # TODO Change sum_cols to include date/timestamp columns when issue-1876 is complete.
-    # Excluded date/timestamp columns from sum because Spanner fails on DVT's pre-agg
-    # CAST(... AS DATETIME) and UNIX_SECONDS(DATE) (see issue-1876).
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
         min_cols=cols,
         max_cols=cols,
-        sum_cols="id",
+        sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
     )

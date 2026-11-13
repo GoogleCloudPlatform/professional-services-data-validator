@@ -74,6 +74,16 @@ TABLE = ibis.table(
     name="t",
 )
 
+SPANNER_TABLE = ibis.table(
+    {
+        "d": "date",
+        "ts": "timestamp('UTC')",
+        "s": "string",
+        "i": "int32",
+    },
+    name="t",
+)
+
 
 def _compile(compiler_class, expr):
     return str(compiler_class().to_sql(expr))
@@ -266,6 +276,91 @@ def test_bigquery_epoch_seconds_compiles_timestamp_cast():
     sql = _compile(BigQueryCompiler, TABLE.ts.epoch_seconds().name("epoch"))
 
     assert "UNIX_SECONDS(CAST(t0.`ts` AS TIMESTAMP))" in sql
+
+
+@pytest.mark.parametrize(
+    "expr,expected_fragments",
+    [
+        pytest.param(
+            SPANNER_TABLE.d.epoch_seconds(),
+            ["UNIX_SECONDS(TIMESTAMP(t0.`d`, 'UTC'))"],
+            id="date_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.epoch_seconds(),
+            ["UNIX_SECONDS(t0.`ts`)"],
+            id="timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp"),
+            ["TIMESTAMP(t0.`d`, 'UTC')"],
+            id="date_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp('UTC')"),
+            ["TIMESTAMP(t0.`d`, 'UTC')"],
+            id="date_cast_utc_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("timestamp"),
+            ["t0.`ts` AS `x`"],
+            id="timestamp_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp").epoch_seconds(),
+            ["UNIX_SECONDS(TIMESTAMP(t0.`d`, 'UTC'))"],
+            id="date_cast_timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("timestamp").epoch_seconds(),
+            ["UNIX_SECONDS(t0.`ts`)"],
+            id="timestamp_cast_timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.s.cast("timestamp"),
+            ["CAST(t0.`s` AS TIMESTAMP)"],
+            id="string_cast_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("timestamp"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("timestamp('UTC')"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_utc_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("int64"),
+            ["CAST(t0.`i` AS INT64)"],
+            id="int_cast_int64",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("string"),
+            ["CAST(t0.`ts` AS STRING)"],
+            id="timestamp_cast_string",
+        ),
+    ],
+)
+def test_spanner_epoch_seconds_and_timestamp_casts(expr, expected_fragments):
+    """Spanner has no DATETIME type and UNIX_SECONDS does not accept DATE (issue-1876)."""
+    sql = _compile(SpannerCompiler, expr.name("x"))
+
+    _assert_fragments(
+        sql,
+        expected_fragments,
+        ["DATETIME", "UNIX_SECONDS(t0.`d`)", "CAST(t0.`d` AS TIMESTAMP)"],
+    )
+
+
+def test_spanner_cast_non_utc_timestamp_raises():
+    """Spanner TIMESTAMP casts only support naive or UTC targets."""
+    with pytest.raises(TypeError, match="other than 'UTC'"):
+        _compile(
+            SpannerCompiler,
+            SPANNER_TABLE.d.cast("timestamp('Europe/London')").name("x"),
+        )
 
 
 def test_postgres_decimal_string_cast_compiles_to_char():
