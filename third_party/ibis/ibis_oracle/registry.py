@@ -301,8 +301,11 @@ def _reduce_tokens(tokens, arg):
                     _reduce_tokens(new_tokens, arg),
                 )
             elif token == "%e":
-                # pad with spaces instead of zeros
-                value = sa.func.replace(sa.func.to_char(arg, "DD"), "0", " ")
+                # Day of the month padded with a space instead of a zero. Only the
+                # leading zero is removed so that 10, 20 and 30 are left intact.
+                value = sa.func.lpad(
+                    sa.func.ltrim(sa.func.to_char(arg, "DD"), "0"), 2, " "
+                )
 
             reduced += [
                 sa.func.to_char(arg, "".join(curtokens)),

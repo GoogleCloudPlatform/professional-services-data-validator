@@ -306,15 +306,23 @@ def _reduce_tokens(tokens, arg, allow_query_params=True):
                     ),
                 )
             elif token == "%e":
-                # pad with spaces instead of zeros
-                value = sa.func.replace(
-                    sa.func.to_char(arg, literal_arg("DD")), "0", " "
+                # Day of the month padded with a space instead of a zero. Only the
+                # leading zero is removed so that 10, 20 and 30 are left intact.
+                value = sa.func.lpad(
+                    sa.func.ltrim(
+                        sa.func.to_char(arg, literal_arg("DD")), literal_arg("0")
+                    ),
+                    sa.literal_column("2"),
+                    literal_arg(" "),
                 )
 
-            reduced += [
-                sa.func.to_char(arg, literal_arg("".join(curtokens))),
-                sa.cast(value, sa.TEXT),
-            ]
+            # Only format the preceding tokens if there are any. Db2 caches the
+            # plan for to_char(x, ?) with an empty format string bound to the
+            # parameter and then returns an empty string for any subsequent
+            # format string bound to the same statement text.
+            if curtokens:
+                reduced.append(sa.func.to_char(arg, literal_arg("".join(curtokens))))
+            reduced.append(sa.cast(value, sa.TEXT))
 
             # empty current token list in case there are more tokens
             del curtokens[:]
