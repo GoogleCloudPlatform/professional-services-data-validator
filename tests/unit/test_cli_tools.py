@@ -255,10 +255,11 @@ def test_configure_arg_parser_test_connection():
     assert args.connection_name == "my_conn"
 
 
-def test_configure_arg_parser_test_connection_needs_name():
+def test_configure_arg_parser_test_connection_needs_name(capsys):
     parser = cli_tools.configure_arg_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(["connections", "test"])
+    assert "--connection-name" in capsys.readouterr().err
 
 
 def test_get_connection_config_from_args():
