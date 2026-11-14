@@ -246,6 +246,22 @@ def test_configure_arg_parser_list_connections():
     assert args.connect_cmd == "list"
 
 
+def test_configure_arg_parser_test_connection():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(["connections", "test", "-c", "my_conn"])
+
+    assert args.command == "connections"
+    assert args.connect_cmd == "test"
+    assert args.connection_name == "my_conn"
+
+
+def test_configure_arg_parser_test_connection_needs_name(capsys):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["connections", "test"])
+    assert "--connection-name" in capsys.readouterr().err
+
+
 def test_get_connection_config_from_args():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
