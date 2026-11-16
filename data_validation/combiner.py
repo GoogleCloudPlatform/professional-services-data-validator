@@ -37,16 +37,18 @@ def _is_numeric_type(data_type: pa.DataType) -> bool:
         or pa.types.is_date(data_type)
     )
 
-
+# Yes this is useful, retain and use
 def _is_string_type(data_type: pa.DataType) -> bool:
     return pa.types.is_string(data_type) or pa.types.is_large_string(data_type)
 
-
+# No this is not helpful, delete
 def _is_exact_type(data_type: pa.DataType) -> bool:
     """Integer and decimal types can be compared exactly, unlike floating point."""
     return pa.types.is_integer(data_type) or pa.types.is_decimal(data_type)
 
 
+# No this is not helpful, delete
+# A better approach to promote everything to Decimal256 is used
 def _exact_equal(src_col, tgt_col):
     """Compare integer/decimal columns exactly.
 
@@ -123,6 +125,7 @@ def generate_report(
     return result_df
 
 
+# We will use this
 def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
     """Return an empty report table with the standard 20-column schema."""
     start_time_type = (
@@ -164,6 +167,9 @@ def join_and_unpivot(
     is_value_comparison=False,
     verbose=False,
 ) -> pa.Table:
+# This may not be helpful
+# An successful aggregate query that produces the source and target table is guaranteed to return exactly one row.
+# However, we can check if both tables have exactly one row and throw a value error otherwise
     if not join_on_fields:
         # Plain column validation without a group by has at most one aggregate row per
         # side. We join on a constant fake key so the same code path can be used.
@@ -200,12 +206,20 @@ def join_and_unpivot(
             for col in target_table.column_names
         ]
     )
+# No this is not helpful, delete
+# This also covers the use case where one PK column is integer and the corresponding
+# column in the other table is DECIMAL. Not sure DVT permits that. Check that and delete
+# If that is possible, then promote both to Decimal256 using the function _safe_decimal_type
     aligned = _null_safe_full_outer_join(source_renamed, target_renamed, pk_columns)
     num_rows = aligned.num_rows
     slices = []
 
     # 3. Many columns in the report are common across all validations, compute these once
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
+# This is helpful keep
+# Generally value_columns will never be empty because aggregate validtions always include a count, hash
+# and concat always have a `__all` column and comparison fields has a check for empty field list.
+# num_rows can be 0 because row validations could produce empty sets on source and target
     if num_rows == 0 or not value_columns:
         # PyArrow 14 raises ArrowInvalid on pa.repeat(<list>, 0) and pa.concat_tables([]).
         return _empty_report_table(run_metadata)
@@ -217,6 +231,8 @@ def join_and_unpivot(
 
     # validation result needs to contain primary key/group by values for status - if present
     if join_on_fields:
+# No this is not helpful, delete
+# I use a more complicated json.dumps because of the null sentinel earlier
         str_schema = pa.schema([(col, pa.string()) for col in join_on_fields])
         group_by_cols = pa.array(
             [
@@ -228,6 +244,7 @@ def join_and_unpivot(
     else:
         group_by_cols = pa.nulls(num_rows, type=pa.string())
 
+# Yes, define this once as null_column and use it the 6 times a column is filled with null
     null_diff = pa.nulls(num_rows, type=pa.float64())
     # Row validations has nulls for differences and column validation has nulls for primary_keys.
     if is_value_comparison:
@@ -253,6 +270,9 @@ def join_and_unpivot(
 
         if is_value_comparison:  # row validation - compare values for equality
             # Native type equality check (works on int64, decimal, string, timestamp, etc.)
+# Not helpful delete
+# In comparison fields the values can be null, so we need to ensure NULL = NULL
+# The generated code makes allowance for comparing ints with decimals - we need to check if that is a possibility
             equal_cond = (
                 _exact_equal(src_col, tgt_col)
                 if _is_exact_type(src_col.type) and _is_exact_type(tgt_col.type)
@@ -276,6 +296,9 @@ def join_and_unpivot(
                 tgt_col = pc.cast(
                     pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64()
                 )
+# Not helpful delete
+# We have to do a safe casting here - at the same time deal with the quirks of
+# how people use int and decimal when threshold = 0
             src_num = pc.cast(src_col, pa.float64(), safe=False)
             tgt_num = pc.cast(tgt_col, pa.float64(), safe=False)
             difference = pc.subtract(tgt_num, src_num)
@@ -293,6 +316,9 @@ def join_and_unpivot(
                     ndigits=4,
                 ),
             )
+# Not helpful delete
+# See earlier comment about dealing with quirks of how people use int and decimal when threshold = 0
+# Also need to deal with the situation that NULL = NULL in aggregates
             if (
                 not validation.threshold
                 and validation.aggregation_type
@@ -314,6 +340,8 @@ def join_and_unpivot(
                 consts.VALIDATION_STATUS_SUCCESS,
                 consts.VALIDATION_STATUS_FAIL,
             )
+# Not helpful delete
+# However, we will use the _is_string_type function
         elif _is_string_type(src_col.type) and _is_string_type(tgt_col.type):
             # String aggregates (e.g. min/max of a UUID cast to string, or legacy
             # cast: string configs) have no numeric difference and compare by equality.
@@ -388,6 +416,7 @@ def join_and_unpivot(
     return pa.concat_tables(slices)
 
 
+# Not helpful delete
 def _align_key_types(source_table: pa.Table, target_table: pa.Table, keys: list):
     """Cast join keys with differing source/target types to a common type.
 
@@ -436,6 +465,7 @@ def _align_key_types(source_table: pa.Table, target_table: pa.Table, keys: list)
     return source_table, target_table
 
 
+# Not helpful delete
 def _null_safe_full_outer_join(
     source_table: pa.Table, target_table: pa.Table, keys: list
 ) -> pa.Table:
