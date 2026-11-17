@@ -75,10 +75,9 @@ data-validation connections describe -c CONN_NAME
 data-validation connections test -c CONN_NAME
 ```
 
-This connects to the database and lists its databases (datasets in BigQuery, schemas in most
-other engines). If a validation command is failing, this helps to check whether the problem is
-in the connection itself, for example wrong credentials or missing permissions, or in the
-validation.
+This connects to the database using the stored connection, the same check that `connections add`
+does. If a validation command is failing, this helps to check whether the problem is in the
+connection itself, for example wrong credentials or missing permissions, or in the validation.
 
 ## List supported connection types
 

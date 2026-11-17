@@ -349,7 +349,6 @@ def test_successful_connection_delete_with_mocked_delete_connection(
     mock_run.assert_called_once()
 
 
-@mock.patch("data_validation.clients.list_databases")
 @mock.patch("data_validation.clients.get_data_client")
 @mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
 @mock.patch(
@@ -357,20 +356,18 @@ def test_successful_connection_delete_with_mocked_delete_connection(
     return_value=argparse.Namespace(**CONNECTION_TEST_ARGS),
 )
 def test_successful_connection_test(
-    mock_args, mock_get_connection, mock_get_data_client, mock_list_databases
+    mock_args, mock_get_connection, mock_get_data_client
 ):
     main.main()
 
     mock_get_connection.assert_called_once_with("dummy-bq-connection")
     mock_get_data_client.assert_called_once_with(TEST_CONN, verify_connection=True)
-    mock_list_databases.assert_called_once_with(mock_get_data_client.return_value)
 
 
-@mock.patch("data_validation.clients.list_databases")
 @mock.patch("data_validation.clients.get_data_client")
 @mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
 def test_run_connection_test_logs_success(
-    mock_get_connection, mock_get_data_client, mock_list_databases, caplog
+    mock_get_connection, mock_get_data_client, caplog
 ):
     caplog.set_level(logging.INFO)
     main.run_connection_test("dummy-bq-connection")
@@ -378,35 +375,17 @@ def test_run_connection_test_logs_success(
     assert "Connection dummy-bq-connection is working" in caplog.text
 
 
-@pytest.mark.parametrize(
-    "client_error,list_databases_error,expected_error",
-    [
-        (
-            exceptions.DataClientConnectionFailure("could not connect"),
-            None,
-            exceptions.DataClientConnectionFailure,
-        ),
-        (None, PermissionError("no access to the project"), PermissionError),
-    ],
-    ids=["client_fails", "list_databases_fails"],
+@mock.patch(
+    "data_validation.clients.get_data_client",
+    side_effect=exceptions.DataClientConnectionFailure("could not connect"),
 )
-@mock.patch("data_validation.clients.list_databases")
-@mock.patch("data_validation.clients.get_data_client")
 @mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
 def test_run_connection_test_fails_when_database_is_not_reachable(
-    mock_get_connection,
-    mock_get_data_client,
-    mock_list_databases,
-    client_error,
-    list_databases_error,
-    expected_error,
-    caplog,
+    mock_get_connection, mock_get_data_client, caplog
 ):
     caplog.set_level(logging.INFO)
-    mock_get_data_client.side_effect = client_error
-    mock_list_databases.side_effect = list_databases_error
 
-    with pytest.raises(expected_error):
+    with pytest.raises(exceptions.DataClientConnectionFailure):
         main.run_connection_test("dummy-bq-connection")
 
     assert "is working" not in caplog.text

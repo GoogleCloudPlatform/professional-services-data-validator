@@ -36,6 +36,7 @@ from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from data_validation.result_handlers.bigquery import BQRH_WRITE_MESSAGE
 from tests.system.data_sources.common_functions import (
+    connections_add_test,
     generate_and_run_table_partitions_test,
     partition_table_test,
     partition_query_test,
@@ -1554,3 +1555,31 @@ def test_bq_result_handler(mock_conn, bigquery_client, bigquery_dataset_id, capl
 def test_raw_query_dvt_row_types(mock_conn, capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--project-id",
+        PROJECT_ID,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_BIGQUERY, conn_args, tmp_path, monkeypatch
+    )
+
+
+def test_connections_add_fail(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command with an invalid project."""
+    conn_args = [
+        "--project-id",
+        "dvt-invalid-project-id-does-not-exist",
+        "--billing-project-id",
+        "dvt-invalid-project-id-does-not-exist",
+    ]
+    with pytest.raises(exceptions.DataClientConnectionFailure):
+        connections_add_test(
+            caplog, consts.SOURCE_TYPE_BIGQUERY, conn_args, tmp_path, monkeypatch
+        )

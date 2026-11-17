@@ -160,3 +160,15 @@ class Backend(BigQueryBackend):
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""
         return True
+
+    def dvt_ping(self) -> None:
+        """Make a cheap round trip to BigQuery to validate the connection.
+
+        Creating a bq.Client does not make any API calls, therefore invalid
+        credentials or projects are not detected until the first query. A dry-run
+        query is free, but still validates credentials.
+        """
+        self.client.query(
+            "SELECT 1",
+            job_config=bq.QueryJobConfig(dry_run=True, use_query_cache=False),
+        )

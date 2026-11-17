@@ -387,8 +387,12 @@ def _verify_connection(data_client) -> None:
     create an Engine in do_connect(); no network round-trip happens until first
     use. Without this, invalid credentials are not detected until the first
     query.
+
+    Non-SQLAlchemy backends (e.g. BigQuery) can opt in by implementing dvt_ping().
     """
-    if is_sqlalchemy_backend(data_client):
+    if hasattr(data_client, "dvt_ping"):
+        data_client.dvt_ping()
+    elif is_sqlalchemy_backend(data_client):
         with data_client.con.connect():
             pass
 

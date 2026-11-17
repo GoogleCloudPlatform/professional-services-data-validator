@@ -514,15 +514,10 @@ def run(args) -> None:
 
 
 def run_connection_test(connection_name: str) -> None:
-    """Connect to the database of a stored connection to check it is working.
-
-    Some clients, like BigQuery, do not call the database when they are created.
-    So we also list the databases, this way wrong credentials or missing
-    permissions are found here and not later in a validation.
-    """
+    """Connect to the database of a stored connection to check it is working."""
     conn = cli_tools.get_connection(connection_name)
-    with clients.get_data_client_ctx(conn, verify_connection=True) as client:
-        clients.list_databases(client)
+    with clients.get_data_client_ctx(conn, verify_connection=True):
+        pass
     logging.info(f"Success! Connection {connection_name} is working")
 
 

@@ -272,6 +272,55 @@ else:
             clients.get_data_client(DB2_CONN_CONFIG)
 
 
+def test_verify_connection_uses_dvt_ping():
+    data_client = mock.MagicMock(spec=["dvt_ping"])
+
+    clients._verify_connection(data_client)
+
+    data_client.dvt_ping.assert_called_once_with()
+
+
+@mock.patch("google.cloud.bigquery.Client.query")
+def test_get_bigquery_data_client_verify_connection(mock_query):
+    mock_credentials = mock.create_autospec(credentials.Credentials)
+    conn_config = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+        consts.PROJECT_ID: "test-project",
+        consts.BILLING_PROJECT_ID: "test-project",
+    }
+
+    with mock.patch(
+        "google.auth.default", return_value=(mock_credentials, "test-project")
+    ):
+        clients.get_data_client(conn_config, verify_connection=True)
+
+    mock_query.assert_called_once()
+    assert mock_query.call_args.args == ("SELECT 1",)
+    job_config = mock_query.call_args.kwargs["job_config"]
+    assert job_config.dry_run is True
+    assert job_config.use_query_cache is False
+
+
+@mock.patch("google.cloud.bigquery.Client.query")
+def test_get_bigquery_data_client_connection_failure(mock_query):
+    mock_query.side_effect = Exception("Not found: Project invalid-project")
+    mock_credentials = mock.create_autospec(credentials.Credentials)
+    conn_config = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+        consts.PROJECT_ID: "invalid-project",
+        consts.BILLING_PROJECT_ID: "invalid-project",
+    }
+
+    with mock.patch(
+        "google.auth.default", return_value=(mock_credentials, "test-project")
+    ):
+        with pytest.raises(
+            exceptions.DataClientConnectionFailure,
+            match=r'Connection Type "BigQuery" could not connect: Not found',
+        ):
+            clients.get_data_client(conn_config, verify_connection=True)
+
+
 @mock.patch("third_party.ibis.ibis_mssql.sa.event.listens_for")
 @mock.patch("third_party.ibis.ibis_mssql.sa.create_engine")
 def test_get_mssql_data_client(mock_create_engine, mock_listens_for):
