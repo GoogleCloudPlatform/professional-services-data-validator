@@ -1575,9 +1575,9 @@ def test_connections_add_fail(caplog, tmp_path, monkeypatch):
     """Test data-validation connections add command with an invalid project."""
     conn_args = [
         "--project-id",
-        "dvt-invalid-project-id",
+        "dvt-project-does-not-exist",
         "--billing-project-id",
-        "dvt-invalid-project-id",
+        "dvt-project-does-not-exist",
     ]
     with pytest.raises(exceptions.DataClientConnectionFailure):
         connections_add_test(
