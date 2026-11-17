@@ -303,7 +303,7 @@ def join_and_unpivot(
 
         src_agg_val = _format_value(src_col)
         tgt_agg_val = _format_value(tgt_col)
-        threshold = pa.repeat(validation.threshold, num_rows)
+        threshold = pa.repeat(validation.threshold if abs(validation.threshold) > consts.VALIDATION_PCT_SENSITIVITY else consts.VALIDATION_PCT_SENSITIVITY, num_rows)
 
         # With comparision-fields (row validation) or aggregates (column validation)
         # the src_col can be of integer type and the tgt_col can be of decimal type.
@@ -346,9 +346,12 @@ def join_and_unpivot(
                 difference = pc.subtract(tgt_col, src_col)
                 # difference is the same type as tgt_col and src_col, but needs to be
                 # float in the table, so casting it now.
+                # While calculating percentage difference, we need to handle small values and
+                # we assume they are effectively equal if the absolute difference is below the sensitivity threshold
+                # Though the sensitivity threshold is for percentages, we are using it as an absolute value here.
                 difference = pc.cast(difference, pa.float64())
                 pct_difference = pc.if_else(
-                    pc.equal(difference, 0.0),
+                    pc.less(pc.abs(difference), consts.VALIDATION_PCT_SENSITIVITY),
                     0.0,
                     pc.round(
                         pc.divide(
