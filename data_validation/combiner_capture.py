@@ -194,11 +194,11 @@ def capture_generate_report(
         # 2. Save input_parameters.txt in call_dir
         metadata_txt = os.path.join(call_dir, "metadata.txt")
         with open(metadata_txt, "w", encoding="utf-8") as f:
-            if join_on_fields :
+            if join_on_fields:
                 f.write(f"join_on_fields: {join_on_fields}\n")
-            if is_value_comparison :
+            if is_value_comparison:
                 f.write(f"is_value_comparison: {is_value_comparison}\n")
-            if verbose :
+            if verbose:
                 f.write(f"verbose: {verbose}\n")
             f.write(pformat(run_metadata))
 

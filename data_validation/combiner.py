@@ -27,68 +27,120 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from data_validation import consts
 
-
-def _is_numeric_type(data_type: pa.DataType) -> bool:
-    return (
-        pa.types.is_integer(data_type)
-        or pa.types.is_floating(data_type)
-        or pa.types.is_decimal(data_type)
-        or pa.types.is_timestamp(data_type)
-        or pa.types.is_date(data_type)
-    )
-
-# Yes this is useful, retain and use
-def _is_string_type(data_type: pa.DataType) -> bool:
-    return pa.types.is_string(data_type) or pa.types.is_large_string(data_type)
-
-# No this is not helpful, delete
-def _is_exact_type(data_type: pa.DataType) -> bool:
-    """Integer and decimal types can be compared exactly, unlike floating point."""
-    return pa.types.is_integer(data_type) or pa.types.is_decimal(data_type)
-
-
-# No this is not helpful, delete
-# A better approach to promote everything to Decimal256 is used
-def _exact_equal(src_col, tgt_col):
-    """Compare integer/decimal columns exactly.
-
-    Arrow promotes both sides to a common decimal type, scale=max(s1, s2) and
-    precision=max(p1-s1, p2-s2)+scale, but stays within decimal128 when both inputs are
-    decimal128. For example decimal128(38, 2) vs decimal128(38, 9) needs precision 45 and
-    raises an error. Widening decimal128 to decimal256 (and uint64 to decimal256(20, 0) so
-    values > 2^63 - 1 can compare against signed integers/decimals) is lossless and handles
-    up to 76 digits in C++. When combined precision exceeds 76 digits (e.g. Oracle
-    decimal256(39, 0) vs BigQuery BIGNUMERIC decimal256(76, 38)), fall back to exact Python
-    int/Decimal equality while preserving Arrow 3-valued null semantics.
-    """
-
-    def _widen(col):
-        if pa.types.is_decimal128(col.type):
-            return pc.cast(col, pa.decimal256(col.type.precision, col.type.scale))
-        if pa.types.is_uint64(col.type):
-            return pc.cast(col, pa.decimal256(20, 0))
-        return col
-
-    try:
-        return pc.equal(_widen(src_col), _widen(tgt_col))
-    except pa.ArrowInvalid:
-        return pa.array(
-            [
-                None if a is None or b is None else a == b
-                for a, b in zip(src_col.to_pylist(), tgt_col.to_pylist())
-            ],
-            type=pa.bool_(),
-        )
-
-
 if TYPE_CHECKING:
     from pandas import DataFrame
     from data_validation.metadata import RunMetadata
 
-
 COMBINER_GET_SUMMARY_EXC_TEXT = (
     "Error while generating summary report of row validation results"
 )
+
+
+def _is_numeric_type(column: pa.ChunkedArray) -> bool:
+    return (
+        pa.types.is_integer(column.type)
+        or pa.types.is_floating(column.type)
+        or pa.types.is_decimal(column.type)
+        or pa.types.is_timestamp(column.type)
+        or pa.types.is_date(column.type)
+    )
+
+
+def _is_string_type(column: pa.ChunkedArray) -> bool:
+    return pa.types.is_string(column.type) or pa.types.is_large_string(column.type)
+
+
+def _safe_decimal_type(
+    src_col: pa.ChunkedArray, tgt_col: pa.ChunkedArray
+) -> tuple[pa.ChunkedArray, pa.ChunkedArray]:
+    # Python Arrow needs one additional digit of precision while doing additions and
+    # subtractions, hence setting precision to 75 and using decimal256
+    # to allow for the addition and subtraction without exceptions.
+    # We assume that no one is concerned about overflow - at 76 digits??
+    # It is possible that one of the columns is not decimal, so we need to convert
+    # both columns to decimal first. We may lose precision, but that is OK.
+    # Sometimes the input column has 76 digits, therefore dropping least significant
+    # digit after the decimal point to prevent overflow.
+    if pa.types.is_decimal(src_col.type) and src_col.type.precision == 76:
+        if src_col.type.scale > 0:
+            src_col = pc.cast(
+                src_col, pa.decimal256(75, src_col.type.scale - 1), safe=False
+            )
+        else:
+            raise ValueError(f"Overflow in decimal column {src_col._name}")
+    if pa.types.is_decimal(tgt_col.type) and tgt_col.type.precision == 76:
+        if tgt_col.type.scale > 0:
+            tgt_col = pc.cast(
+                tgt_col, pa.decimal256(75, tgt_col.type.scale - 1), safe=False
+            )
+        else:
+            raise ValueError(f"Overflow in decimal column {tgt_col._name}")
+    if not pa.types.is_decimal(src_col.type):
+        src_col = pc.cast(src_col, pa.decimal256(75, tgt_col.type.scale))
+        tgt_col = pc.cast(tgt_col, src_col.type)
+    elif not pa.types.is_decimal(tgt_col.type):
+        tgt_col = pc.cast(tgt_col, pa.decimal256(75, src_col.type.scale))
+        src_col = pc.cast(src_col, tgt_col.type)
+    else:
+        scale = (
+            src_col.type.scale
+            if src_col.type.scale >= tgt_col.type.scale
+            else tgt_col.type.scale
+        )
+        src_col = pc.cast(src_col, pa.decimal256(75, scale))
+        tgt_col = pc.cast(tgt_col, pa.decimal256(75, scale))
+    return src_col, tgt_col
+
+
+def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
+    """Return an empty report table with the standard 20-column schema."""
+    start_time_type = (
+        pa.scalar(run_metadata.start_time).type
+        if run_metadata.start_time is not None
+        else pa.timestamp("us", tz="UTC")
+    )
+    return pa.schema(
+        [
+            (consts.VALIDATION_NAME, pa.string()),
+            (consts.VALIDATION_TYPE, pa.string()),
+            (consts.AGGREGATION_TYPE, pa.string()),
+            (consts.SOURCE_TABLE_NAME, pa.string()),
+            (consts.SOURCE_COLUMN_NAME, pa.string()),
+            (consts.SOURCE_AGG_VALUE, pa.string()),
+            (consts.TARGET_TABLE_NAME, pa.string()),
+            (consts.TARGET_COLUMN_NAME, pa.string()),
+            (consts.TARGET_AGG_VALUE, pa.string()),
+            (consts.GROUP_BY_COLUMNS, pa.string()),
+            (consts.CONFIG_PRIMARY_KEYS, pa.string()),
+            (consts.NUM_RANDOM_ROWS, pa.int64()),
+            (consts.VALIDATION_DIFFERENCE, pa.float64()),
+            (consts.VALIDATION_PCT_DIFFERENCE, pa.float64()),
+            (consts.VALIDATION_PCT_THRESHOLD, pa.float64()),
+            (consts.VALIDATION_STATUS, pa.string()),
+            (consts.CONFIG_RUN_ID, pa.string()),
+            (consts.CONFIG_LABELS, pa.list_(pa.list_(pa.string()))),
+            (consts.CONFIG_START_TIME, start_time_type),
+            (consts.CONFIG_END_TIME, pa.timestamp("us", tz="UTC")),
+        ]
+    ).empty_table()
+
+
+def _exact_comparison(src_col, tgt_col, float_nulls_col):
+    # User is looking for exact comparison, so we return the validation status
+    # along with the difference and percentage difference, both null values.
+    both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
+    values_equal = pc.fill_null(pc.equal(src_col, tgt_col), False)
+    is_successful = pc.if_else(
+        pc.or_kleene(both_null, values_equal),
+        consts.VALIDATION_STATUS_SUCCESS,
+        consts.VALIDATION_STATUS_FAIL,
+    )
+    return is_successful, float_nulls_col, float_nulls_col
+
+
+def _fillcolumn_string_scalar(value, num_rows) -> pa.ChunkedArray:
+    # helper function to build a column from scalar
+    return pa.repeat(pa.scalar(value, type=pa.string()), num_rows)
 
 
 def generate_report(
@@ -125,40 +177,6 @@ def generate_report(
     return result_df
 
 
-# We will use this
-def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
-    """Return an empty report table with the standard 20-column schema."""
-    start_time_type = (
-        pa.scalar(run_metadata.start_time).type
-        if run_metadata.start_time is not None
-        else pa.timestamp("us", tz="UTC")
-    )
-    return pa.schema(
-        [
-            (consts.VALIDATION_NAME, pa.string()),
-            (consts.VALIDATION_TYPE, pa.string()),
-            (consts.AGGREGATION_TYPE, pa.string()),
-            (consts.SOURCE_TABLE_NAME, pa.string()),
-            (consts.SOURCE_COLUMN_NAME, pa.string()),
-            (consts.SOURCE_AGG_VALUE, pa.string()),
-            (consts.TARGET_TABLE_NAME, pa.string()),
-            (consts.TARGET_COLUMN_NAME, pa.string()),
-            (consts.TARGET_AGG_VALUE, pa.string()),
-            (consts.GROUP_BY_COLUMNS, pa.string()),
-            (consts.CONFIG_PRIMARY_KEYS, pa.string()),
-            (consts.NUM_RANDOM_ROWS, pa.int64()),
-            (consts.VALIDATION_DIFFERENCE, pa.float64()),
-            (consts.VALIDATION_PCT_DIFFERENCE, pa.float64()),
-            (consts.VALIDATION_PCT_THRESHOLD, pa.float64()),
-            (consts.VALIDATION_STATUS, pa.string()),
-            (consts.CONFIG_RUN_ID, pa.string()),
-            (consts.CONFIG_LABELS, pa.list_(pa.list_(pa.string()))),
-            (consts.CONFIG_START_TIME, start_time_type),
-            (consts.CONFIG_END_TIME, pa.timestamp("us", tz="UTC")),
-        ]
-    ).empty_table()
-
-
 def join_and_unpivot(
     run_metadata: "RunMetadata",
     source_table: pa.Table,
@@ -167,24 +185,16 @@ def join_and_unpivot(
     is_value_comparison=False,
     verbose=False,
 ) -> pa.Table:
-# This may not be helpful
-# An successful aggregate query that produces the source and target table is guaranteed to return exactly one row.
-# However, we can check if both tables have exactly one row and throw a value error otherwise
-    if not join_on_fields:
-        # Plain column validation without a group by has at most one aggregate row per
-        # side. We join on a constant fake key so the same code path can be used.
-        if source_table.num_rows > 1 or target_table.num_rows > 1:
+    if (
+        not join_on_fields
+    ):  # Plain column validation without a group by, has only one row, we inject a fake join key
+        if source_table.num_rows != 1 or target_table.num_rows != 1:
             raise ValueError(
-                "Expected at most one row per side for a column validation without "
-                f"grouped columns, got {consts.RESULT_TYPE_SOURCE}={source_table.num_rows}, "
-                f"{consts.RESULT_TYPE_TARGET}={target_table.num_rows}"
+                "Expected exactly one row for column validation, received "
+                f"{source_table.num_rows} and {target_table.num_rows}"
             )
-        source_table = source_table.add_column(
-            0, "__dvt_fake_pk", pa.repeat(0, source_table.num_rows)
-        )
-        target_table = target_table.add_column(
-            0, "__dvt_fake_pk", pa.repeat(0, target_table.num_rows)
-        )
+        source_table = source_table.add_column(0, "__dvt_fake_pk", [[0]])
+        target_table = target_table.add_column(0, "__dvt_fake_pk", [[0]])
         pk_columns = ["__dvt_fake_pk"]
     else:
         pk_columns = join_on_fields
@@ -206,56 +216,73 @@ def join_and_unpivot(
             for col in target_table.column_names
         ]
     )
-# No this is not helpful, delete
-# This also covers the use case where one PK column is integer and the corresponding
-# column in the other table is DECIMAL. Not sure DVT permits that. Check that and delete
-# If that is possible, then promote both to Decimal256 using the function _safe_decimal_type
-    aligned = _null_safe_full_outer_join(source_renamed, target_renamed, pk_columns)
+    NULL_SENTINEL = "__dvt_null__"
+
+    # Cast PK / group-by columns to string and replace NULLs with sentinel so NULL == NULL in join
+    # All primary key columns are cast to string, so if they are of disparate types, int, decimal
+    # the join will still succeed.
+    for col in join_on_fields:
+        src_idx = source_renamed.schema.get_field_index(col)
+        source_renamed = source_renamed.set_column(
+            src_idx,
+            col,
+            pc.fill_null(pc.cast(source_renamed[col], pa.string()), NULL_SENTINEL),
+        )
+        tgt_idx = target_renamed.schema.get_field_index(col)
+        target_renamed = target_renamed.set_column(
+            tgt_idx,
+            col,
+            pc.fill_null(pc.cast(target_renamed[col], pa.string()), NULL_SENTINEL),
+        )
+
+    aligned = source_renamed.join(
+        target_renamed, keys=pk_columns, join_type="full outer"
+    )
     num_rows = aligned.num_rows
     slices = []
 
-    # 3. Many columns in the report are common across all validations, compute these once
-    run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-# This is helpful keep
-# Generally value_columns will never be empty because aggregate validtions always include a count, hash
-# and concat always have a `__all` column and comparison fields has a check for empty field list.
-# num_rows can be 0 because row validations could produce empty sets on source and target
-    if num_rows == 0 or not value_columns:
-        # PyArrow 14 raises ArrowInvalid on pa.repeat(<list>, 0) and pa.concat_tables([]).
+    # If the number of rows is null (usually row validation), return an empty table
+    if num_rows == 0:
         return _empty_report_table(run_metadata)
 
+    # 3. Many columns in the report are common across all validations, compute these once
+    run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
     run_id_col = pa.repeat(run_metadata.run_id, num_rows)
     labels_col = pa.repeat(run_metadata.labels, num_rows)
     start_time_col = pa.repeat(run_metadata.start_time, num_rows)
     end_time_col = pa.repeat(run_metadata.end_time, num_rows)
+    # Column of null values, created once and reused
+    string_nulls_col = pa.nulls(num_rows, type=pa.string())
+    float_nulls_col = pa.nulls(num_rows, type=pa.float64())
 
     # validation result needs to contain primary key/group by values for status - if present
     if join_on_fields:
-# No this is not helpful, delete
-# I use a more complicated json.dumps because of the null sentinel earlier
-        str_schema = pa.schema([(col, pa.string()) for col in join_on_fields])
+        pk_table = aligned.select(join_on_fields)
+        for i, col in enumerate(join_on_fields):
+            pk_table = pk_table.set_column(
+                i,
+                col,
+                pc.if_else(
+                    pc.equal(pk_table[col], NULL_SENTINEL),
+                    pa.scalar(None, type=pa.string()),
+                    pk_table[col],
+                ),
+            )
         group_by_cols = pa.array(
-            [
-                json.dumps(row)
-                for row in aligned.select(join_on_fields).cast(str_schema).to_pylist()
-            ],
+            [json.dumps(row) for row in pk_table.to_pylist()],
             type=pa.string(),
         )
     else:
-        group_by_cols = pa.nulls(num_rows, type=pa.string())
+        group_by_cols = string_nulls_col
 
-# Yes, define this once as null_column and use it the 6 times a column is filled with null
-    null_diff = pa.nulls(num_rows, type=pa.float64())
     # Row validations has nulls for differences and column validation has nulls for primary_keys.
     if is_value_comparison:
-        difference = null_diff
-        pct_difference = null_diff
         primary_keys = pa.repeat(
             "{" + ", ".join(join_on_fields) + "}" if join_on_fields else None,
             num_rows,
         )
     else:
-        primary_keys = pa.nulls(num_rows, type=pa.string())
+        primary_keys = string_nulls_col
 
     # 4. Loop over each value column and compare using native Arrow types
     #    and create the report for that specific validation.
@@ -268,26 +295,25 @@ def join_and_unpivot(
         tgt_agg_val = _format_value(tgt_col)
         threshold = pa.repeat(validation.threshold, num_rows)
 
+        # With comparision-fields (row validation) or aggregates (column validation)
+        # the src_col can be of integer type and the tgt_col can be of decimal type.
+        # pyArrow comparisons will work with mixed types, however some customers
+        # have reported issues with very large decimal values, when the number of decimal
+        # digits is at the max. Hence making such comparisons safe here.
+        if pa.types.is_decimal(src_col.type) or pa.types.is_decimal(tgt_col.type):
+            src_col, tgt_col = _safe_decimal_type(src_col, tgt_col)
         if is_value_comparison:  # row validation - compare values for equality
+            # With Hash and concat, the column values will always be non null
+            # With comparison-fields, we can have nulls, so the check here null==null as success.
             # Native type equality check (works on int64, decimal, string, timestamp, etc.)
-# Not helpful delete
-# In comparison fields the values can be null, so we need to ensure NULL = NULL
-# The generated code makes allowance for comparing ints with decimals - we need to check if that is a possibility
-            equal_cond = (
-                _exact_equal(src_col, tgt_col)
-                if _is_exact_type(src_col.type) and _is_exact_type(tgt_col.type)
-                else pc.equal(src_col, tgt_col)
+            is_successful, difference, pct_difference = _exact_comparison(
+                src_col, tgt_col, float_nulls_col
             )
-            is_successful = pc.if_else(
-                pc.fill_null(equal_cond, False),
-                consts.VALIDATION_STATUS_SUCCESS,
-                consts.VALIDATION_STATUS_FAIL,
-            )
-        elif _is_numeric_type(src_col.type) and _is_numeric_type(
-            tgt_col.type
+        elif _is_numeric_type(src_col) and _is_numeric_type(
+            tgt_col
         ):  # aggregated values, compare % difference against threshold
             # According to PR 195 https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/195
-            # date and timestamp aggregatins should use epoch seconds for source and target values
+            # date and timestamp aggregations should use epoch seconds for source and target values
             if pa.types.is_date(src_col.type) or pa.types.is_timestamp(src_col.type):
                 src_col = pc.cast(
                     pc.cast(src_col, pa.timestamp("s"), safe=False), pa.int64()
@@ -296,68 +322,58 @@ def join_and_unpivot(
                 tgt_col = pc.cast(
                     pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64()
                 )
-# Not helpful delete
-# We have to do a safe casting here - at the same time deal with the quirks of
-# how people use int and decimal when threshold = 0
-            src_num = pc.cast(src_col, pa.float64(), safe=False)
-            tgt_num = pc.cast(tgt_col, pa.float64(), safe=False)
-            difference = pc.subtract(tgt_num, src_num)
-            pct_difference = pc.if_else(
-                pc.equal(difference, 0),
-                0.0,
-                pc.round(
-                    pc.multiply(
-                        100.0,
-                        pc.divide(
-                            difference,
-                            pc.if_else(pc.equal(src_num, 0), tgt_num, src_num),
-                        ),
-                    ),
-                    ndigits=4,
-                ),
-            )
-# Not helpful delete
-# See earlier comment about dealing with quirks of how people use int and decimal when threshold = 0
-# Also need to deal with the situation that NULL = NULL in aggregates
-            if (
-                not validation.threshold
-                and validation.aggregation_type
-                not in (consts.CONFIG_TYPE_AVG, consts.CONFIG_TYPE_STD)
-                and _is_exact_type(src_col.type)
-                and _is_exact_type(tgt_col.type)
-            ):
-                # With a zero threshold integer/decimal aggregates must match exactly.
-                # The float64 difference above can lose precision beyond ~16 significant
-                # digits so we compare the native values instead, Arrow promotes both
-                # sides to a common integer/decimal type without loss.
-                # avg and std are approximate by nature, engines return them with
-                # different precision/scale, so they use the percentage difference.
-                success_condition = _exact_equal(src_col, tgt_col)
+            if validation.threshold < consts.VALIDATION_PCT_SENSITIVITY:
+                # User is looking for exact comparison
+                is_successful, difference, pct_difference = _exact_comparison(
+                    src_col, tgt_col, float_nulls_col
+                )
             else:
-                success_condition = pc.less_equal(pc.abs(pct_difference), threshold)
-            is_successful = pc.if_else(
-                pc.fill_null(success_condition, False),
-                consts.VALIDATION_STATUS_SUCCESS,
-                consts.VALIDATION_STATUS_FAIL,
-            )
-# Not helpful delete
-# However, we will use the _is_string_type function
-        elif _is_string_type(src_col.type) and _is_string_type(tgt_col.type):
-            # String aggregates (e.g. min/max of a UUID cast to string, or legacy
-            # cast: string configs) have no numeric difference and compare by equality.
-            difference = null_diff
-            pct_difference = null_diff
-            is_successful = pc.if_else(
-                pc.fill_null(pc.equal(src_col, tgt_col), False),
-                consts.VALIDATION_STATUS_SUCCESS,
-                consts.VALIDATION_STATUS_FAIL,
+                # We need to use threshold for success and failure
+                difference = pc.subtract(tgt_col, src_col)
+                # difference is the same type as tgt_col and src_col, but needs to be
+                # float in the table, so casting it now.
+                difference = pc.cast(difference, pa.float64())
+                pct_difference = pc.if_else(
+                    pc.equal(difference, 0.0),
+                    0.0,
+                    pc.round(
+                        pc.divide(
+                            pc.multiply(
+                                100.0, pc.cast(difference, pa.float32(), safe=False)
+                            ),
+                            pc.cast(
+                                pc.if_else(
+                                    pc.equal(src_col, pa.scalar(0, type=src_col.type)),
+                                    tgt_col,
+                                    src_col,
+                                ),
+                                pa.float64(),
+                                safe=False,
+                            ),
+                        ),
+                        ndigits=4,
+                    ),
+                )
+                # Some aggregates can be null if all the values are null so handle null==null;
+                both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
+                values_below_threshold = pc.fill_null(
+                    pc.less_equal(pc.abs(pct_difference), threshold), False
+                )
+                is_successful = pc.if_else(
+                    pc.or_kleene(both_null, values_below_threshold),
+                    consts.VALIDATION_STATUS_SUCCESS,
+                    consts.VALIDATION_STATUS_FAIL,
+                )
+        elif _is_string_type(src_col) and _is_string_type(tgt_col):
+            # column aggregates should generally be numeric. Where we allow aggregates like
+            # max, min of strings, uuid, binary, we have to set difference and pct_difference
+            # to null and just provide success/fail. We also have to handle null == null as
+            # success.
+            is_successful, difference, pct_difference = _exact_comparison(
+                src_col, tgt_col, float_nulls_col
             )
         else:
-            raise ValueError(
-                f"Aggregate value of {col} must be numeric or string, got "
-                f"{consts.RESULT_TYPE_SOURCE}: {src_col.type}, "
-                f"{consts.RESULT_TYPE_TARGET}: {tgt_col.type}"
-            )
+            raise ValueError(f"Aggregate value {col} must be numeric or string")
 
         # 3. Cast display values to string so all slices share the same output schema
         validation_name_col = pa.repeat(col, num_rows)
@@ -365,37 +381,21 @@ def join_and_unpivot(
             {
                 consts.VALIDATION_NAME: validation_name_col,
                 consts.VALIDATION_TYPE: pa.repeat(validation.validation_type, num_rows),
-                consts.AGGREGATION_TYPE: pa.repeat(
-                    pa.scalar(validation.aggregation_type, type=pa.string()), num_rows
+                consts.AGGREGATION_TYPE: _fillcolumn_string_scalar(
+                    validation.aggregation_type, num_rows
                 ),
-                consts.SOURCE_TABLE_NAME: pa.repeat(
-                    pa.scalar(
-                        validation.get_table_name(consts.RESULT_TYPE_SOURCE),
-                        type=pa.string(),
-                    ),
-                    num_rows,
+                consts.SOURCE_TABLE_NAME: _fillcolumn_string_scalar(
+                    validation.get_table_name(consts.RESULT_TYPE_SOURCE), num_rows
                 ),
-                consts.SOURCE_COLUMN_NAME: pa.repeat(
-                    pa.scalar(
-                        validation.get_column_name(consts.RESULT_TYPE_SOURCE),
-                        type=pa.string(),
-                    ),
-                    num_rows,
+                consts.SOURCE_COLUMN_NAME: _fillcolumn_string_scalar(
+                    validation.get_column_name(consts.RESULT_TYPE_SOURCE), num_rows
                 ),
                 consts.SOURCE_AGG_VALUE: src_agg_val,
-                consts.TARGET_TABLE_NAME: pa.repeat(
-                    pa.scalar(
-                        validation.get_table_name(consts.RESULT_TYPE_TARGET),
-                        type=pa.string(),
-                    ),
-                    num_rows,
+                consts.TARGET_TABLE_NAME: _fillcolumn_string_scalar(
+                    validation.get_table_name(consts.RESULT_TYPE_TARGET), num_rows
                 ),
-                consts.TARGET_COLUMN_NAME: pa.repeat(
-                    pa.scalar(
-                        validation.get_column_name(consts.RESULT_TYPE_TARGET),
-                        type=pa.string(),
-                    ),
-                    num_rows,
+                consts.TARGET_COLUMN_NAME: _fillcolumn_string_scalar(
+                    validation.get_column_name(consts.RESULT_TYPE_TARGET), num_rows
                 ),
                 consts.TARGET_AGG_VALUE: tgt_agg_val,
                 consts.GROUP_BY_COLUMNS: group_by_cols,
@@ -414,91 +414,6 @@ def join_and_unpivot(
         slices.append(col_slice)
     # 4. Stack all per-column slices into the final unpivoted table
     return pa.concat_tables(slices)
-
-
-# Not helpful delete
-def _align_key_types(source_table: pa.Table, target_table: pa.Table, keys: list):
-    """Cast join keys with differing source/target types to a common type.
-
-    PyArrow joins require identical key types but engines often return the same key with
-    different types, e.g. Oracle NUMBER(5) as decimal128(5, 0) and BigQuery INT64 as int64.
-    For numeric keys we try a safe cast in each direction, a safe cast raises rather than
-    lose data. Other type mismatches are not silently converted.
-    """
-
-    def _is_numeric(data_type: pa.DataType) -> bool:
-        return (
-            pa.types.is_integer(data_type)
-            or pa.types.is_decimal(data_type)
-            or pa.types.is_floating(data_type)
-        )
-
-    for key in keys:
-        source_col = source_table[key]
-        target_col = target_table[key]
-        if source_col.type == target_col.type:
-            continue
-        incompatible = ValueError(
-            f"Unable to join on key {key}, incompatible data types "
-            f"{consts.RESULT_TYPE_SOURCE}: {source_col.type}, "
-            f"{consts.RESULT_TYPE_TARGET}: {target_col.type}"
-        )
-        if not (_is_numeric(source_col.type) and _is_numeric(target_col.type)):
-            raise incompatible
-        try:
-            target_table = target_table.set_column(
-                target_table.column_names.index(key),
-                key,
-                target_col.cast(source_col.type),
-            )
-            continue
-        except (pa.ArrowInvalid, pa.ArrowNotImplementedError):
-            pass
-        try:
-            source_table = source_table.set_column(
-                source_table.column_names.index(key),
-                key,
-                source_col.cast(target_col.type),
-            )
-        except (pa.ArrowInvalid, pa.ArrowNotImplementedError) as e:
-            raise incompatible from e
-    return source_table, target_table
-
-
-# Not helpful delete
-def _null_safe_full_outer_join(
-    source_table: pa.Table, target_table: pa.Table, keys: list
-) -> pa.Table:
-    """Full outer join source and target tables where NULL key values match each other.
-
-    PyArrow joins follow SQL semantics where NULL != NULL. A grouped column validation can
-    legitimately have a NULL group, which must be matched between source and target.
-    For each key containing NULLs we join on a stand-in key instead: the position of each
-    value in the distinct values from both tables. NULL is one of those distinct values so
-    it matches itself. The original values, including NULLs, are restored after the join.
-    """
-
-    def _replace(table: pa.Table, name: str, values) -> pa.Table:
-        return table.set_column(table.column_names.index(name), name, values)
-
-    source_table, target_table = _align_key_types(source_table, target_table, keys)
-    value_sets = {}
-    for key in keys:
-        if not (source_table[key].null_count or target_table[key].null_count):
-            continue
-        value_set = pc.unique(
-            pa.chunked_array(source_table[key].chunks + target_table[key].chunks)
-        )
-        value_sets[key] = value_set
-        source_table, target_table = (
-            _replace(t, key, pc.index_in(t[key], value_set=value_set, skip_nulls=False))
-            for t in (source_table, target_table)
-        )
-
-    aligned = source_table.join(target_table, keys=list(keys), join_type="full outer")
-    for key, value_set in value_sets.items():
-        aligned = _replace(aligned, key, value_set.take(aligned[key]))
-    return aligned
 
 
 def _check_schema_names(source_table: pa.Table, target_table: pa.Table):
