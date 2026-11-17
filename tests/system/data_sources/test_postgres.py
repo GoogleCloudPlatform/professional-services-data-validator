@@ -707,7 +707,6 @@ def test_column_validation_core_types_to_bigquery():
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
-    breakpoint()
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
