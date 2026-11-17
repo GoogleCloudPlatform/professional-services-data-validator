@@ -46,6 +46,16 @@ def _is_numeric_type(column: pa.ChunkedArray) -> bool:
     )
 
 
+def _exact_numeric_types(src_col: pa.ChunkedArray, tgt_col: pa.ChunkedArray) -> bool:
+    return not (
+        pa.types.is_floating(src_col.type) or pa.types.is_floating(tgt_col.type)
+    )
+
+
+def _aggregation_type_not_lossy(aggregation_type: str) -> bool:
+    return not (aggregation_type.lower() in ["avg", "std"])
+
+
 def _is_string_type(column: pa.ChunkedArray) -> bool:
     return pa.types.is_string(column.type) or pa.types.is_large_string(column.type)
 
@@ -322,7 +332,11 @@ def join_and_unpivot(
                 tgt_col = pc.cast(
                     pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64()
                 )
-            if validation.threshold < consts.VALIDATION_PCT_SENSITIVITY:
+            if (
+                _aggregation_type_not_lossy(validation.aggregation_type)
+                and validation.threshold < consts.VALIDATION_PCT_SENSITIVITY
+                and _exact_numeric_types(src_col, tgt_col)
+            ):
                 # User is looking for exact comparison
                 is_successful, difference, pct_difference = _exact_comparison(
                     src_col, tgt_col, float_nulls_col
