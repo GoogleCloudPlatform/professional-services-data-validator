@@ -1572,7 +1572,7 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
 
 
 def test_connections_add_fail(caplog, tmp_path, monkeypatch):
-    """Test data-validation connections add command with an invalid project."""
+    """Test data-validation connections add command with a project that does not exist."""
     conn_args = [
         "--project-id",
         "dvt-project-does-not-exist",
