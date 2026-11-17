@@ -656,12 +656,21 @@ def test_get_tables_list_err(test_input):
         ("col_a,col_b", ["col_a", "col_b"]),
         ("col_a", ["col_a"]),
         ("col a,col b", ["col a", "col b"]),
+        ("col_a, col_b ,  col_c", ["col_a", "col_b", "col_c"]),
     ],
 )
 def test_get_arg_list(test_input, expected):
     """Test get aggregations list of columns."""
     res = cli_tools.get_arg_list(test_input)
     assert res == expected
+
+
+def test_pre_build_configs_exclude_columns_with_spaces():
+    """A space after the comma must not stop a column being excluded."""
+    cols = cli_tools._get_pre_build_configs_cols_from_arg(
+        "col_b, col_c", ["col_a", "col_b", "col_c"], True
+    )
+    assert cols == ["col_a"]
 
 
 @pytest.mark.parametrize(
@@ -802,6 +811,42 @@ def test_get_filters_fail(test_input: str):
     """Test get filters."""
     with pytest.raises(argparse.ArgumentTypeError):
         _ = cli_tools.get_filters(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        # A "::" type cast is not the source/target separator.
+        (
+            "id::text = '5'",
+            [
+                {
+                    "type": "custom",
+                    "source": "id::text = '5'",
+                    "target": "id::text = '5'",
+                }
+            ],
+        ),
+        (
+            "created_at::date > '2024-01-01':CAST(created_at AS DATE) > '2024-01-01'",
+            [
+                {
+                    "type": "custom",
+                    "source": "created_at::date > '2024-01-01'",
+                    "target": "CAST(created_at AS DATE) > '2024-01-01'",
+                }
+            ],
+        ),
+        (
+            "a::int > 1:b::int > 1",
+            [{"type": "custom", "source": "a::int > 1", "target": "b::int > 1"}],
+        ),
+    ],
+)
+def test_get_filters_type_cast(test_input: str, expected: list):
+    """Test get filters with PostgreSQL style "::" type casts."""
+    res = cli_tools.get_filters(test_input)
+    assert res == expected
 
 
 @pytest.mark.parametrize(
@@ -1405,3 +1450,30 @@ def test_get_pre_build_configs_lazy_base_columns(
         mock_query_schema.assert_called_once_with(
             mock_client, "SELECT id, col1 FROM s.t"
         )
+
+
+def test_print_validations_in_dir(tmp_path, caplog):
+    caplog.set_level(logging.INFO)
+    (tmp_path / "b.yaml").write_text("")
+    (tmp_path / "a.yaml").write_text("")
+    (tmp_path / "notes.txt").write_text("")
+    cli_tools.print_validations_in_dir(config_dir=str(tmp_path))
+    messages = [record.getMessage() for record in caplog.records]
+    assert "a.yaml" in messages
+    assert "b.yaml" in messages
+    assert "notes.txt" not in messages
+
+
+def test_print_validations_in_dir_no_yaml_files(tmp_path):
+    """configs list must not report success when there is nothing to list (issue 1597)."""
+    (tmp_path / "notes.txt").write_text("")
+    with pytest.raises(ValueError, match="No validation YAML files found"):
+        cli_tools.print_validations_in_dir(config_dir=str(tmp_path))
+
+
+@mock.patch("data_validation.gcs_helper.list_gcs_directory", return_value=[])
+def test_print_validations_in_dir_empty_gcs_prefix(mock_list_gcs):
+    """A misspelt GCS prefix matches no objects, which must be reported as an error."""
+    with pytest.raises(ValueError, match="No validation YAML files found"):
+        cli_tools.print_validations_in_dir(config_dir="gs://my-bucket/typo-dir")
+    mock_list_gcs.assert_called_once_with("gs://my-bucket/typo-dir/")

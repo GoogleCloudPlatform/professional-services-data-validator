@@ -39,6 +39,11 @@
 
 - Requires the `snowflake-sqlalchemy` package to be installed as an extra dependency.
 
+## Spanner
+
+- Only GoogleSQL dialect databases are supported. Connecting to a PostgreSQL dialect database fails with an error. See [issue-1877](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1877) for details.
+- Spanner does not support the `ROW_NUMBER()` window function. At the current time this prevents Spanner from being the source table in a `generate-table-partitions` command. A simple workaround is to flip the source and target connections. See [issue-1059](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1059) for details.
+
 ## SQL Server
 
 - Requires the `pyodbc` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
@@ -46,7 +51,7 @@
 - The `text` and `ntext` data types are incompatible with the `len()` therefore the `datalength()` function ius used in it's place which will give different results for multibyte characters.
 - The `image` data type is not currently supported, these columns are skipped when validated. See [issue-1578](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578) for details.
 - SQL Server's `AVG()` function can overflow and return an arithmetic overflow error when calculating the average of a max-precision decimal column (e.g. `decimal(38)`). If you encounter this, exclude the column(s) from the list of columns passed to the `--avg` option.
-- SQL Server has a limit of 2,100 query parameters. This effects `--use-random-row` validation when using composite primary keys. `--random-row-batch-size` should be limited to 2,100 minus margin for other filters, divided by the number of primary key columns.
+- SQL Server has a limit of 2,100 query parameters, which affects `--use-random-row` validation. When SQL Server is used as either the source or target, the tool automatically caps `--random-row-batch-size` (to `2000 // number_of_primary_keys`, with a minimum of 1) to ensure the total number of bound parameters stays within the limit. The effective batch size is logged, used during query execution, and reflected in the validation results.
 
 ## Sybase ASE
 

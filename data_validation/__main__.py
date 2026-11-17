@@ -301,7 +301,7 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
             primary_keys = config_manager.auto_list_primary_keys()
         if not primary_keys:
             raise ValueError(
-                "No primary keys were provided and neither the source or target tables have primary keys. Please include --primary-keys argument"
+                "No primary keys were provided and neither the source or target tables have usable primary keys. Please include --primary-keys argument"
             )
         primary_keys = [_.casefold() for _ in primary_keys]
         config_manager.append_primary_keys(
@@ -581,10 +581,13 @@ def main():
     _use_utf8_stdout()
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
+    # force=True because a warning logged while parsing arguments (e.g. for a
+    # deprecated option) has already configured the root logger with defaults.
     logging.basicConfig(
         level=LOG_LEVEL_MAP[args.log_level],
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
+        force=True,
     )
     if args.command == "connections":
         run_connections(args)

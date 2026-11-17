@@ -40,7 +40,7 @@ BLACK_PATHS = (
     "noxfile.py",
     "setup.py",
 )
-LINT_PACKAGES = ["flake8", "black==26.5.1"]
+LINT_PACKAGES = ["flake8", "black==26.10.1"]
 UNIT_PACKAGES = [
     "pyfakefs",
     "freezegun",
@@ -230,6 +230,23 @@ def integration_spanner(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS))
+def integration_spanner_pg(session):
+    """Run Spanner PostgreSQL dialect integration tests.
+    Ensure Spanner PostgreSQL dialect validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    expected_env_vars = ["PROJECT_ID"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run(
+        "pytest", "tests/system/data_sources/test_spanner_pg.py", *session.posargs
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))

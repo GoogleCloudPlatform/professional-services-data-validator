@@ -1324,8 +1324,24 @@ def list_validations(config_dir="./"):
     return [file_name for file_name in files if file_name.endswith(".yaml")]
 
 
+def list_validation_files(config_dir: str) -> list:
+    """Return the sorted validation YAML file names found in config_dir.
+
+    An empty directory is treated as an error rather than as zero work to do. This
+    matters most for Cloud Storage, where a misspelt prefix such as
+    gs://my-bucket/typo-dir/ is not an error in itself, it simply matches no objects.
+    Without this check DVT would report a successful run having validated nothing.
+    """
+    config_file_names = sorted(list_validations(config_dir=config_dir))
+    if not config_file_names:
+        raise ValueError(
+            f"No validation YAML files found in config directory: {config_dir}"
+        )
+    return config_file_names
+
+
 def print_validations_in_dir(config_dir="./"):
-    validations = list_validations(config_dir=config_dir)
+    validations = list_validation_files(config_dir)
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
         logging.info(validation_name)
@@ -1350,8 +1366,13 @@ def get_filters(filter_value: str) -> List[Dict]:
     A filter is the condition that is used in a SQL WHERE clause.
     If only one filter is specified, it applies to both source and target
     For a doc on regular expression for filters see docs/internal/filters_regex.md
+
+    The separator is a lone colon, matched with "(?<!:):(?!:)", so "::" type casts
+    (PostgreSQL, Redshift, Snowflake), e.g. "id::text = '5'", are not split.
+    Snowflake JSON path expressions such as "src_json:customer:age::INTEGER" are
+    still unsupported, because the single ":" path operator looks like a separator.
     """
-    filters = util.split_not_in_quotes(filter_value, ":")
+    filters = util.split_not_in_quotes(filter_value, "(?<!:):(?!:)")
     if len(filters) not in (1, 2):
         raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
     filters = [_.strip() for _ in filters]
@@ -1432,7 +1453,9 @@ def get_arg_list(arg_value, default_value=None):
     if not arg_value:
         return default_value
 
-    return _read_json_value(arg_value) or arg_value.split(",")
+    # Trim each item so "col_a, col_b" is the same as "col_a,col_b". Column names
+    # with surrounding spaces are not something we need to support.
+    return _read_json_value(arg_value) or [_.strip() for _ in arg_value.split(",")]
 
 
 def _read_json_value(arg_value: str) -> list:
