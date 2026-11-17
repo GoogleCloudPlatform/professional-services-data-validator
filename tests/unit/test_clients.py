@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 from unittest import mock
 
 import pytest
@@ -22,6 +23,7 @@ import ibis.backends.pandas
 from ibis.backends.pandas import BasePandasBackend as PandasBackend
 
 from data_validation import clients, consts, exceptions
+from third_party.ibis.ibis_bigquery import DVT_PING_TIMEOUT_SECONDS
 
 try:
     import ibm_db_sa
@@ -299,6 +301,30 @@ def test_get_bigquery_data_client_verify_connection(mock_query):
     job_config = mock_query.call_args.kwargs["job_config"]
     assert job_config.dry_run is True
     assert job_config.use_query_cache is False
+    assert mock_query.call_args.kwargs["timeout"] == DVT_PING_TIMEOUT_SECONDS
+    assert mock_query.call_args.kwargs["retry"].timeout == DVT_PING_TIMEOUT_SECONDS
+    assert mock_query.call_args.kwargs["job_retry"] is None
+
+
+@mock.patch("third_party.ibis.ibis_bigquery.DVT_PING_TIMEOUT_SECONDS", 1)
+def test_get_bigquery_data_client_verify_connection_does_not_wait_long():
+    mock_credentials = mock.create_autospec(credentials.Credentials)
+    conn_config = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+        consts.PROJECT_ID: "test-project",
+        consts.BILLING_PROJECT_ID: "test-project",
+        # Nothing listens on this port, so every call fails.
+        consts.API_ENDPOINT: "http://127.0.0.1:9",
+    }
+
+    start = time.monotonic()
+    with mock.patch(
+        "google.auth.default", return_value=(mock_credentials, "test-project")
+    ):
+        with pytest.raises(exceptions.DataClientConnectionFailure):
+            clients.get_data_client(conn_config, verify_connection=True)
+
+    assert time.monotonic() - start < 15
 
 
 @mock.patch("google.cloud.bigquery.Client.query")

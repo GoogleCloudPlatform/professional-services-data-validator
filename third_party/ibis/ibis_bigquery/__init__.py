@@ -33,6 +33,8 @@ import third_party.ibis.ibis_bigquery.datatypes  # noqa: F401
 if TYPE_CHECKING:
     import google.cloud.bigquery_storage_v1
 
+DVT_PING_TIMEOUT_SECONDS = 30
+
 
 class Backend(BigQueryBackend):
     def __init__(self):
@@ -167,7 +169,11 @@ class Backend(BigQueryBackend):
         Creating the client does not call BigQuery, so bad credentials or projects
         are not found until the first query.
         """
+        # timeout only limits one HTTP call, the default retries keep trying for minutes.
         self.client.query(
             "SELECT 1",
             job_config=bq.QueryJobConfig(dry_run=True, use_query_cache=False),
+            timeout=DVT_PING_TIMEOUT_SECONDS,
+            retry=bq.DEFAULT_RETRY.with_timeout(DVT_PING_TIMEOUT_SECONDS),
+            job_retry=None,
         )
