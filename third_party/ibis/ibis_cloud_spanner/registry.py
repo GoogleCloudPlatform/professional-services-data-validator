@@ -77,7 +77,8 @@ def _cast(translator: sql_compiler.ExprTranslator, op: ops.Cast) -> str:
 
     Spanner GoogleSQL has no DATETIME type, so casts to a timezone-naive or UTC
     timestamp map to Spanner TIMESTAMP (converting DATE values at midnight UTC).
-    All other casts delegate to bigquery_cast.
+    Casts from TIMESTAMP to DATE use the UTC date rather than Spanner's default
+    time zone (America/Los_Angeles). All other casts delegate to bigquery_cast.
 
     Note: Casting a timezone-naive STRING expression to TIMESTAMP uses Spanner's
     default time zone (America/Los_Angeles) rather than UTC.
@@ -94,6 +95,8 @@ def _cast(translator: sql_compiler.ExprTranslator, op: ops.Cast) -> str:
     """
     arg, target_type = op.arg, op.to
     arg_formatted = translator.translate(arg)
+    if target_type.is_date() and arg.dtype.is_timestamp():
+        return f"DATE({arg_formatted}, 'UTC')"
     if not target_type.is_timestamp():
         return bigquery_cast(arg_formatted, arg.dtype, target_type)
     if target_type.timezone not in (None, "UTC"):

@@ -341,6 +341,11 @@ def test_bigquery_epoch_seconds_compiles_timestamp_cast():
             ["CAST(t0.`ts` AS STRING)"],
             id="timestamp_cast_string",
         ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("date"),
+            ["DATE(t0.`ts`, 'UTC')"],
+            id="timestamp_cast_date",
+        ),
     ],
 )
 def test_spanner_epoch_seconds_and_timestamp_casts(expr, expected_fragments):
