@@ -69,6 +69,12 @@ data-validation connections delete -c CONN_NAME
 data-validation connections describe -c CONN_NAME
 ```
 
+## Test an existing connection
+
+```sh
+data-validation connections test -c CONN_NAME
+```
+
 ## List supported connection types
 
 ```sh
