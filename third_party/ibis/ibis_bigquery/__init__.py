@@ -162,11 +162,10 @@ class Backend(BigQueryBackend):
         return True
 
     def dvt_ping(self) -> None:
-        """Make a cheap round trip to BigQuery to validate the connection.
+        """Run a free dry-run query to check the connection.
 
-        Creating a bq.Client does not make any API calls, therefore invalid
-        credentials or projects are not detected until the first query. A dry-run
-        query is free, but still validates credentials.
+        Creating the client does not call BigQuery, so bad credentials or projects
+        are not found until the first query.
         """
         self.client.query(
             "SELECT 1",
