@@ -76,6 +76,31 @@ def test_backend_get_schema_with_float32():
     assert schema["col_float32"] == dt.float32
 
 
+def test_backend_get_schema_marks_not_null_columns():
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+    database = backend.instance.database.return_value
+    database.table.return_value.schema = [
+        StructType.Field(name="col_nn", type_=Type(code=TypeCode.INT64)),
+        StructType.Field(name="col_nullable", type_=Type(code=TypeCode.STRING)),
+    ]
+    mock_snapshot = database.snapshot.return_value.__enter__.return_value
+    mock_snapshot.execute_sql.return_value = iter([["col_nn"]])
+
+    schema = backend.get_schema("dvt_null_not_null")
+
+    assert schema["col_nn"] == dt.Int64(nullable=False)
+    assert not schema["col_nn"].nullable
+    assert schema["col_nullable"].nullable
+    assert list(schema.names) == ["col_nn", "col_nullable"]
+    sql = mock_snapshot.execute_sql.call_args.args[0]
+    assert "is_nullable = 'NO'" in sql
+    assert mock_snapshot.execute_sql.call_args.kwargs["params"] == {
+        "table_name": "dvt_null_not_null"
+    }
+
+
 def test_backend_get_schema_using_query_with_float32():
     backend = Backend()
     backend.dataset = "pso_data_validator"

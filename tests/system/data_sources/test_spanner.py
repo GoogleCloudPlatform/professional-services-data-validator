@@ -256,9 +256,6 @@ def test_schema_validation_core_types_to_bigquery():
 )
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
-    pytest.skip(
-        "Skipping test_schema_validation_not_null_vs_nullable due to issue-1889."
-    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
