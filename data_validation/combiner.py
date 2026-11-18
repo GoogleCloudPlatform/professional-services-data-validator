@@ -198,6 +198,8 @@ def join_and_unpivot(
     if (
         not join_on_fields
     ):  # Plain column validation without a group by, has only one row, we inject a fake join key
+        # An aggregate query without a GROUP BY always returns exactly one row, even on an
+        # empty table. Any other row count fails loudly.
         if source_table.num_rows != 1 or target_table.num_rows != 1:
             raise ValueError(
                 "Expected exactly one row for column validation, received "
@@ -250,13 +252,14 @@ def join_and_unpivot(
     )
     num_rows = aligned.num_rows
     slices = []
+    run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
-    # If the number of rows is null (usually row validation), return an empty table
-    if num_rows == 0:
+    # If there are no rows (usually row validation on empty tables/partitions) or no
+    # value columns, return an empty report table.
+    if num_rows == 0 or not value_columns:
         return _empty_report_table(run_metadata)
 
     # 3. Many columns in the report are common across all validations, compute these once
-    run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
     run_id_col = pa.repeat(run_metadata.run_id, num_rows)
     labels_col = pa.repeat(run_metadata.labels, num_rows)
     start_time_col = pa.repeat(run_metadata.start_time, num_rows)
@@ -403,7 +406,11 @@ def join_and_unpivot(
                 src_col, tgt_col, float_nulls_col
             )
         else:
-            raise ValueError(f"Aggregate value {col} must be numeric or string")
+            raise ValueError(
+                f"Aggregate value of {col} must be numeric or string, got "
+                f"{consts.RESULT_TYPE_SOURCE}: {src_col.type}, "
+                f"{consts.RESULT_TYPE_TARGET}: {tgt_col.type}"
+            )
 
         # 3. Cast display values to string so all slices share the same output schema
         validation_name_col = pa.repeat(col, num_rows)

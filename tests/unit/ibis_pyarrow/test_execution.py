@@ -171,6 +171,34 @@ def test_base_to_pyarrow_preserves_overflowing_numerics(
     assert result["agg_val"][0].as_py() == expected_py_val
 
 
+def test_base_to_pyarrow_returns_empty_table_when_no_rows():
+    t = ibis.table([("col", "int64")], name="t")
+    backend = _FakeSQLBackend([])
+
+    result = backend.to_pyarrow(t)
+
+    assert result.num_rows == 0
+    assert result.schema == t.schema().to_pyarrow()
+
+
+def test_base_to_pyarrow_does_not_swallow_value_errors():
+    """A ValueError while fetching must propagate rather than become an empty table.
+
+    Otherwise a failed query looks like a query returning no rows.
+    """
+
+    class _FailingBackend(_FakeSQLBackend):
+        def _cursor_batches(self, expr, params=None, limit=None, chunk_size=1_000_000):
+            raise ValueError("simulated fetch failure")
+            yield  # pragma: no cover
+
+    t = ibis.table([("col", "int64")], name="t")
+    backend = _FailingBackend([])
+
+    with pytest.raises(ValueError, match="simulated fetch failure"):
+        backend.to_pyarrow(t.aggregate(agg_val=t.col.sum()))
+
+
 def test_sql_to_pyarrow_batches_unifies_mismatched_batch_schemas():
     t = ibis.table(
         [

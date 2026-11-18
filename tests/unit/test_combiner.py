@@ -648,7 +648,10 @@ def test_generate_report_with_incompatible_key_types(module_under_test):
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pyarrow.table({"count": [1, 1]})
     target = pyarrow.table({"count": [2, 2]})
-    with pytest.raises(ValueError, match="Expected at most one row per side"):
+    with pytest.raises(
+        ValueError,
+        match="Expected exactly one row for column validation, received 2 and 2",
+    ):
         module_under_test.generate_report(
             EXAMPLE_RUN_METADATA,
             source,
@@ -656,15 +659,35 @@ def test_generate_report_with_too_many_rows(module_under_test):
         )
 
 
-def test_generate_report_with_empty_target(module_under_test):
-    """A column validation where the target returns no rows should fail, not error."""
-    source = pyarrow.table({"count": [1]})
-    target = pyarrow.table({"count": pyarrow.array([], type=pyarrow.int64())})
-    report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+@pytest.mark.parametrize(
+    ("source_rows", "target_rows"),
+    [
+        # Target returned no rows.
+        ([1], []),
+        # Source returned no rows.
+        ([], [1]),
+        # Both sides returned no rows.
+        ([], []),
+    ],
+)
+def test_generate_report_ungrouped_with_empty_side_raises(
+    module_under_test, source_rows, target_rows
+):
+    """An aggregate query without grouped columns always returns exactly one row.
 
-    assert len(report) == 1
-    assert report.loc[0, consts.SOURCE_AGG_VALUE] == "1"
-    assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
+    Zero rows on either side means the query or fetch went wrong, so the combiner raises
+    rather than reporting a misleading mismatch or an empty (silently passing) report.
+    """
+    source = pyarrow.table({"count": pyarrow.array(source_rows, type=pyarrow.int64())})
+    target = pyarrow.table({"count": pyarrow.array(target_rows, type=pyarrow.int64())})
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Expected exactly one row for column validation, received "
+            f"{len(source_rows)} and {len(target_rows)}"
+        ),
+    ):
+        module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
 
 
 @pytest.mark.parametrize("labels", [[], [("env", "dev")]])
@@ -683,8 +706,8 @@ def test_generate_report_with_empty_target(module_under_test):
             False,
             pyarrow.schema([("id", pyarrow.int64()), ("count", pyarrow.int64())]),
         ),
-        # Ungrouped validation where both sides return 0 rows (e.g. custom query)
-        ((), False, pyarrow.schema([("count", pyarrow.int64())])),
+        # Ungrouped validations with empty sides raise, see
+        # test_generate_report_ungrouped_with_empty_side_raises.
     ],
 )
 def test_generate_report_with_both_sides_empty(

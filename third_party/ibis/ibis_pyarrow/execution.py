@@ -278,20 +278,19 @@ def _base_to_pyarrow(self, expr, *, params=None, limit=None, **kwargs):
     self._run_pre_execute_hooks(expr)
     table_expr = expr.as_table()
     arrow_schema = table_expr.schema().to_pyarrow()
-    try:
-        with self.to_pyarrow_batches(
-            table_expr, params=params, limit=limit, **kwargs
-        ) as reader:
-            batches = list(reader)
-            if not batches:
-                result = arrow_schema.empty_table()
-            else:
-                table = pa.Table.from_batches(batches)
-                result = _align_table_preserving_precision(table, arrow_schema)
-    except pa.lib.ArrowInvalid:
-        raise
-    except ValueError:
-        result = arrow_schema.empty_table()
+    # Upstream Ibis wraps this in "except ValueError: return an empty table" because
+    # pa.Table.from_batches() raises ValueError when there are no batches. We handle that
+    # case explicitly below, so we do not catch ValueError: doing so would turn real query
+    # or fetch errors into an empty result (pa.ArrowInvalid is itself a ValueError).
+    with self.to_pyarrow_batches(
+        table_expr, params=params, limit=limit, **kwargs
+    ) as reader:
+        batches = list(reader)
+        if not batches:
+            result = arrow_schema.empty_table()
+        else:
+            table = pa.Table.from_batches(batches)
+            result = _align_table_preserving_precision(table, arrow_schema)
 
     if isinstance(expr, ibis.expr.types.Table):
         return result
