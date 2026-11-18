@@ -339,45 +339,51 @@ def join_and_unpivot(
                 tgt_col = pc.cast(
                     pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64()
                 )
+            try:
+                difference = pc.subtract_checked(tgt_col, src_col)
+            except (pa.ArrowInvalid, pa.ArrowNotImplementedError):
+                # The exact result overflows int64 or needs more than 76 decimal
+                # digits, so subtract as float64 instead.
+                difference = pc.subtract(
+                    pc.cast(tgt_col, pa.float64(), safe=False),
+                    pc.cast(src_col, pa.float64(), safe=False),
+                )
+            # difference is the same type as tgt_col and src_col, but needs to be
+            # float in the table, so casting it now.
+            # While calculating percentage difference, we need to handle small values and
+            # we assume tpip hey are effectively equal if the absolute difference is below the sensitivity threshold
+            # Though the sensitivity threshold is for percentages, we are using it as an absolute value here.
+            difference = pc.cast(difference, pa.float64(), safe=False)
+            pct_difference = pc.if_else(
+                pc.less(pc.abs(difference), consts.VALIDATION_PCT_SENSITIVITY),
+                0.0,
+                pc.round(
+                    pc.divide(
+                        pc.multiply(100.0, difference),
+                        pc.cast(
+                            pc.if_else(
+                                pc.equal(src_col, pa.scalar(0, type=src_col.type)),
+                                tgt_col,
+                                src_col,
+                            ),
+                            pa.float64(),
+                            safe=False,
+                        ),
+                    ),
+                    ndigits=4,
+                ),
+            )
             if (
                 _aggregation_type_not_lossy(validation.aggregation_type)
                 and validation.threshold < consts.VALIDATION_PCT_SENSITIVITY
                 and _exact_numeric_types(src_col, tgt_col)
             ):
                 # User is looking for exact comparison
-                is_successful, difference, pct_difference = _exact_comparison(
+                is_successful, _, _ = _exact_comparison(
                     src_col, tgt_col, float_nulls_col
                 )
             else:
                 # We need to use threshold for success and failure
-                difference = pc.subtract(tgt_col, src_col)
-                # difference is the same type as tgt_col and src_col, but needs to be
-                # float in the table, so casting it now.
-                # While calculating percentage difference, we need to handle small values and
-                # we assume tpip hey are effectively equal if the absolute difference is below the sensitivity threshold
-                # Though the sensitivity threshold is for percentages, we are using it as an absolute value here.
-                difference = pc.cast(difference, pa.float64())
-                pct_difference = pc.if_else(
-                    pc.less(pc.abs(difference), consts.VALIDATION_PCT_SENSITIVITY),
-                    0.0,
-                    pc.round(
-                        pc.divide(
-                            pc.multiply(
-                                100.0, pc.cast(difference, pa.float32(), safe=False)
-                            ),
-                            pc.cast(
-                                pc.if_else(
-                                    pc.equal(src_col, pa.scalar(0, type=src_col.type)),
-                                    tgt_col,
-                                    src_col,
-                                ),
-                                pa.float64(),
-                                safe=False,
-                            ),
-                        ),
-                        ndigits=4,
-                    ),
-                )
                 # Some aggregates can be null if all the values are null so handle null==null;
                 both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
                 values_below_threshold = pc.fill_null(
