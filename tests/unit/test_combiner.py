@@ -439,14 +439,101 @@ def test_generate_report_row_validation_with_mixed_exact_types(module_under_test
     assert by_col_and_id[("dec_over_76", "1")] == consts.VALIDATION_STATUS_SUCCESS
     assert by_col_and_id[("dec_over_76", "2")] == consts.VALIDATION_STATUS_FAIL
     assert by_col_and_id[("dec_over_76", "3")] == consts.VALIDATION_STATUS_FAIL
-    # Note: NULL vs NULL currently evaluates to fail until Open Problem #10 is resolved;
-    # this asserts the >76 Python fallback matches pc.equal's 3-valued NULL behavior.
-    assert by_col_and_id[("dec_over_76", "4")] == consts.VALIDATION_STATUS_FAIL
+    # id 4 is present on both sides with a NULL value on both sides, NULL == NULL is a
+    # success (problem #10). The >76 digit Python fallback keeps that behaviour.
+    assert by_col_and_id[("dec_over_76", "4")] == consts.VALIDATION_STATUS_SUCCESS
 
     assert by_col_and_id[("uint_vs_int", "1")] == consts.VALIDATION_STATUS_SUCCESS
     assert by_col_and_id[("uint_vs_int", "2")] == consts.VALIDATION_STATUS_FAIL
     assert by_col_and_id[("uint_vs_int", "3")] == consts.VALIDATION_STATUS_SUCCESS
-    assert by_col_and_id[("uint_vs_int", "4")] == consts.VALIDATION_STATUS_FAIL
+    assert by_col_and_id[("uint_vs_int", "4")] == consts.VALIDATION_STATUS_SUCCESS
+
+
+def _row_validation_run_metadata(columns):
+    return metadata.RunMetadata(
+        validations={
+            col: metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_schema",
+                source_column_name=col,
+                target_table_name="test_target",
+                target_table_schema="target_schema",
+                target_column_name=col,
+                validation_type="Row",
+                aggregation_type=None,
+                primary_keys=["id"],
+                num_random_rows=None,
+                threshold=0.0,
+            )
+            for col in columns
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+        labels=[],
+        run_id="test-run",
+    )
+
+
+def test_generate_report_row_validation_does_not_round_float_to_decimal(
+    module_under_test,
+):
+    """A float must not be rounded to match an integer decimal (1.5 is not 2)."""
+    source_table = pyarrow.table(
+        {"id": [1, 2], "x": pyarrow.array([1.5, 2.0], type=pyarrow.float64())}
+    )
+    target_table = pyarrow.table(
+        {
+            "id": [1, 2],
+            "x": pyarrow.array(
+                [decimal.Decimal("2"), decimal.Decimal("2")],
+                type=pyarrow.decimal128(5, 0),
+            ),
+        }
+    )
+    report = module_under_test.generate_report(
+        _row_validation_run_metadata(["x"]),
+        source_table,
+        target_table,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+    by_id = {
+        json.loads(row[consts.GROUP_BY_COLUMNS])["id"]: row[consts.VALIDATION_STATUS]
+        for _, row in report.iterrows()
+    }
+    assert by_id["1"] == consts.VALIDATION_STATUS_FAIL
+    assert by_id["2"] == consts.VALIDATION_STATUS_SUCCESS
+
+
+@pytest.mark.parametrize(
+    ("source_value", "target_value", "expected_status"),
+    [
+        # Values differing only in the 38th decimal digit of BIGNUMERIC must fail.
+        (
+            decimal.Decimal("1." + "0" * 37 + "1"),
+            decimal.Decimal("1." + "0" * 37 + "2"),
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            decimal.Decimal("1." + "0" * 37 + "1"),
+            decimal.Decimal("1." + "0" * 37 + "1"),
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+    ],
+)
+def test_generate_report_keeps_all_bignumeric_digits(
+    module_under_test, source_value, target_value, expected_status
+):
+    source = pyarrow.table(
+        {"count": pyarrow.array([source_value], type=pyarrow.decimal256(76, 38))}
+    )
+    target = pyarrow.table(
+        {"count": pyarrow.array([target_value], type=pyarrow.decimal256(76, 38))}
+    )
+
+    report = module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
 
 
 @pytest.mark.parametrize("aggregation_type", ["avg", "std"])

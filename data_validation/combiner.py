@@ -60,46 +60,36 @@ def _is_string_type(column: pa.ChunkedArray) -> bool:
     return pa.types.is_string(column.type) or pa.types.is_large_string(column.type)
 
 
+def _is_exact_type(column: pa.ChunkedArray) -> bool:
+    return pa.types.is_integer(column.type) or pa.types.is_decimal(column.type)
+
+
 def _safe_decimal_type(
     src_col: pa.ChunkedArray, tgt_col: pa.ChunkedArray
 ) -> tuple[pa.ChunkedArray, pa.ChunkedArray]:
     # Python Arrow needs one additional digit of precision while doing additions and
-    # subtractions, hence setting precision to 75 and using decimal256
-    # to allow for the addition and subtraction without exceptions.
-    # We assume that no one is concerned about overflow - at 76 digits??
+    # subtractions. If more than 76 digits are needed, subtraction falls back to float64
+    # and _exact_comparison() falls back to an exact Python comparison.
     # It is possible that one of the columns is not decimal, so we need to convert
-    # both columns to decimal first. We may lose precision, but that is OK.
-    # Sometimes the input column has 76 digits, therefore dropping least significant
-    # digit after the decimal point to prevent overflow.
-    if pa.types.is_decimal(src_col.type) and src_col.type.precision == 76:
-        if src_col.type.scale > 0:
-            src_col = pc.cast(
-                src_col, pa.decimal256(75, src_col.type.scale - 1), safe=False
-            )
-        else:
-            raise ValueError(f"Overflow in decimal column {src_col._name}")
-    if pa.types.is_decimal(tgt_col.type) and tgt_col.type.precision == 76:
-        if tgt_col.type.scale > 0:
-            tgt_col = pc.cast(
-                tgt_col, pa.decimal256(75, tgt_col.type.scale - 1), safe=False
-            )
-        else:
-            raise ValueError(f"Overflow in decimal column {tgt_col._name}")
-    if not pa.types.is_decimal(src_col.type):
-        src_col = pc.cast(src_col, pa.decimal256(75, tgt_col.type.scale))
-        tgt_col = pc.cast(tgt_col, src_col.type)
-    elif not pa.types.is_decimal(tgt_col.type):
-        tgt_col = pc.cast(tgt_col, pa.decimal256(75, src_col.type.scale))
-        src_col = pc.cast(src_col, tgt_col.type)
-    else:
-        scale = (
-            src_col.type.scale
-            if src_col.type.scale >= tgt_col.type.scale
-            else tgt_col.type.scale
+    # both columns to decimal first. Only integer/decimal pairs are converted: casting a
+    # float to decimal rounds (1.5 -> 2), and dates/timestamps cannot be cast to decimal.
+    if not (_is_exact_type(src_col) and _is_exact_type(tgt_col)):
+        return src_col, tgt_col
+    types = (src_col.type, tgt_col.type)
+    scale = max(t.scale if pa.types.is_decimal(t) else 0 for t in types)
+    int_digits = max(
+        (
+            max(t.precision - t.scale, 0)
+            if pa.types.is_decimal(t)
+            else (20 if pa.types.is_uint64(t) else 19)
         )
-        src_col = pc.cast(src_col, pa.decimal256(75, scale))
-        tgt_col = pc.cast(tgt_col, pa.decimal256(75, scale))
-    return src_col, tgt_col
+        for t in types
+    )
+    precision = int_digits + scale
+    if precision > 76:
+        return src_col, tgt_col
+    common_type = pa.decimal256(max(precision, 1), scale)
+    return pc.cast(src_col, common_type), pc.cast(tgt_col, common_type)
 
 
 def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
@@ -139,7 +129,18 @@ def _exact_comparison(src_col, tgt_col, float_nulls_col):
     # User is looking for exact comparison, so we return the validation status
     # along with the difference and percentage difference, both null values.
     both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
-    values_equal = pc.fill_null(pc.equal(src_col, tgt_col), False)
+    try:
+        equal = pc.equal(src_col, tgt_col)
+    except pa.ArrowInvalid:
+        # Decimals needing more than 76 combined digits have no common Arrow type.
+        equal = pa.array(
+            [
+                None if src is None or tgt is None else src == tgt
+                for src, tgt in zip(src_col.to_pylist(), tgt_col.to_pylist())
+            ],
+            type=pa.bool_(),
+        )
+    values_equal = pc.fill_null(equal, False)
     is_successful = pc.if_else(
         pc.or_kleene(both_null, values_equal),
         consts.VALIDATION_STATUS_SUCCESS,
@@ -320,7 +321,12 @@ def join_and_unpivot(
         # pyArrow comparisons will work with mixed types, however some customers
         # have reported issues with very large decimal values, when the number of decimal
         # digits is at the max. Hence making such comparisons safe here.
-        if pa.types.is_decimal(src_col.type) or pa.types.is_decimal(tgt_col.type):
+        if (
+            pa.types.is_decimal(src_col.type)
+            or pa.types.is_decimal(tgt_col.type)
+            or pa.types.is_uint64(src_col.type)
+            or pa.types.is_uint64(tgt_col.type)
+        ) and not (is_value_comparison and src_col.type == tgt_col.type):
             src_col, tgt_col = _safe_decimal_type(src_col, tgt_col)
         if is_value_comparison:  # row validation - compare values for equality
             # With Hash and concat, the column values will always be non null
@@ -363,14 +369,10 @@ def join_and_unpivot(
                 pc.round(
                     pc.divide(
                         pc.multiply(100.0, difference),
-                        pc.cast(
-                            pc.if_else(
-                                pc.equal(src_col, pa.scalar(0, type=src_col.type)),
-                                tgt_col,
-                                src_col,
-                            ),
-                            pa.float64(),
-                            safe=False,
+                        pc.if_else(
+                            pc.equal(src_col, pa.scalar(0, type=src_col.type)),
+                            pc.cast(tgt_col, pa.float64(), safe=False),
+                            pc.cast(src_col, pa.float64(), safe=False),
                         ),
                     ),
                     ndigits=4,
