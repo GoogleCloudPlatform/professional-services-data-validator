@@ -936,7 +936,7 @@ def test_generate_report_with_invalid_aggregate_types(
     source = pyarrow.table({"count": source_array})
     target = pyarrow.table({"count": target_array})
     with pytest.raises(
-        ValueError, match="Aggregate value of count must be numeric or string"
+        ValueError, match="Aggregate value count must be numeric or string"
     ):
         module_under_test.generate_report(EXAMPLE_RUN_METADATA, source, target)
 

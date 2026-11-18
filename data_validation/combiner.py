@@ -254,8 +254,8 @@ def join_and_unpivot(
     slices = []
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
-    # If there are no rows (usually row validation on empty tables/partitions) or no
-    # value columns, return an empty report table.
+    # If the number of rows is null (usually row validation) or there are no value
+    # columns, return an empty table
     if num_rows == 0 or not value_columns:
         return _empty_report_table(run_metadata)
 
@@ -406,11 +406,7 @@ def join_and_unpivot(
                 src_col, tgt_col, float_nulls_col
             )
         else:
-            raise ValueError(
-                f"Aggregate value of {col} must be numeric or string, got "
-                f"{consts.RESULT_TYPE_SOURCE}: {src_col.type}, "
-                f"{consts.RESULT_TYPE_TARGET}: {tgt_col.type}"
-            )
+            raise ValueError(f"Aggregate value {col} must be numeric or string")
 
         # 3. Cast display values to string so all slices share the same output schema
         validation_name_col = pa.repeat(col, num_rows)
