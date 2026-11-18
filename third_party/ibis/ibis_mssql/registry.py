@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
+import ibis.expr.datatypes as dt
 import sqlalchemy as sa
 
 from ibis.backends.base.sql.alchemy import (
@@ -19,6 +21,23 @@ from ibis.backends.base.sql.alchemy import (
 )
 from ibis.backends.base.sql.alchemy.registry import get_col
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
+
+
+def sa_format_literal(t, op):
+    dtype = op.dtype
+    value = op.value
+
+    if value is None:
+        return sa.null()
+
+    if dtype.is_interval():
+        return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
+    elif isinstance(dtype, dt.Set):
+        return list(map(sa.literal, value))
+    elif dtype.is_decimal() or isinstance(value, decimal.Decimal):
+        return sa.literal_column(format(value, "f"))
+    else:
+        return sa.literal(value)
 
 
 def sa_table_column(t, op):
