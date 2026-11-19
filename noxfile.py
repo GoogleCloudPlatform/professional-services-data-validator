@@ -26,6 +26,9 @@ import random
 
 import nox
 
+# session.venv_backend (used below) requires nox >= 2024.4.15.
+nox.needs_version = ">=2024.4.15"
+
 # Prefer uv for creating virtualenvs and installing packages (much faster than
 # pip), falling back to virtualenv if uv is not available.
 nox.options.default_venv_backend = "uv|virtualenv"
@@ -80,9 +83,13 @@ def _setup_session_requirements(session, extra_packages=[]):
         )
         session.install("--no-build-isolation", "pyarrow==14.0.2")
 
-    # uv uses --no-cache rather than pip's --no-cache-dir.
-    no_cache_arg = "--no-cache" if session.venv_backend == "uv" else "--no-cache-dir"
-    session.install(no_cache_arg, "-e", ".")
+    if session.venv_backend == "uv":
+        # uv's cache is safe to use, and lets multiple sessions in the same
+        # container (e.g. unit on 3.10/3.11/3.12) reuse downloaded wheels.
+        session.install("-e", ".")
+    else:
+        # --no-cache-dir works around a pip cache issue, see PR #1019.
+        session.install("--no-cache-dir", "-e", ".")
 
     if extra_packages:
         session.install(*extra_packages)
@@ -104,8 +111,8 @@ def unit(session):
         "--cov-config=.coveragerc",
         "--cov-report=term",
         os.path.join("tests", "unit"),
-        env={"PSO_DV_CONN_HOME": ""},
         *session.posargs,
+        env={"PSO_DV_CONN_HOME": ""},
     )
 
 
@@ -225,7 +232,7 @@ def integration_bigquery(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run(
-        "pytest", *PYTEST_DURATION_ARGS, test_path, env=env_vars, *session.posargs
+        "pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs, env=env_vars
     )
 
 
@@ -431,7 +438,7 @@ def integration_filesystem(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run(
-        "pytest", *PYTEST_DURATION_ARGS, test_path, env=env_vars, *session.posargs
+        "pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs, env=env_vars
     )
 
 

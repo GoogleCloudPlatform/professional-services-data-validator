@@ -39,15 +39,22 @@ fi
 # Disable buffering, so that the logs stream through.
 export PYTHONUNBUFFERED=1
 
-# Install nox
-${PYTHON} -m pip install --upgrade --quiet nox uv pip
+# Install nox and uv. nox[uv] honours nox's own uv version constraints.
+${PYTHON} -m pip install --upgrade --quiet "nox[uv]" pip
 ${PYTHON} -m nox --version
+${PYTHON} -m uv --version
+
+# Require uv in CI rather than letting noxfile.py's "uv|virtualenv" silently
+# fall back to virtualenv. We use --default-venv-backend rather than
+# --force-venv-backend so sessions that explicitly declare a backend
+# (e.g. unit_small uses venv) are not overridden.
+NOX_ARGS="--error-on-missing-interpreters --default-venv-backend uv"
 
 # When NOX_SESSION is set, it only runs the specified session
 if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" || "$NOX_SESSION" == "integration_mysql" || "$NOX_SESSION" =~ integration_oracle.* ) ]]; then
-    ./cloud_sql_proxy --private-ip "$CLOUD_SQL_CONNECTION" & ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ./cloud_sql_proxy --private-ip "$CLOUD_SQL_CONNECTION" & ${PYTHON} -m nox ${NOX_ARGS} -s "${NOX_SESSION:-}"
 elif [[ -n "${NOX_SESSION:-}" ]]; then
-    ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ${PYTHON} -m nox ${NOX_ARGS} -s "${NOX_SESSION:-}"
 else
     echo "NOX_SESSION env var not set"
     exit 1
