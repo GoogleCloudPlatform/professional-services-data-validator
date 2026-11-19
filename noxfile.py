@@ -55,7 +55,7 @@ UNIT_PACKAGES = [
     "teradatasql",
     "snowflake-sqlalchemy<2.0.0",
 ]
-# Report the 5 slowest test durations (≥2s) so we can identify slow tests in CI logs.
+# Report the 5 slowest test durations (>=2s) so we can identify slow tests in CI logs.
 PYTEST_DURATION_ARGS = ["--durations=5", "--durations-min=2.0"]
 
 
