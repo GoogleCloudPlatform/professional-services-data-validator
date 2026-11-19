@@ -576,9 +576,13 @@ def test_row_validation_core_types_auto_pks():
     ],
 )
 def test_list_primary_key_columns(table: str, expected: list):
-    """Test Spanner primary key detection directly from the client."""
+    """Test Spanner primary key detection directly from the client.
+
+    The schema argument is ignored, keys always come from the connected database.
+    """
     client = clients.get_data_client(SPANNER_CONN)
-    assert client.list_primary_key_columns(SPANNER_DATABASE, table) == expected
+    assert client.list_primary_key_columns("non_existent_schema", table) == expected
+    assert client.list_primary_key_columns(None, table) == expected
 
 
 @mock.patch(
