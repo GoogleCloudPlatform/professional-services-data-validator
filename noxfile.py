@@ -26,6 +26,10 @@ import random
 
 import nox
 
+# Prefer uv for creating virtualenvs and installing packages (much faster than
+# pip), falling back to virtualenv if uv is not available.
+nox.options.default_venv_backend = "uv|virtualenv"
+
 # Python version used for linting.
 DEFAULT_PYTHON_VERSION = "3.11"
 
@@ -48,6 +52,9 @@ UNIT_PACKAGES = [
     "teradatasql",
     "snowflake-sqlalchemy<2.0.0",
 ]
+# Report per-test durations (for tests taking at least 1 second) so that we
+# can identify slow tests in CI logs.
+PYTEST_DURATION_ARGS = ["--durations=0", "--durations-min=1.0"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
@@ -74,7 +81,9 @@ def _setup_session_requirements(session, extra_packages=[]):
         )
         session.install("--no-build-isolation", "pyarrow==14.0.2")
 
-    session.install("--no-cache-dir", "-e", ".")
+    # uv uses --no-cache rather than pip's --no-cache-dir.
+    no_cache_arg = "--no-cache" if session.venv_backend == "uv" else "--no-cache-dir"
+    session.install(no_cache_arg, "-e", ".")
 
     if extra_packages:
         session.install(*extra_packages)
@@ -89,6 +98,7 @@ def unit(session):
     session.run(
         "py.test",
         "--quiet",
+        *PYTEST_DURATION_ARGS,
         "--cov=data_validation",
         "--cov=tests.unit",
         "--cov-append",
@@ -122,7 +132,7 @@ def samples(session):
     _setup_session_requirements(session)
 
     # Run pytest against the samples tests.
-    session.run("pytest", "samples", *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, "samples", *session.posargs)
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
@@ -134,7 +144,8 @@ def lint(session):
 
     _setup_session_requirements(session, extra_packages=LINT_PACKAGES)
 
-    session.install("--upgrade", "pip", "wheel")
+    # setuptools is required by "setup.py check" and is not seeded by uv venvs.
+    session.install("--upgrade", "pip", "wheel", "setuptools")
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
     session.run("black", "--check", *BLACK_PATHS)
@@ -166,7 +177,7 @@ def integration_mysql(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -182,7 +193,7 @@ def integration_postgres(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -198,7 +209,7 @@ def integration_sql_server(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -214,7 +225,9 @@ def integration_bigquery(session):
         if not env_vars[env_var]:
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, env=env_vars, *session.posargs)
+    session.run(
+        "pytest", *PYTEST_DURATION_ARGS, test_path, env=env_vars, *session.posargs
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -229,7 +242,12 @@ def integration_spanner(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_spanner.py",
+        *session.posargs,
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -245,7 +263,10 @@ def integration_spanner_pg(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run(
-        "pytest", "tests/system/data_sources/test_spanner_pg.py", *session.posargs
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_spanner_pg.py",
+        *session.posargs,
     )
 
 
@@ -262,7 +283,10 @@ def integration_teradata(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run(
-        "pytest", "tests/system/data_sources/test_teradata.py", *session.posargs
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_teradata.py",
+        *session.posargs,
     )
 
 
@@ -274,7 +298,7 @@ def integration_state(session):
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/test_state_manager.py"
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -295,7 +319,12 @@ def integration_oracle(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_oracle.py",
+        *session.posargs,
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -310,7 +339,12 @@ def integration_hive(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_hive.py",
+        *session.posargs,
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -336,7 +370,10 @@ def integration_snowflake(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run(
-        "pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_snowflake.py",
+        *session.posargs,
     )
 
 
@@ -356,7 +393,12 @@ def integration_db2(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_db2.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_db2.py",
+        *session.posargs,
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -373,7 +415,7 @@ def integration_secrets(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     test_path = "tests/system/test_secret_manager.py"
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", *PYTEST_DURATION_ARGS, test_path, *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -389,7 +431,9 @@ def integration_filesystem(session):
         if not env_vars[env_var]:
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, env=env_vars, *session.posargs)
+    session.run(
+        "pytest", *PYTEST_DURATION_ARGS, test_path, env=env_vars, *session.posargs
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -404,7 +448,12 @@ def integration_impala(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_impala.py",
+        *session.posargs,
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS))
@@ -417,4 +466,9 @@ def integration_sybase(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_sybase.py", *session.posargs)
+    session.run(
+        "pytest",
+        *PYTEST_DURATION_ARGS,
+        "tests/system/data_sources/test_sybase.py",
+        *session.posargs,
+    )

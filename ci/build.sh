@@ -40,7 +40,7 @@ fi
 export PYTHONUNBUFFERED=1
 
 # Install nox
-${PYTHON} -m pip install --upgrade --quiet nox pip
+${PYTHON} -m pip install --upgrade --quiet nox uv pip
 ${PYTHON} -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
