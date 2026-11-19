@@ -19,6 +19,7 @@ from google.api_core import client_options
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
+from google.cloud.spanner_v1 import param_types
 from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
@@ -34,6 +35,14 @@ SPANNER_DIALECT_QUERY = (
     " WHERE option_name = 'database_dialect'"
 )
 SPANNER_DIALECT_POSTGRESQL = "POSTGRESQL"
+# The table's Spanner type metadata has no nullability, so NOT NULL columns come from here.
+# Spanner resolves table names case insensitively but information_schema stores them as
+# created, so the name is compared in lower case.
+SPANNER_NOT_NULL_COLUMNS_QUERY = (
+    "SELECT column_name FROM information_schema.columns"
+    " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
+    " AND is_nullable = 'NO'"
+)
 
 
 class Backend(BaseSQLBackend):
@@ -174,7 +183,22 @@ class Backend(BaseSQLBackend):
             database = self.dataset_id
         db_value = self.instance.database(database)
         spanner_table = db_value.table(table_id)
-        return schema_from_spanner(spanner_table.schema)
+        schema = schema_from_spanner(spanner_table.schema)
+        with db_value.snapshot() as snapshot:
+            not_null = {
+                row[0]
+                for row in snapshot.execute_sql(
+                    SPANNER_NOT_NULL_COLUMNS_QUERY,
+                    params={"table_name": table_id},
+                    param_types={"table_name": param_types.STRING},
+                )
+            }
+        return sch.Schema(
+            {
+                name: dtype.copy(nullable=False) if name in not_null else dtype
+                for name, dtype in schema.items()
+            }
+        )
 
     def execute(
         self,
