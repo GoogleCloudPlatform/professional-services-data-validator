@@ -515,6 +515,12 @@ def _configure_validation_config_parser(subparsers):
         action="store_true",
         help="Use with --config-dir when running DVT as an indexed Kubernetes Job or Cloud Run Job. Each task runs the single YAML file matching its index (JOB_COMPLETION_INDEX or CLOUD_RUN_TASK_INDEX) in the sorted list of files in the directory.",
     )
+    run_parser.add_argument(
+        "--concurrency",
+        type=_check_positive,
+        default=1,
+        help="Maximum YAML config files to validate in parallel with --config-dir (default: 1). Values greater than 1 cannot be used with --kube-completions.",
+    )
 
     get_parser = configs_subparsers.add_parser(
         "get", help="Get and print a validation config"

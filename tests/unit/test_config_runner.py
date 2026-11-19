@@ -13,13 +13,16 @@
 # limitations under the License.
 
 import argparse
+import json
 import logging
 import os
+import threading
 from unittest import mock
 
 import pytest
+import yaml
 
-from data_validation import cli_tools, config_runner, exceptions
+from data_validation import cli_tools, config_runner, consts, exceptions, state_manager
 
 CONFIG_RUNNER_ARGS_1 = {
     "verbose": False,
@@ -62,6 +65,198 @@ CONFIG_RUNNER_ARGS_4 = {
 CONFIG_RUNNER_EXCEPTION_TEXT = (
     "Error '{}' occurred while running config file {}. Skipping it for now."
 )
+
+
+@pytest.mark.parametrize("include_bad_file", [False, True])
+def test_concurrent_config_directory_csv_smoke(
+    tmp_path, monkeypatch, capsys, include_bad_file
+):
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path / "connections"))
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text("id\n1\n2\n", encoding="utf-8")
+    connection = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
+        consts.CONFIG_TABLE_NAME: "my_table",
+        "file_path": str(csv_path),
+        "file_type": "csv",
+    }
+    state = state_manager.StateManager()
+    state.create_connection("source", connection)
+    state.create_connection("target", connection)
+    config_dir = tmp_path / "configs"
+    config_dir.mkdir()
+    validation = {
+        consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
+        consts.CONFIG_SCHEMA_NAME: None,
+        consts.CONFIG_TABLE_NAME: "my_table",
+        consts.CONFIG_TARGET_SCHEMA_NAME: None,
+        consts.CONFIG_TARGET_TABLE_NAME: "my_table",
+        consts.CONFIG_GROUPED_COLUMNS: [],
+        consts.CONFIG_AGGREGATES: [
+            {
+                "source_column": "id",
+                "target_column": "id",
+                "field_alias": "count_id",
+                "type": "count",
+            }
+        ],
+        consts.CONFIG_THRESHOLD: 0.0,
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_JSON,
+    }
+    for file in ["first.yaml", "second.yaml"]:
+        (config_dir / file).write_text(
+            yaml.safe_dump(
+                {
+                    consts.YAML_SOURCE: "source",
+                    consts.YAML_TARGET: "target",
+                    consts.YAML_RESULT_HANDLER: None,
+                    consts.YAML_VALIDATIONS: [validation],
+                }
+            ),
+            encoding="utf-8",
+        )
+    if include_bad_file:
+        (config_dir / "bad.yaml").write_text("validations: []\n", encoding="utf-8")
+    args = argparse.Namespace(
+        config_dir=str(config_dir),
+        kube_completions=False,
+        concurrency=2,
+        dry_run=False,
+        verbose=False,
+    )
+    build = config_runner.build_config_managers_from_yaml
+    client_pairs = []
+    lock = threading.Lock()
+
+    def track_clients(args, file):
+        managers = build(args, file)
+        with lock:
+            client_pairs.append((managers[0].source_client, managers[0].target_client))
+        return managers
+
+    with mock.patch(
+        "data_validation.config_runner.build_config_managers_from_yaml",
+        side_effect=track_clients,
+    ):
+        if include_bad_file:
+            with pytest.raises(exceptions.ValidationException):
+                config_runner.config_runner(args)
+        else:
+            config_runner.config_runner(args)
+
+    reports = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert len(reports) == 2
+    assert all(report["0"][consts.VALIDATION_STATUS] == "success" for report in reports)
+    assert len(client_pairs) == 2
+    assert len({id(client) for pair in client_pairs for client in pair}) == 4
+
+
+@pytest.mark.parametrize(
+    "config_dir,kube_completions,message",
+    [
+        (None, False, "requires --config-dir"),
+        ("configs", True, "cannot be used with --kube-completions"),
+    ],
+)
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+def test_config_runner_rejects_unsupported_concurrency(
+    mock_build, config_dir, kube_completions, message
+):
+    args = argparse.Namespace(
+        config_dir=config_dir, kube_completions=kube_completions, concurrency=2
+    )
+    with pytest.raises(ValueError, match=message):
+        config_runner.config_runner(args)
+    mock_build.assert_not_called()
+
+
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+def test_config_files_concurrency_is_bounded_and_continues_after_failure(
+    mock_build, mock_run
+):
+    args = argparse.Namespace(**CONFIG_RUNNER_ARGS_4, concurrency=2)
+    mock_build.side_effect = lambda args, file: [file]
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    active = 0
+    max_active = 0
+
+    def run_file(args, managers):
+        nonlocal active, max_active
+        with lock:
+            active += 1
+            max_active = max(active, max_active)
+        try:
+            if managers[0] in ("0000.yaml", "0001.yaml"):
+                barrier.wait(timeout=5)
+            if managers[0] == "0001.yaml":
+                raise ValueError("Boom!")
+        finally:
+            with lock:
+                active -= 1
+
+    mock_run.side_effect = run_file
+    with pytest.raises(exceptions.ValidationException):
+        config_runner._run_config_files(args, ["0000.yaml", "0001.yaml", "0002.yaml"])
+    assert mock_run.call_count == 3
+    assert max_active == 2
+
+
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+def test_config_files_continue_after_yaml_load_failure(mock_build, mock_run):
+    args = argparse.Namespace(**CONFIG_RUNNER_ARGS_4, concurrency=2)
+
+    def build_file(args, file):
+        if file == "bad.yaml":
+            raise ValueError("Invalid YAML")
+        return ["good"]
+
+    mock_build.side_effect = build_file
+    with pytest.raises(exceptions.ValidationException):
+        config_runner._run_config_files(args, ["bad.yaml", "good.yaml"])
+    assert mock_build.call_count == 2
+    assert mock_run.call_count == 1
+
+
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+@mock.patch("data_validation.config_runner.ThreadPoolExecutor")
+def test_config_files_default_is_serial(mock_executor, mock_build, mock_run):
+    args = argparse.Namespace(**CONFIG_RUNNER_ARGS_4)
+    files = ["first.yaml", "second.yaml", "third.yaml"]
+    mock_build.side_effect = lambda args, file: [file]
+    config_runner._run_config_files(args, files)
+    assert mock_run.call_args_list == [mock.call(args, [file]) for file in files]
+    mock_executor.assert_not_called()
+
+
+@pytest.mark.parametrize("concurrency", [1, 2])
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+def test_config_files_release_each_files_clients(mock_build, mock_run, concurrency):
+    args = argparse.Namespace(**CONFIG_RUNNER_ARGS_4, concurrency=concurrency)
+    managers = {file: mock.Mock() for file in ["first.yaml", "second.yaml"]}
+    mock_build.side_effect = lambda args, file: [managers[file]]
+    config_runner._run_config_files(args, list(managers))
+    mock_run.assert_has_calls(
+        [mock.call(args, [manager]) for manager in managers.values()], any_order=True
+    )
+    for manager in managers.values():
+        manager.close_client_connections.assert_called_once_with()
+
+
+@mock.patch("data_validation.config_runner.run_validations")
+@mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
+def test_config_files_release_clients_after_execution_failure(mock_build, mock_run):
+    args = argparse.Namespace(**CONFIG_RUNNER_ARGS_4)
+    manager = mock.Mock()
+    mock_build.return_value = [manager]
+    mock_run.side_effect = ValueError("Boom!")
+    with pytest.raises(exceptions.ValidationException):
+        config_runner._run_config_files(args, ["bad.yaml"])
+    manager.close_client_connections.assert_called_once_with()
 
 
 @pytest.fixture(autouse=True)
