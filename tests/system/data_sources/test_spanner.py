@@ -23,9 +23,9 @@ import pytest
 from data_validation import __main__ as main
 from data_validation import (
     cli_tools,
+    clients,
     consts,
     data_validation,
-    exceptions,
     find_tables,
     validation_runner,
 )
@@ -553,20 +553,36 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_auto_pks():
-    """Test auto population of -pks from Spanner - expect an exception.
+    """Test auto population of -pks from Spanner defined primary key."""
+    row_validation_test(
+        tc="mock-conn",
+        hash="col_int8,col_int16",
+        primary_keys=None,
+    )
 
-    Expects:
-      ValueError: No primary keys were provided and neither the source or target tables
-      have usable primary keys. Please include --primary-keys argument
 
-    TODO Update to expect success when issue-1890 is complete.
+@pytest.mark.parametrize(
+    "table,expected",
+    [
+        ("dvt_core_types", ["id"]),
+        # Table names are matched case insensitively.
+        ("DVT_CORE_TYPES", ["id"]),
+        # Composite keys are returned in key order.
+        ("dvt_composite_pk", ["key1", "key2", "key3"]),
+        # Views have no primary key.
+        ("dvt_core_types_vw", []),
+        # Table declared with PRIMARY KEY ().
+        ("dvt_null_not_null", []),
+    ],
+)
+def test_list_primary_key_columns(table: str, expected: list):
+    """Test Spanner primary key detection directly from the client.
+
+    The schema argument is ignored, keys always come from the connected database.
     """
-    with pytest.raises(exceptions.BuildConfigException):
-        row_validation_test(
-            tc="mock-conn",
-            hash="col_int8,col_int16",
-            primary_keys=None,
-        )
+    client = clients.get_data_client(SPANNER_CONN)
+    assert client.list_primary_key_columns("non_existent_schema", table) == expected
+    assert client.list_primary_key_columns(None, table) == expected
 
 
 @mock.patch(
