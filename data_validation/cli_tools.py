@@ -572,6 +572,12 @@ def _configure_connection_parser(subparsers):
         default="yaml",
         help="Output format for the configuration (default: yaml)",
     )
+    test_parser = connect_subparsers.add_parser(
+        "test", help="Test that an existing connection is working"
+    )
+    test_parser.add_argument(
+        "--connection-name", "-c", required=True, help="Name of connection to test"
+    )
 
 
 def _configure_database_specific_parsers(parser):
