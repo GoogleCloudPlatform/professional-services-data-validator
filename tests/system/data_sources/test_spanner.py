@@ -250,11 +250,19 @@ def test_schema_validation_core_types_to_bigquery():
     )
 
 
+@pytest.mark.parametrize(
+    "tables",
+    [
+        "pso_data_validator.dvt_null_not_null",
+        # Spanner resolves table names case insensitively.
+        "pso_data_validator.DVT_NULL_NOT_NULL=pso_data_validator.dvt_null_not_null",
+    ],
+)
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_not_null_vs_nullable():
+def test_schema_validation_not_null_vs_nullable(tables):
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -263,7 +271,7 @@ def test_schema_validation_not_null_vs_nullable():
             "schema",
             "-sc=mock-conn",
             "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_null_not_null",
+            f"-tbls={tables}",
             # Spanner does not have a timezone-naive datetime type.
             "--allow-list=timestamp('UTC'):timestamp,!timestamp('UTC'):!timestamp",
         ]

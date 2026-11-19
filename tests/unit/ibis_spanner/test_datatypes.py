@@ -96,6 +96,7 @@ def test_backend_get_schema_marks_not_null_columns():
     assert list(schema.names) == ["col_nn", "col_nullable"]
     sql = mock_snapshot.execute_sql.call_args.args[0]
     assert "is_nullable = 'NO'" in sql
+    assert "LOWER(table_name) = LOWER(@table_name)" in sql
     assert mock_snapshot.execute_sql.call_args.kwargs["params"] == {
         "table_name": "dvt_null_not_null"
     }

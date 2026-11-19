@@ -36,9 +36,12 @@ SPANNER_DIALECT_QUERY = (
 )
 SPANNER_DIALECT_POSTGRESQL = "POSTGRESQL"
 # The table's Spanner type metadata has no nullability, so NOT NULL columns come from here.
+# Spanner resolves table names case insensitively but information_schema stores them as
+# created, so the name is compared in lower case.
 SPANNER_NOT_NULL_COLUMNS_QUERY = (
     "SELECT column_name FROM information_schema.columns"
-    " WHERE table_schema = '' AND table_name = @table_name AND is_nullable = 'NO'"
+    " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
+    " AND is_nullable = 'NO'"
 )
 
 
