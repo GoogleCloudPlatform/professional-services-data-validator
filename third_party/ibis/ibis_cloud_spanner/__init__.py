@@ -255,9 +255,10 @@ class Backend(BaseSQLBackend):
         self._log(sql)
 
         self._register_in_memory_tables(expr)
-        db = self.instance.database(self.dataset_id)
 
-        with db.snapshot() as snapshot:
+        # Reuse the Database created at connect time. Database objects own a session pool and
+        # a multiplexed session (with a maintenance thread), creating one per query leaks both.
+        with self.database_name.snapshot() as snapshot:
             schema, batches = record_batches_from_result(
                 snapshot.execute_sql(sql), chunk_size=chunk_size
             )

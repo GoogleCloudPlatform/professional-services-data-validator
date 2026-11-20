@@ -298,23 +298,42 @@ IBIS_SCHEMA = [
 
 
 def _backend(fields, rows):
+    """Return a Backend whose database returns a new fake snapshot per call, and the snapshots."""
     backend = Backend()
     backend.dataset = "pso_data_validator"
     backend.instance = mock.MagicMock()
-    snapshot = _FakeSnapshot(fields, rows)
-    backend.instance.database.return_value.snapshot.return_value = snapshot
-    return backend, snapshot
+    backend.database_name = mock.MagicMock()
+    snapshots = []
+
+    def _new_snapshot():
+        snapshots.append(_FakeSnapshot(fields, rows))
+        return snapshots[-1]
+
+    backend.database_name.snapshot.side_effect = _new_snapshot
+    return backend, snapshots
+
+
+def test_backend_to_pyarrow_reuses_connected_database():
+    """Creating a Database per query leaks a session pool and a maintenance thread."""
+    backend, _ = _backend(ALL_TYPE_FIELDS, [ALL_TYPE_ROW])
+    table = ibis.table(IBIS_SCHEMA, name="dvt_core_types")
+
+    backend.to_pyarrow(table)
+    backend.to_pyarrow(table)
+
+    backend.instance.database.assert_not_called()
+    assert backend.database_name.snapshot.call_count == 2
 
 
 def test_backend_to_pyarrow():
     """End to end through DVT's to_pyarrow(), reading rows inside the snapshot."""
-    backend, snapshot = _backend(ALL_TYPE_FIELDS, [ALL_TYPE_ROW, NULL_ROW])
+    backend, snapshots = _backend(ALL_TYPE_FIELDS, [ALL_TYPE_ROW, NULL_ROW])
     table = ibis.table(IBIS_SCHEMA, name="dvt_core_types")
 
     result = backend.to_pyarrow(table)
 
-    assert snapshot.closed
-    assert "dvt_core_types" in snapshot.sql
+    assert [s.closed for s in snapshots] == [True]
+    assert "dvt_core_types" in snapshots[0].sql
     assert result.num_rows == 2
     assert result.schema.names == [name for name, _ in IBIS_SCHEMA]
     assert result.schema.field("col_numeric").type == pyarrow.decimal128(38, 9)
@@ -327,12 +346,12 @@ def test_backend_to_pyarrow():
 
 
 def test_backend_to_pyarrow_no_rows():
-    backend, snapshot = _backend(ALL_TYPE_FIELDS, [])
+    backend, snapshots = _backend(ALL_TYPE_FIELDS, [])
     table = ibis.table(IBIS_SCHEMA, name="dvt_core_types")
 
     result = backend.to_pyarrow(table)
 
-    assert snapshot.closed
+    assert [s.closed for s in snapshots] == [True]
     assert result.num_rows == 0
     assert result.schema == table.schema().to_pyarrow()
 
