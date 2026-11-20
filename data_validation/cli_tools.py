@@ -577,6 +577,12 @@ def _configure_connection_parser(subparsers):
         default="yaml",
         help="Output format for the configuration (default: yaml)",
     )
+    test_parser = connect_subparsers.add_parser(
+        "test", help="Test that an existing connection is working"
+    )
+    test_parser.add_argument(
+        "--connection-name", "-c", required=True, help="Name of connection to test"
+    )
 
 
 def _configure_database_specific_parsers(parser):
@@ -1554,8 +1560,8 @@ def get_query_from_file(filename):
     try:
         query = gcs_helper.read_file(filename, download_as_text=True)
         query = query.rstrip(";\n")
-    except IOError:
-        logging.error("Cannot read query file: ", filename)
+    except IOError as e:
+        logging.error(f"Cannot read query file {filename}: {e}")
 
     if not query or query.isspace():
         raise ValueError(

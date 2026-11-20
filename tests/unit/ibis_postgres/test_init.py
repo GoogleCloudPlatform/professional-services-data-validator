@@ -81,6 +81,21 @@ def test_raw_column_metadata_core_types(mock_begin, module_under_test):
 
 
 @mock.patch("third_party.ibis.ibis_postgres.client.PostgresBackend.begin")
+def test_list_primary_key_columns_mixed_case(mock_begin, module_under_test):
+    """Test that schema and table names are passed separately so they can be quoted in the query."""
+    mock_execute = mock_begin().__enter__().execute
+    mock_execute().cursor.fetchall.return_value = [("Id",)]
+    backend = module_under_test.PostgresBackend()
+    assert backend.list_primary_key_columns("MySchema", "MyTable") == ["Id"]
+    query = mock_execute.call_args.args[0]
+    assert "format('%I.%I', :schema_name, :table_name)" in query.text
+    assert query.compile().params == {
+        "schema_name": "MySchema",
+        "table_name": "MyTable",
+    }
+
+
+@mock.patch("third_party.ibis.ibis_postgres.client.PostgresBackend.begin")
 def test_raw_column_metadata_qry(mock_begin, module_under_test):
     mock_begin().__enter__().exec_driver_sql().cursor.description = DVT_CORE_TYPES_CURS
     backend = module_under_test.PostgresBackend()
