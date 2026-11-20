@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import datetime
+import sqlite3
+
 import ibis
 import pandas
 import pytest
@@ -182,3 +184,20 @@ def test_execute_epoch_seconds_new(
 ):
     result = module_under_test.execute_epoch_seconds_new(None, test_input)
     assert list(result) == list(expected)
+
+
+def test_execute_column_named_dtype(tmp_path):
+    """A column called dtype must not break fetching results (issue 1434).
+
+    pandas.DataFrame.from_records() treats a first row with a "dtype"
+    attribute as a NumPy record, and SQLAlchemy rows expose each column as
+    an attribute.
+    """
+    db_path = str(tmp_path / "dtype.db")
+    with sqlite3.connect(db_path) as setup:
+        setup.execute("CREATE TABLE db_str_err (dtype VARCHAR(10), id VARCHAR(10))")
+        setup.execute("INSERT INTO db_str_err VALUES ('a', 'b')")
+
+    df = ibis.sqlite.connect(db_path).table("db_str_err").execute()
+
+    assert df.to_dict("records") == [{"dtype": "a", "id": "b"}]
