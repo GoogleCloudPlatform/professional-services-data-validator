@@ -356,6 +356,16 @@ def test_backend_to_pyarrow_no_rows():
     assert result.schema == table.schema().to_pyarrow()
 
 
+def test_backend_to_pyarrow_batches_chunk_size():
+    fields = [_field("id", TypeCode.INT64)]
+    backend, _ = _backend(fields, [[i] for i in range(5)])
+    table = ibis.table([("id", "int64")], name="dvt_core_types")
+
+    reader = backend.to_pyarrow_batches(table, chunk_size=2)
+
+    assert [batch.num_rows for batch in reader] == [2, 2, 1]
+
+
 def test_backend_to_pyarrow_aggregate():
     """Column validations fetch a single aggregate row."""
     fields = [_field("count", TypeCode.INT64), _field("sum__col", TypeCode.NUMERIC)]

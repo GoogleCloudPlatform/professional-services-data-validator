@@ -29,7 +29,10 @@ from third_party.ibis.ibis_cloud_spanner.datatypes import (
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
-from third_party.ibis.ibis_cloud_spanner.to_pyarrow import record_batches_from_result
+from third_party.ibis.ibis_cloud_spanner.to_pyarrow import (
+    DEFAULT_CHUNK_SIZE,
+    record_batches_from_result,
+)
 
 SPANNER_DIALECT_QUERY = (
     "SELECT option_value FROM information_schema.database_options"
@@ -237,7 +240,7 @@ class Backend(BaseSQLBackend):
         *,
         params: Mapping[ir.Scalar, Any] = None,
         limit: str = None,
-        chunk_size: int = 1_000_000,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
         **kwargs: Any,
     ):
         """Execute expression and return a RecordBatchReader of the results.

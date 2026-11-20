@@ -89,8 +89,27 @@ def _to_arrow_array(
     return pa.array(values, type=arrow_type)
 
 
+# Rows per record batch. The temporary Python objects for a chunk are several times the size of
+# the Arrow data (measured peak for 1M narrow rows: 320 MiB at 1,000,000 rows per chunk, 16 MiB
+# at 50,000), and smaller chunks were no slower. pa.string() and pa.binary() have 32-bit offsets,
+# so one column of one batch is limited to 2 GiB: at 50,000 rows that needs an average of more
+# than ~43 KiB per row in a single STRING, BYTES or JSON column.
+DEFAULT_CHUNK_SIZE = 50_000
+
+
+def _record_batch_from_rows(
+    rows: list, schema: pa.Schema, converters: List[Optional[Callable]]
+) -> pa.RecordBatch:
+    columns = zip(*rows)
+    arrays = [
+        _to_arrow_array(values, field.type, converter)
+        for values, field, converter in zip(columns, schema, converters)
+    ]
+    return pa.RecordBatch.from_arrays(arrays, schema=schema)
+
+
 def record_batches_from_result(
-    result, chunk_size: int = 1_000_000
+    result, chunk_size: int = DEFAULT_CHUNK_SIZE
 ) -> Tuple[Optional[pa.Schema], List[pa.RecordBatch]]:
     """Read a Spanner StreamedResultSet into typed PyArrow record batches.
 
@@ -120,12 +139,10 @@ def record_batches_from_result(
             converters = [_value_converter(field.type_) for field in fields]
         if not chunk:
             break
-        columns = zip(*chunk)
-        arrays = [
-            _to_arrow_array(values, field.type, converter)
-            for values, field, converter in zip(columns, schema, converters)
-        ]
-        batches.append(pa.RecordBatch.from_arrays(arrays, schema=schema))
-        if len(chunk) < chunk_size:
+        batches.append(_record_batch_from_rows(chunk, schema, converters))
+        last_chunk = len(chunk) < chunk_size
+        # Free this chunk's rows before the next chunk is read.
+        del chunk
+        if last_chunk:
             break
     return schema, batches
