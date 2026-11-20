@@ -135,9 +135,7 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
         """
     with self.begin() as con:
         result = con.execute(
-            sa.text(list_pk_col_sql).bindparams(
-                schema_name=database, table_name=table
-            )
+            sa.text(list_pk_col_sql).bindparams(schema_name=database, table_name=table)
         )
         return [_[0] for _ in result.cursor.fetchall()]
 
