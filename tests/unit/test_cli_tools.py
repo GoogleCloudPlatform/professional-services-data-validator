@@ -1111,6 +1111,19 @@ def test_get_query_from_file(test_input: str):
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 
+def test_get_query_from_file_unreadable(tmp_path, caplog):
+    """An unreadable query file should be logged with its path and reason."""
+    missing_file = str(tmp_path / "missing.sql")
+    with pytest.raises(ValueError):
+        cli_tools.get_query_from_file(missing_file)
+    messages = [
+        record.getMessage() for record in caplog.records if record.levelname == "ERROR"
+    ]
+    assert len(messages) == 1
+    assert missing_file in messages[0]
+    assert "No such file or directory" in messages[0]
+
+
 @pytest.mark.parametrize(
     "test_input,expect_exception",
     [

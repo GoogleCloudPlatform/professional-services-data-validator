@@ -833,6 +833,20 @@ def test_row_validation_core_types_auto_pks():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_camel_case_auto_pks():
+    """Test auto population of -pks from PostgreSQL defined constraint on a table with camel case identifiers."""
+    row_validation_test(
+        tables="pso_data_validator.DvtCaseCamel",
+        tc="mock-conn",
+        hash="*",
+        primary_keys=None,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_comp_fields_pg_types():
     """PostgreSQL to PostgreSQL dvt_pg_types row validation --comp-fields"""
     row_validation_test(

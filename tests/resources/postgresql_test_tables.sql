@@ -1104,3 +1104,16 @@ VALUES
 , NULL
 , NULL
 );
+
+DROP TABLE IF EXISTS pso_data_validator."DvtCaseCamel";
+CREATE TABLE pso_data_validator."DvtCaseCamel"
+(   "Id"           int NOT NULL PRIMARY KEY
+,   "ColInt"       int
+,   "ColDec"       decimal(10,2)
+,   "ColStr"       varchar(30)
+,   "ColDate"      date
+);
+COMMENT ON TABLE pso_data_validator."DvtCaseCamel" IS 'Integration test table used to test CamelCase identifiers.';
+INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
+(1,1,1.1,'Hello DVT',DATE'1970-01-01'),
+(2,2,2.2,'Hello DVT',DATE'1970-01-02');
