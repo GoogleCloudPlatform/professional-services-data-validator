@@ -1555,8 +1555,8 @@ def get_query_from_file(filename):
     try:
         query = gcs_helper.read_file(filename, download_as_text=True)
         query = query.rstrip(";\n")
-    except IOError:
-        logging.error("Cannot read query file: ", filename)
+    except IOError as e:
+        logging.error(f"Cannot read query file {filename}: {e}")
 
     if not query or query.isspace():
         raise ValueError(
