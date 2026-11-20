@@ -47,6 +47,60 @@ def test_dtype_from_spanner_field(type_code, expected_dtype):
     assert isinstance(dtype, dt.DataType)
 
 
+@pytest.mark.parametrize(
+    ("element_type_code", "expected_dtype"),
+    [
+        (TypeCode.INT64, dt.Array(dt.int64)),
+        (TypeCode.STRING, dt.Array(dt.string)),
+        (TypeCode.NUMERIC, dt.Array(dt.Decimal(38, 9))),
+    ],
+)
+def test_dtype_from_spanner_field_array(element_type_code, expected_dtype):
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=element_type_code))
+
+    dtype = dtype_from_spanner_field(field)
+
+    assert dtype == expected_dtype
+
+
+@pytest.mark.parametrize(
+    "type_code",
+    [
+        TypeCode.STRUCT,
+        TypeCode.PROTO,
+        TypeCode.ENUM,
+        TypeCode.INTERVAL,
+        TypeCode.UUID,
+        TypeCode.TYPE_CODE_UNSPECIFIED,
+    ],
+)
+def test_dtype_from_spanner_field_unsupported(type_code):
+    with pytest.raises(
+        TypeError, match=f"^Unsupported Spanner data type: {type_code.name}$"
+    ):
+        dtype_from_spanner_field(Type(code=type_code))
+
+
+def test_dtype_from_spanner_field_array_of_unsupported():
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=TypeCode.STRUCT))
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: STRUCT$"):
+        dtype_from_spanner_field(field)
+
+
+def test_backend_get_schema_with_unsupported_type():
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+    backend.instance.database.return_value.table.return_value.schema = [
+        StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
+        StructType.Field(name="col_uuid", type_=Type(code=TypeCode.UUID)),
+    ]
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: UUID$"):
+        backend.get_schema("dvt_core_types")
+
+
 def test_schema_from_spanner_with_float32():
     fields = [
         StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
