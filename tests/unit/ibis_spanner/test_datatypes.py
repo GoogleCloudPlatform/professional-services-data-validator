@@ -88,6 +88,21 @@ def test_dtype_from_spanner_field_array_of_unsupported():
         dtype_from_spanner_field(field)
 
 
+@pytest.mark.filterwarnings("ignore:Unrecognized TypeCode enum value")
+def test_dtype_from_spanner_field_unknown_type_code():
+    """A type code newer than the installed google-cloud-spanner arrives as a raw int."""
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: 999$"):
+        dtype_from_spanner_field(Type(code=999))
+
+
+@pytest.mark.filterwarnings("ignore:Unrecognized TypeCode enum value")
+def test_dtype_from_spanner_field_array_of_unknown_type_code():
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=999))
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: 999$"):
+        dtype_from_spanner_field(field)
+
+
 def test_backend_get_schema_with_unsupported_type():
     backend = Backend()
     backend.dataset = "pso_data_validator"
