@@ -359,12 +359,15 @@ def join_and_unpivot(
                 )
             # difference is the same type as tgt_col and src_col, but needs to be
             # float in the table, so casting it now.
-            # While calculating percentage difference, we need to handle small values and
-            # we assume tpip hey are effectively equal if the absolute difference is below the sensitivity threshold
-            # Though the sensitivity threshold is for percentages, we are using it as an absolute value here.
             difference = pc.cast(difference, pa.float64(), safe=False)
+            if validation.aggregation_type.lower() == consts.CONFIG_TYPE_STD:
+                # There are different methods to calculate standard deviation,
+                # and we ignore small differences less than consts.STD_SENSITIVITY.
+                difference = pc.if_else(
+                    pc.less(pc.abs(difference), consts.STD_SENSITIVITY), 0.0, difference
+                )
             pct_difference = pc.if_else(
-                pc.less(pc.abs(difference), consts.VALIDATION_PCT_SENSITIVITY),
+                pc.equal(difference, 0.0),
                 0.0,
                 pc.round(
                     pc.divide(
