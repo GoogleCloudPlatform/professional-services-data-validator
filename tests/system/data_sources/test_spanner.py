@@ -23,9 +23,9 @@ import pytest
 from data_validation import __main__ as main
 from data_validation import (
     cli_tools,
+    clients,
     consts,
     data_validation,
-    exceptions,
     find_tables,
     validation_runner,
 )
@@ -250,15 +250,20 @@ def test_schema_validation_core_types_to_bigquery():
     )
 
 
+@pytest.mark.parametrize(
+    "tables",
+    [
+        "pso_data_validator.dvt_null_not_null",
+        # Spanner resolves table names case insensitively.
+        "pso_data_validator.DVT_NULL_NOT_NULL=pso_data_validator.dvt_null_not_null",
+    ],
+)
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_not_null_vs_nullable():
+def test_schema_validation_not_null_vs_nullable(tables):
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
-    pytest.skip(
-        "Skipping test_schema_validation_not_null_vs_nullable due to issue-1889."
-    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -266,7 +271,7 @@ def test_schema_validation_not_null_vs_nullable():
             "schema",
             "-sc=mock-conn",
             "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_null_not_null",
+            f"-tbls={tables}",
             # Spanner does not have a timezone-naive datetime type.
             "--allow-list=timestamp('UTC'):timestamp,!timestamp('UTC'):!timestamp",
         ]
@@ -548,20 +553,36 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_auto_pks():
-    """Test auto population of -pks from Spanner - expect an exception.
+    """Test auto population of -pks from Spanner defined primary key."""
+    row_validation_test(
+        tc="mock-conn",
+        hash="col_int8,col_int16",
+        primary_keys=None,
+    )
 
-    Expects:
-      ValueError: No primary keys were provided and neither the source or target tables
-      have usable primary keys. Please include --primary-keys argument
 
-    TODO Update to expect success when issue-1890 is complete.
+@pytest.mark.parametrize(
+    "table,expected",
+    [
+        ("dvt_core_types", ["id"]),
+        # Table names are matched case insensitively.
+        ("DVT_CORE_TYPES", ["id"]),
+        # Composite keys are returned in key order.
+        ("dvt_composite_pk", ["key1", "key2", "key3"]),
+        # Views have no primary key.
+        ("dvt_core_types_vw", []),
+        # Table declared with PRIMARY KEY ().
+        ("dvt_null_not_null", []),
+    ],
+)
+def test_list_primary_key_columns(table: str, expected: list):
+    """Test Spanner primary key detection directly from the client.
+
+    The schema argument is ignored, keys always come from the connected database.
     """
-    with pytest.raises(exceptions.BuildConfigException):
-        row_validation_test(
-            tc="mock-conn",
-            hash="col_int8,col_int16",
-            primary_keys=None,
-        )
+    client = clients.get_data_client(SPANNER_CONN)
+    assert client.list_primary_key_columns("non_existent_schema", table) == expected
+    assert client.list_primary_key_columns(None, table) == expected
 
 
 @mock.patch(

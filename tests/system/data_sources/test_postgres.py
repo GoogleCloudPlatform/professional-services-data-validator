@@ -1458,9 +1458,9 @@ def test_result_handler_postgres_with_labels(mock_list, caplog):
     run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
-    # Labels columns should NOT be empty.
+    # Labels column should contain the label values exactly as provided.
     rows = raw_query_rows(
-        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{a=1,b=2}}'",
         conn="mock-conn",
     )
     # Ensure that we added the data to the results table.
