@@ -413,6 +413,9 @@ def join_and_unpivot(
         else:
             raise ValueError(f"Aggregate value {col} must be numeric or string")
 
+        # Reset threshold so the value of the sensitivity does not confuse users
+        threshold = pa.repeat(validation.threshold, num_rows)
+
         # 3. Cast display values to string so all slices share the same output schema
         validation_name_col = pa.repeat(col, num_rows)
         col_slice = pa.table(
