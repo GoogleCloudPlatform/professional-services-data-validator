@@ -127,7 +127,9 @@ def record_batches_from_result(
         chunk = list(itertools.islice(rows, chunk_size))
         if schema is None:
             # Field metadata is only populated once the first response has been read.
-            fields = result.fields
+            # result.fields raises AttributeError if the stream returned no responses.
+            metadata = result.metadata
+            fields = metadata.row_type.fields if metadata else ()
             if not fields:
                 return None, []
             schema = pa.schema(

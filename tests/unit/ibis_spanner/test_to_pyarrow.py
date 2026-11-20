@@ -15,10 +15,12 @@
 import base64
 import datetime
 import decimal
+from types import SimpleNamespace
 from unittest import mock
 
 from google.api_core.datetime_helpers import DatetimeWithNanoseconds
 from google.cloud.spanner_v1.data_types import JsonObject
+from google.cloud.spanner_v1.streamed import StreamedResultSet
 from google.cloud.spanner_v1.types import StructType, Type, TypeCode
 import ibis
 import pyarrow
@@ -54,8 +56,10 @@ class _FakeResult:
             yield row
 
     @property
-    def fields(self):
-        return self._fields if self._started else []
+    def metadata(self):
+        if not self._started:
+            return None
+        return SimpleNamespace(row_type=SimpleNamespace(fields=self._fields))
 
 
 class _FakeSnapshot:
@@ -273,7 +277,8 @@ def test_record_batches_from_result_no_rows():
 
 
 def test_record_batches_from_result_no_field_metadata():
-    assert record_batches_from_result(_FakeResult([], [])) == (None, [])
+    # A real StreamedResultSet whose stream returned no responses has no metadata.
+    assert record_batches_from_result(StreamedResultSet(iter([]))) == (None, [])
 
 
 def test_record_batches_from_result_unsupported_type():
