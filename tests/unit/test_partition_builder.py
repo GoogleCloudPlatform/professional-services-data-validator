@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import os
 import shutil
 import pytest
@@ -30,6 +31,7 @@ from data_validation.partition_builder import PartitionBuilder
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
+
 
 STRING_CONSTANT = "constant"
 RANDOM_STRINGS = ["a", "b", "c", "d"]
@@ -50,6 +52,7 @@ TARGET_CONN_CONFIG = {
 
 TEST_CONN = "{'source_type':'Example'}"
 PARTITION_NUM = 9
+ROWS_PER_PARTITION = 4
 PARTS_PER_FILE = 5
 PARTITIONS_DIR = "test_partitions_dir"
 SOURCE_QUERY = (
@@ -651,6 +654,212 @@ def test_class_object_creation(module_under_test):
     assert builder.args.primary_keys == "region_id,station_id"
     assert builder.args.source_query == SOURCE_QUERY
     assert builder.args.target_query_file == TARGET_QUERY_FILE
+
+
+def test_partition_number_and_rows_per_partition_are_mutually_exclusive():
+    parser = cli_tools.configure_arg_parser()
+    rows_per_partition_args = TABLE_PART_ARGS.copy()
+    partition_num_index = rows_per_partition_args.index("--partition-num")
+    del rows_per_partition_args[partition_num_index : partition_num_index + 2]
+    rows_per_partition_args.extend(["--rows-per-partition", str(ROWS_PER_PARTITION)])
+
+    args = parser.parse_args(rows_per_partition_args)
+    assert args.partition_num is None
+    assert args.rows_per_partition == ROWS_PER_PARTITION
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            TABLE_PART_ARGS + ["--rows-per-partition", str(ROWS_PER_PARTITION)]
+        )
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(rows_per_partition_args[:-2])
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "many"])
+def test_rows_per_partition_must_be_positive(value):
+    args = TABLE_PART_ARGS.copy()
+    partition_num_index = args.index("--partition-num")
+    args[partition_num_index : partition_num_index + 2] = [
+        "--rows-per-partition",
+        value,
+    ]
+    with pytest.raises(SystemExit):
+        cli_tools.configure_arg_parser().parse_args(args)
+
+
+@pytest.mark.parametrize(
+    "partition_argument,partition_value,source_rows,target_rows,expected_source,expected_target",
+    [
+        (
+            "--rows-per-partition",
+            4,
+            10,
+            10,
+            ["0,1,2,3", "4,5,6,7", "8,9"],
+            ["0,1,2,3", "4,5,6,7", "8,9"],
+        ),
+        (
+            "--rows-per-partition",
+            4,
+            10,
+            14,
+            ["0,1,2,3", "4,5,6,7", "8,9"],
+            ["0,1,2,3", "4,5,6,7", "8,9,10,11,12,13"],
+        ),
+        ("--rows-per-partition", 20, 10, 10, ["1 = 1"], ["1 = 1"]),
+        ("--rows-per-partition", 4, 0, 0, ["1 = 1"], ["1 = 1"]),
+        ("--rows-per-partition", 4, 1, 1, ["1 = 1"], ["1 = 1"]),
+        ("--rows-per-partition", 1, 3, 3, ["0", "1", "2"], ["0", "1", "2"]),
+        (
+            "--partition-num",
+            3,
+            10,
+            10,
+            ["0,1,2", "3,4,5", "6,7,8,9"],
+            ["0,1,2", "3,4,5", "6,7,8,9"],
+        ),
+    ],
+)
+def test_get_partition_key_filters_for_partition_mode(
+    module_under_test,
+    partition_argument,
+    partition_value,
+    source_rows,
+    target_rows,
+    expected_source,
+    expected_target,
+):
+    data = pandas.DataFrame({"id": pandas.Series(range(source_rows), dtype="int64")})
+    target_data = pandas.DataFrame(
+        {"id": pandas.Series(range(target_rows), dtype="int64")}
+    )
+    ibis_client = ibis.sqlite.connect(":memory:")
+    ibis_client.create_table("source_table", obj=data)
+    ibis_client.create_table("target_table", obj=target_data)
+    source_table = ibis_client.table("source_table")
+    target_table = ibis_client.table("target_table")
+
+    config_manager = mock.Mock()
+    config_manager.primary_keys = [{"source_column": "id", "target_column": "id"}]
+    config_manager.source_client = ibis_client
+    config_manager.source_schema = None
+    config_manager.source_table = "source_table"
+    config_manager.source_query = None
+    config_manager.target_client = ibis_client
+    config_manager.target_schema = None
+    config_manager.target_table = "target_table"
+    config_manager.target_query = None
+
+    source_row_builder = mock.Mock(query=source_table)
+    source_row_builder.get_count.return_value = len(data)
+    target_row_builder = mock.Mock(query=target_table)
+    target_row_builder.get_count.return_value = len(target_data)
+
+    def get_rows(table_expr, _client):
+        return ",".join(str(value) for value in table_expr.execute()["id"])
+
+    with mock.patch.object(
+        module_under_test, "ValidationBuilder"
+    ) as validation_builder, mock.patch.object(
+        module_under_test,
+        "PartitionRowBuilder",
+        side_effect=[source_row_builder, target_row_builder],
+    ), mock.patch.object(
+        module_under_test.cli_tools, "check_no_yaml_files"
+    ) as check_no_yaml_files, mock.patch.object(
+        module_under_test.PartitionBuilder,
+        "_extract_where",
+        new=staticmethod(get_rows),
+    ):
+        validation_builder.return_value.source_builder = object()
+        validation_builder.return_value.target_builder = object()
+
+        parser_args = TABLE_PART_ARGS.copy()
+        partition_num_index = parser_args.index("--partition-num")
+        del parser_args[partition_num_index : partition_num_index + 2]
+        parser_args.extend([partition_argument, str(partition_value)])
+        args = cli_tools.configure_arg_parser().parse_args(parser_args)
+        builder = module_under_test.PartitionBuilder([config_manager], args)
+
+        partition_filters = builder._get_partition_key_filters()
+
+    if partition_argument == "--rows-per-partition":
+        expected_partition_count = max(1, math.ceil(len(data) / partition_value))
+        check_no_yaml_files.assert_called_once_with(
+            expected_partition_count, args.parts_per_file
+        )
+    else:
+        check_no_yaml_files.assert_not_called()
+
+    assert partition_filters == [[expected_source, expected_target]]
+
+
+def test_rows_per_partition_generated_sql_filters(module_under_test):
+    client = ibis.sqlite.connect(":memory:")
+    client.create_table("source_table", obj=pandas.DataFrame({"id": range(10)}))
+    client.create_table("target_table", obj=pandas.DataFrame({"id": range(14)}))
+    source = mock.Mock(query=client.table("source_table"))
+    target = mock.Mock(query=client.table("target_table"))
+    source.get_count.return_value = 10
+    target.get_count.return_value = 14
+    config_manager = mock.Mock(
+        primary_keys=[{"source_column": "id", "target_column": "id"}],
+        source_client=client,
+        target_client=client,
+        source_schema=None,
+        target_schema=None,
+        source_table="source_table",
+        target_table="target_table",
+        source_query=None,
+        target_query=None,
+    )
+    args = TABLE_PART_ARGS.copy()
+    partition_num_index = args.index("--partition-num")
+    args[partition_num_index : partition_num_index + 2] = ["--rows-per-partition", "4"]
+    builder = module_under_test.PartitionBuilder(
+        [config_manager], cli_tools.configure_arg_parser().parse_args(args)
+    )
+
+    with mock.patch.object(module_under_test, "ValidationBuilder"), mock.patch.object(
+        module_under_test, "PartitionRowBuilder", side_effect=[source, target]
+    ), mock.patch("data_validation.clients.is_sqlalchemy_backend", return_value=True):
+        source_filters, target_filters = builder._get_partition_key_filters()[0]
+
+    for table, filters, expected in (
+        ("source_table", source_filters, [list(range(4)), list(range(4, 8)), [8, 9]]),
+        (
+            "target_table",
+            target_filters,
+            [list(range(4)), list(range(4, 8)), list(range(8, 14))],
+        ),
+    ):
+        actual = []
+        for partition_filter in filters:
+            rows = client.raw_sql(
+                f"SELECT id FROM {table} WHERE {partition_filter} ORDER BY id"
+            ).fetchall()
+            actual.append([row[0] for row in rows])
+        assert actual == expected
+
+
+def test_rows_per_partition_checks_file_limit_before_fetching_boundaries(
+    module_under_test,
+):
+    args = TABLE_PART_ARGS.copy()
+    partition_num_index = args.index("--partition-num")
+    args[partition_num_index : partition_num_index + 2] = ["--rows-per-partition", "1"]
+    args[args.index("--parts-per-file") + 1] = "1"
+    builder = module_under_test.PartitionBuilder(
+        [mock.Mock(primary_keys=[])], cli_tools.configure_arg_parser().parse_args(args)
+    )
+    row_builder = mock.Mock()
+    row_builder.get_count.return_value = 10001
+    with mock.patch.object(module_under_test, "ValidationBuilder"), mock.patch.object(
+        module_under_test, "PartitionRowBuilder", return_value=row_builder
+    ):
+        with pytest.raises(argparse.ArgumentTypeError, match="10,000"):
+            builder._get_partition_key_filters()
 
 
 @pytest.mark.parametrize(

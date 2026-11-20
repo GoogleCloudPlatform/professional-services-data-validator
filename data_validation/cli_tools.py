@@ -358,12 +358,17 @@ def _configure_partition_parser(subparsers):
         "Local: Provide a relative path of the target directory. "
         "Eg: `partitions_dir`",
     )
-    required_arguments.add_argument(
+    partition_arguments = required_arguments.add_mutually_exclusive_group(required=True)
+    partition_arguments.add_argument(
         "--partition-num",
         "-pn",
-        required=True,
-        help="Number of partitions into which the table should be split",
+        help="Number of approximately equally sized partitions into which the table should be split",
         type=_check_gt_one,
+    )
+    partition_arguments.add_argument(
+        "--rows-per-partition",
+        type=_check_positive,
+        help="Target number of source rows per partition; actual sizes may vary",
     )
     # User can provide tables or custom queries, but not both
     # However, Argparse does not support adding an argument_group to an argument_group or adding a
@@ -1180,7 +1185,7 @@ def check_no_yaml_files(partition_num: int, parts_per_file: int):
         return
     else:
         raise argparse.ArgumentTypeError(
-            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
+            f"Partition count={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by increasing --parts-per-file or reducing the partition count (by lowering --partition-num or increasing --rows-per-partition)."
         )
 
 

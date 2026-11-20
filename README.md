@@ -240,9 +240,11 @@ data-validation
 ```
 #### Generate Partitions for Large Row Validations
 
-When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating partitions in order to perform row validations on large dataset (table or custom-query) to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
+When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Generate partitions to validate a large table or custom query in smaller primary-key ranges. Use either `--partition-num` to choose the number of approximately equal-sized partitions or `--rows-per-partition` to target a number of source rows per partition. The latter makes it easier to choose a partition size suited to the available memory without first calculating a partition count. See *Primary Keys* section.
 
-The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+This is not a hard memory limit: row widths, target rows in each key range, changes to the data, and the number of concurrent validations also affect memory usage. Target partitions may contain more rows than the requested source-row size.
+
+The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions when the number of partitions is not evenly divisible. You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. You can specify tables that are being validated or the source and target custom query. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
@@ -285,8 +287,11 @@ data-validation
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
                         For custom queries, the yaml files are stored in CONFIG_DIR and, for tables the yamls are stored in a directory named <source_schema>.<table> within CONFIG_DIR.
   --partition-num INT, -pn INT
-                        Number of partitions into which the table should be split, e.g. 1000 or 10000
-                        In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
+                        Number of approximately equal-sized partitions, e.g. 1000 or 10000.
+                        Mutually exclusive with --rows-per-partition.
+  --rows-per-partition INT
+                        Target number of source rows per partition; actual sizes may vary.
+                        Mutually exclusive with --partition-num.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
