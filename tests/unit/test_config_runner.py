@@ -170,6 +170,17 @@ def test_config_runner_rejects_unsupported_concurrency(
     mock_build.assert_not_called()
 
 
+@pytest.mark.parametrize("concurrency", [0, 129, 640])
+@mock.patch("data_validation.config_runner._list_validation_files")
+def test_config_runner_rejects_out_of_range_concurrency(mock_list, concurrency):
+    args = argparse.Namespace(
+        config_dir="configs", kube_completions=False, concurrency=concurrency
+    )
+    with pytest.raises(ValueError, match="--concurrency must be between 1 and 128"):
+        config_runner.config_runner(args)
+    mock_list.assert_not_called()
+
+
 @mock.patch("data_validation.config_runner.run_validations")
 @mock.patch("data_validation.config_runner.build_config_managers_from_yaml")
 def test_config_files_concurrency_is_bounded_and_continues_after_failure(

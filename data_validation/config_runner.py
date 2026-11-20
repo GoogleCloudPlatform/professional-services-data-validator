@@ -157,7 +157,12 @@ def config_runner(args):
     file corresponding to its index in the sorted list. The number of tasks/completions should
     match the number of validation YAML files in the directory.
     """
-    if getattr(args, "concurrency", 1) > 1:
+    concurrency = getattr(args, "concurrency", 1)
+    if not 1 <= concurrency <= cli_tools.MAX_CONFIG_CONCURRENCY:
+        raise ValueError(
+            f"--concurrency must be between 1 and {cli_tools.MAX_CONFIG_CONCURRENCY}."
+        )
+    if concurrency > 1:
         if not args.config_dir:
             raise ValueError("--concurrency greater than 1 requires --config-dir.")
         if args.kube_completions:

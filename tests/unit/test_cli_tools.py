@@ -1186,6 +1186,7 @@ def test_configs_run_concurrency():
     args = ["configs", "run", "--config-dir", "configs"]
     assert parser.parse_args(args).concurrency == 1
     assert parser.parse_args(args + ["--concurrency", "3"]).concurrency == 3
+    assert parser.parse_args(args + ["--concurrency", "128"]).concurrency == 128
 
 
 @pytest.mark.parametrize("concurrency", ["0", "-1", "many"])
@@ -1195,6 +1196,17 @@ def test_configs_run_invalid_concurrency(concurrency):
         parser.parse_args(
             ["configs", "run", "--config-dir", "configs", "--concurrency", concurrency]
         )
+
+
+@pytest.mark.parametrize("concurrency", ["129", "640"])
+def test_configs_run_concurrency_over_limit(concurrency, capsys):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit) as exc_info:
+        parser.parse_args(
+            ["configs", "run", "--config-dir", "configs", "--concurrency", concurrency]
+        )
+    assert exc_info.value.code == 2
+    assert "concurrency must be between 1 and 128" in capsys.readouterr().err
 
 
 def test_arg_parser_generate_table_partitions_help(capsys):
