@@ -47,7 +47,8 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | 10 | NULL in both source and target marked as fail | Row/column validations fail on NULL/NaN values | **Open (parked)** |
 | 11 | Floating point noise in `std`/`avg` | Oracle `7.07e-13` vs BigQuery `0.0` fails | **Open (parked)** |
 | 12 | String aggregates rejected by the combiner | `ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric` | Fixed |
-| 13 | Spanner backend cannot fetch results into PyArrow | `AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'` | **Open** |
+| 13 | Spanner backend cannot fetch results into PyArrow | `AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'` | Fixed |
+| 14 | Time zone aware vs naive timestamps compared as unequal | Spanner `TIMESTAMP` vs BigQuery `DATETIME` comparison fields marked fail | **Open** |
 
 ## System test results
 
@@ -57,7 +58,7 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | Oracle column validations (`test_oracle.py -k "column_validation and not postgres"`) | 14 passed, 2 skipped, 2 failed | #10, #11 |
 | Oracle to PostgreSQL (`test_oracle.py -k postgres`) | 9 passed, 1 skipped, 8 failed | #10 (6 tests), #12 (2 tests) |
 | PostgreSQL (`test_postgres.py --no-cloud-sql`) | 55 passed, 3 skipped, 4 failed | #10 (3 tests), #12 (1 test) |
-| Spanner (`test_spanner.py`) | 5 passed, 14 failed | #13 (all 14 tests) |
+| Spanner (`test_spanner.py`) | 52 passed, 1 failed, 5 skipped (after fix 13) | #14 (1 test) |
 
 Oracle to PostgreSQL failures in detail:
 
@@ -84,9 +85,9 @@ PostgreSQL failures in detail:
 No PostgreSQL or Oracle to PostgreSQL failures were caused by the fixes in this document, and no
 PostgreSQL YAML line count expectations needed updating for problem 1.
 
-Every Spanner test that runs a validation query fails with problem 13 before the combiner is reached,
-so Spanner currently gives no coverage of the combiner. Once 13 is fixed the Spanner suite should be
-rerun, it may expose further combiner issues.
+Before fix 13 every Spanner test that ran a validation query (37 of 53 by 2026-11-20) failed with problem
+13 before the combiner was reached. After fix 13 the only failure is
+`test_row_validation_comp_fields_tricky_dates_to_bigquery`, which is problem 14.
 
 ---
 
@@ -499,7 +500,7 @@ in the threshold comparison only, leaving exact integer/decimal comparisons unto
 decimal places makes very small non-zero values compare equal, which is the same trade-off `develop`
 made.
 
-### 13. Spanner backend cannot fetch results into PyArrow
+### 13. Spanner backend cannot fetch results into PyArrow (fixed)
 
 **Tests:** All 14 Spanner tests that run a validation, e.g. `test_count_validator`,
 `test_column_validation_core_types`, `test_row_validation_core_types_to_bigquery`. The 5 passing tests
@@ -568,6 +569,61 @@ Note that `raw_sql()` also returns the cursor after the `db.snapshot()` context 
    results, multi-batch chunking, and snapshot lifetime, then rerun `test_spanner.py` to check for
    any remaining combiner issues (e.g. #10 or #11).
 
+**Fix (`beb4d6ed` and the following commit):** Plan steps 1 and 3. `adbc-driver-spanner` was rejected for now because it needs
+Python 3.11+, it should be a separate future piece of work.
+
+- New [to_pyarrow.py](../../../../third_party/ibis/ibis_cloud_spanner/to_pyarrow.py) builds typed Arrow
+  record batches from the Spanner result's field types rather than letting PyArrow infer them:
+  `BYTES` is base64 decoded, `JSON` is serialized to a string, `NUMERIC` is `decimal128(38, 9)`,
+  `TIMESTAMP` is `timestamp("us", tz="UTC")`, `DATE` is `date32`, and `ARRAY<T>` is a list of `T` with
+  the same element conversions. Unsupported types (`STRUCT`, `PROTO`, `ENUM`, `INTERVAL`, `UUID`,
+  unrecognised codes) raise `TypeError: Unsupported Spanner data type: ...`, matching PR #1907 (issue
+  #1880) for Ibis schemas.
+- `Backend.to_pyarrow_batches()` overrides the generic `fetchmany()` version for Spanner only. It builds
+  every batch inside `db.snapshot()` (DVT's `_base_to_pyarrow()` reads all batches anyway) and falls back
+  to the Ibis schema when Spanner returns no field metadata. `execute()` and the Pandas path are unchanged.
+- `Backend.to_pyarrow_batches()` reuses the `Database` created at connect time (`self.database_name`).
+  Creating one per query (`self.instance.database(...)`) also creates a session pool, a multiplexed
+  session and a maintenance thread that lives for up to 10 minutes, measured as one leaked thread per
+  query against `dvt-spanner`.
+- Timestamps are microseconds because Arrow nanosecond timestamps cannot hold Spanner's range (years
+  0001 to 9999). Sub-microsecond digits are dropped, noted in [limitations.md](../../../limitations.md).
+- Plan step 2 was not needed for validations. `raw_sql()` still returns a cursor after its snapshot has
+  closed (only used by the `query` CLI), and the `datatypes.py` fixes are in PR #1907.
+
+Unit tests in [test_to_pyarrow.py](../../../../tests/unit/ibis_spanner/test_to_pyarrow.py). Inferring
+types would also have been slower for `NUMERIC` (about 0.69s vs 0.10s per 500,000 values), but the
+Spanner client's own Python decoding (1.7 to 3.4s per 500,000 values per column) dominates either way.
+
+**Result:** `test_spanner.py` went from 16 passed, 37 failed to 52 passed, 1 failed (5 skipped for
+existing issues #1881, #1891, #1613, #1888). The remaining failure is problem 14.
+
+Known edge case: a JSON value that is literally `null` is returned by the Spanner client as `None`, so it
+becomes a SQL NULL rather than the string `"null"`.
+
+### 14. Time zone aware vs naive timestamps compared as unequal
+
+**Test:** `test_row_validation_comp_fields_tricky_dates_to_bigquery` (Spanner to BigQuery).
+
+**Symptom:** The four `col_ts_*` comparison fields are marked fail although the values are identical,
+e.g. `1970-01-01 00:00:00+00:00` vs `1970-01-01`. The `col_dt_*` `DATE` columns pass.
+
+**Root cause:** Spanner `TIMESTAMP` is time zone aware (`timestamp[us, tz=UTC]`) while BigQuery
+`DATETIME` is naive (`timestamp[us]`). `pc.equal()` raises
+`ArrowInvalid: Cannot compare timestamp with timezone to timestamp without timezone`. The Python
+fallback in `_exact_comparison()`, intended for decimals needing more than 76 digits, catches the error
+and compares aware and naive `datetime` objects, which Python treats as never equal. So the type
+mismatch becomes a silent `fail` rather than an error. The Spanner type mapping is not the cause: the
+Ibis schema already declares Spanner `TIMESTAMP` as UTC, and mapping it as naive would break
+comparisons with BigQuery `TIMESTAMP`.
+
+**Proposed fix:**
+
+1. In the combiner, when one side is time zone aware and the other naive, treat the naive side as UTC
+   before comparing. Spanner and BigQuery store UTC, and DVT sets the Oracle session time zone to UTC.
+2. Restrict the Python fallback in `_exact_comparison()` to decimal columns so other type mismatches
+   raise rather than silently fail.
+
 ---
 
 ## Not yet verified
@@ -575,4 +631,5 @@ Note that `raw_sql()` also returns the cursor after the `db.snapshot()` context 
 - System tests for other engines (e.g. SQL Server, Teradata, Snowflake) have not been run with these
   changes. Their test files may have YAML line count expectations affected by problem 1.
 - The full Oracle suite (beyond column validations and Oracle to PostgreSQL) has not been run.
-- Spanner combiner behaviour is untested until problem 13 is fixed.
+- Spanner has only been verified with `test_spanner.py` (Spanner to Spanner and Spanner to BigQuery).
+  Problem 14 (time zone aware vs naive timestamps) may also affect other engine pairs.
