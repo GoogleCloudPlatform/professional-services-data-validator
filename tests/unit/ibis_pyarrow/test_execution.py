@@ -171,6 +171,22 @@ def test_base_to_pyarrow_preserves_overflowing_numerics(
     assert result["agg_val"][0].as_py() == expected_py_val
 
 
+def test_sql_to_pyarrow_batches_default_chunk_size():
+    """DVT does not pass chunk_size, so the default sets fetchmany() and batch size."""
+
+    class _RecordingBackend(_FakeSQLBackend):
+        def _cursor_batches(self, expr, params=None, limit=None, chunk_size=None):
+            self.chunk_size = chunk_size
+            yield from self._batches
+
+    t = ibis.table([("col", "int64")], name="t")
+    backend = _RecordingBackend([(1,), (2,)])
+
+    backend.to_pyarrow(t)
+
+    assert backend.chunk_size == execution.DEFAULT_CHUNK_SIZE == 50_000
+
+
 def test_base_to_pyarrow_returns_empty_table_when_no_rows():
     t = ibis.table([("col", "int64")], name="t")
     backend = _FakeSQLBackend([])

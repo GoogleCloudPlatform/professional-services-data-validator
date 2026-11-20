@@ -119,13 +119,21 @@ def _unify_record_batches(batches):
     return out_schema, aligned_batches
 
 
+# Rows per fetchmany() call and record batch. The fetched Python tuples, plus their transposed
+# copy, are several times the size of the Arrow data (measured peak for 1M narrow rows: 284 MiB at
+# 1,000,000 rows per batch, 20 MiB at 50,000), and smaller batches were no slower. pa.string() and
+# pa.binary() have 32-bit offsets, so one column of one batch is limited to 2 GiB: at 50,000 rows
+# that needs an average of more than ~43 KiB per row in a single text or binary column.
+DEFAULT_CHUNK_SIZE = 50_000
+
+
 def _sql_to_pyarrow_batches(
     self,
     expr,
     *,
     params=None,
     limit=None,
-    chunk_size=1_000_000,
+    chunk_size=DEFAULT_CHUNK_SIZE,
 ):
     """Execute expression and return an iterator of pyarrow record batches.
 

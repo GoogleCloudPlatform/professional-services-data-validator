@@ -49,6 +49,7 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | 12 | String aggregates rejected by the combiner | `ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric` | Fixed |
 | 13 | Spanner backend cannot fetch results into PyArrow | `AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'` | Fixed |
 | 14 | Time zone aware vs naive timestamps compared as unequal | Spanner `TIMESTAMP` vs BigQuery `DATETIME` comparison fields marked fail | **Open** |
+| 15 | 1M-row PyArrow fetch batches | High peak Python memory, 2 GiB string/binary limit per batch | Fixed |
 
 ## System test results
 
@@ -623,6 +624,39 @@ comparisons with BigQuery `TIMESTAMP`.
    before comparing. Spanner and BigQuery store UTC, and DVT sets the Oracle session time zone to UTC.
 2. Restrict the Python fallback in `_exact_comparison()` to decimal columns so other type mismatches
    raise rather than silently fail.
+
+### 15. 1M-row PyArrow fetch batches (fixed)
+
+**Scope:** Only this branch. `develop` still fetches through `execute()` and Pandas, and has no
+`ibis_pyarrow` module.
+
+**Root cause:** Found in review of fix 13. DVT's generic `_sql_to_pyarrow_batches()` in
+[execution.py](../../../../third_party/ibis/ibis_pyarrow/execution.py), used by every SQLAlchemy
+backend (Oracle, PostgreSQL, SQL Server, MySQL, Db2, Teradata, ...), and the Spanner
+`to_pyarrow_batches()` defaulted to `chunk_size=1_000_000`. Each batch holds up to 1M rows as Python
+objects plus a transposed copy, which is several times the size of the resulting Arrow data.
+`pa.string()` and `pa.binary()` also have 32-bit offsets, so a text or binary column averaging more
+than ~2.1 KiB per row in a 1M-row batch overflows 2 GiB. `pa.array()` then returns a `ChunkedArray`
+and `pa.RecordBatch.from_arrays()` fails.
+
+**Measured** (1M narrow rows, 80 MiB of Arrow data, `tracemalloc` peak):
+
+| Path | `chunk_size` 1,000,000 | `chunk_size` 50,000 |
+|---|---|---|
+| Generic SQL (`_sql_to_pyarrow_batches`) | 284 MiB, 4.2s | 20 MiB, 3.5s |
+| Spanner (`record_batches_from_result`) | 320 MiB, 6.1s | 16 MiB, 5.6s |
+
+**Fix:** Both default to 50,000 rows (`DEFAULT_CHUNK_SIZE` in `execution.py` and in the Spanner
+`to_pyarrow.py`). The Spanner path also builds each batch in a helper and releases each chunk before
+reading the next. DVT's `_base_to_pyarrow()` keeps every batch, so total Arrow memory is unchanged,
+only the temporary Python objects shrink.
+
+**Remaining limit:** One text or binary column in one 50,000-row batch can still exceed 2 GiB if it
+averages more than ~43 KiB per row. Using `large_string` / `large_binary` would remove that if it is
+ever seen in practice.
+
+Unit tests `test_sql_to_pyarrow_batches_default_chunk_size` and
+`test_backend_to_pyarrow_batches_chunk_size`.
 
 ---
 
