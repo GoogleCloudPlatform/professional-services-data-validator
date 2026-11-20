@@ -449,6 +449,84 @@ def test_generate_report_row_validation_with_mixed_exact_types(module_under_test
     assert by_col_and_id[("uint_vs_int", "4")] == consts.VALIDATION_STATUS_SUCCESS
 
 
+def test_generate_report_row_validation_time_zone_aware_vs_naive(module_under_test):
+    """Spanner TIMESTAMP (UTC) vs BigQuery DATETIME (naive), the naive side is UTC."""
+    src_values = [
+        datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc),
+        datetime.datetime(9999, 12, 31, 23, 59, 59, tzinfo=datetime.timezone.utc),
+        datetime.datetime(2000, 1, 1, 12, tzinfo=datetime.timezone.utc),
+        None,
+    ]
+    tgt_values = [
+        datetime.datetime(1970, 1, 1),
+        datetime.datetime(9999, 12, 31, 23, 59, 59),
+        datetime.datetime(2000, 1, 1, 13),
+        None,
+    ]
+    run_metadata = metadata.RunMetadata(
+        validations={
+            col: metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_schema",
+                source_column_name=col,
+                target_table_name="test_target",
+                target_table_schema="target_schema",
+                target_column_name=col,
+                validation_type="Row",
+                aggregation_type=None,
+                primary_keys=["id"],
+                num_random_rows=None,
+                threshold=0.0,
+            )
+            for col in ("aware_vs_naive", "naive_vs_aware")
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+        labels=[],
+        run_id="test-run",
+    )
+    aware = pyarrow.array(src_values, type=pyarrow.timestamp("us", tz="UTC"))
+    naive = pyarrow.array(tgt_values, type=pyarrow.timestamp("us"))
+    source_table = pyarrow.table(
+        {"id": [1, 2, 3, 4], "aware_vs_naive": aware, "naive_vs_aware": naive}
+    )
+    target_table = pyarrow.table(
+        {"id": [1, 2, 3, 4], "aware_vs_naive": naive, "naive_vs_aware": aware}
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source_table,
+        target_table,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+
+    by_col_and_id = {
+        (
+            row[consts.VALIDATION_NAME],
+            json.loads(row[consts.GROUP_BY_COLUMNS])["id"],
+        ): row[consts.VALIDATION_STATUS]
+        for _, row in report.iterrows()
+    }
+    for col in ("aware_vs_naive", "naive_vs_aware"):
+        assert by_col_and_id[(col, "1")] == consts.VALIDATION_STATUS_SUCCESS
+        assert by_col_and_id[(col, "2")] == consts.VALIDATION_STATUS_SUCCESS
+        assert by_col_and_id[(col, "3")] == consts.VALIDATION_STATUS_FAIL
+        assert by_col_and_id[(col, "4")] == consts.VALIDATION_STATUS_SUCCESS
+
+
+def test_exact_comparison_non_decimal_type_mismatch_raises(module_under_test):
+    """Only decimals fall back to a Python comparison, other mismatches must not fail silently."""
+    aware = pyarrow.chunked_array(
+        [pyarrow.array([0], type=pyarrow.timestamp("us", tz="UTC"))]
+    )
+    naive = pyarrow.chunked_array([pyarrow.array([0], type=pyarrow.timestamp("us"))])
+    nulls = pyarrow.chunked_array([pyarrow.array([None], type=pyarrow.float64())])
+    with pytest.raises(pyarrow.ArrowInvalid):
+        module_under_test._exact_comparison(aware, naive, nulls)
+
+
 def _row_validation_run_metadata(columns):
     return metadata.RunMetadata(
         validations={

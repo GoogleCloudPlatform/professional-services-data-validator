@@ -92,6 +92,22 @@ def _safe_decimal_type(
     return pc.cast(src_col, common_type), pc.cast(tgt_col, common_type)
 
 
+def _naive_timestamp_as_utc(
+    src_col: pa.ChunkedArray, tgt_col: pa.ChunkedArray
+) -> tuple[pa.ChunkedArray, pa.ChunkedArray]:
+    # Arrow cannot compare time zone aware and naive timestamps, e.g. Spanner TIMESTAMP vs
+    # BigQuery DATETIME. DVT queries engines in UTC, so a naive timestamp is treated as UTC.
+    if not (
+        pa.types.is_timestamp(src_col.type) and pa.types.is_timestamp(tgt_col.type)
+    ):
+        return src_col, tgt_col
+    if src_col.type.tz and not tgt_col.type.tz:
+        tgt_col = pc.cast(tgt_col, pa.timestamp(tgt_col.type.unit, tz="UTC"))
+    elif tgt_col.type.tz and not src_col.type.tz:
+        src_col = pc.cast(src_col, pa.timestamp(src_col.type.unit, tz="UTC"))
+    return src_col, tgt_col
+
+
 def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
     """Return an empty report table with the standard 20-column schema."""
     start_time_type = (
@@ -133,6 +149,11 @@ def _exact_comparison(src_col, tgt_col, float_nulls_col):
         equal = pc.equal(src_col, tgt_col)
     except pa.ArrowInvalid:
         # Decimals needing more than 76 combined digits have no common Arrow type.
+        # Other type mismatches must raise rather than be reported as a fail.
+        if not (
+            pa.types.is_decimal(src_col.type) and pa.types.is_decimal(tgt_col.type)
+        ):
+            raise
         equal = pa.array(
             [
                 None if src is None or tgt is None else src == tgt
@@ -332,6 +353,7 @@ def join_and_unpivot(
             # With Hash and concat, the column values will always be non null
             # With comparison-fields, we can have nulls, so the check here null==null as success.
             # Native type equality check (works on int64, decimal, string, timestamp, etc.)
+            src_col, tgt_col = _naive_timestamp_as_utc(src_col, tgt_col)
             is_successful, difference, pct_difference = _exact_comparison(
                 src_col, tgt_col, float_nulls_col
             )

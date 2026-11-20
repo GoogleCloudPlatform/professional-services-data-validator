@@ -48,7 +48,7 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | 11 | Floating point noise in `std`/`avg` | Oracle `7.07e-13` vs BigQuery `0.0` fails | **Open (parked)** |
 | 12 | String aggregates rejected by the combiner | `ValueError: Aggregate value of min__cast_uuid_string__col_uuid must be numeric` | Fixed |
 | 13 | Spanner backend cannot fetch results into PyArrow | `AttributeError: 'SpannerCursor' object has no attribute 'fetchmany'` | Fixed |
-| 14 | Time zone aware vs naive timestamps compared as unequal | Spanner `TIMESTAMP` vs BigQuery `DATETIME` comparison fields marked fail | **Open** |
+| 14 | Time zone aware vs naive timestamps compared as unequal | Spanner `TIMESTAMP` vs BigQuery `DATETIME` comparison fields marked fail | Fixed |
 | 15 | 1M-row PyArrow fetch batches | High peak Python memory, 2 GiB string/binary limit per batch | Fixed |
 
 ## System test results
@@ -59,7 +59,7 @@ Pandas is only used at the end of `generate_report()` to convert the finished re
 | Oracle column validations (`test_oracle.py -k "column_validation and not postgres"`) | 14 passed, 2 skipped, 2 failed | #10, #11 |
 | Oracle to PostgreSQL (`test_oracle.py -k postgres`) | 9 passed, 1 skipped, 8 failed | #10 (6 tests), #12 (2 tests) |
 | PostgreSQL (`test_postgres.py --no-cloud-sql`) | 55 passed, 3 skipped, 4 failed | #10 (3 tests), #12 (1 test) |
-| Spanner (`test_spanner.py`) | 52 passed, 1 failed, 5 skipped (after fix 13) | #14 (1 test) |
+| Spanner (`test_spanner.py`) | 53 passed, 5 skipped (after fixes 13 and 14) | None |
 
 Oracle to PostgreSQL failures in detail:
 
@@ -87,8 +87,9 @@ No PostgreSQL or Oracle to PostgreSQL failures were caused by the fixes in this 
 PostgreSQL YAML line count expectations needed updating for problem 1.
 
 Before fix 13 every Spanner test that ran a validation query (37 of 53 by 2026-11-20) failed with problem
-13 before the combiner was reached. After fix 13 the only failure is
-`test_row_validation_comp_fields_tricky_dates_to_bigquery`, which is problem 14.
+13 before the combiner was reached. After fix 13 the only failure was
+`test_row_validation_comp_fields_tricky_dates_to_bigquery`, which is problem 14. After fix 14 all
+Spanner tests pass, apart from 5 skipped for known issues (#1881, #1891, #1613, #1888).
 
 ---
 
@@ -602,7 +603,7 @@ existing issues #1881, #1891, #1613, #1888). The remaining failure is problem 14
 Known edge case: a JSON value that is literally `null` is returned by the Spanner client as `None`, so it
 becomes a SQL NULL rather than the string `"null"`.
 
-### 14. Time zone aware vs naive timestamps compared as unequal
+### 14. Time zone aware vs naive timestamps compared as unequal (fixed)
 
 **Test:** `test_row_validation_comp_fields_tricky_dates_to_bigquery` (Spanner to BigQuery).
 
@@ -618,12 +619,17 @@ mismatch becomes a silent `fail` rather than an error. The Spanner type mapping 
 Ibis schema already declares Spanner `TIMESTAMP` as UTC, and mapping it as naive would break
 comparisons with BigQuery `TIMESTAMP`.
 
-**Proposed fix:**
+**Fix:**
 
-1. In the combiner, when one side is time zone aware and the other naive, treat the naive side as UTC
-   before comparing. Spanner and BigQuery store UTC, and DVT sets the Oracle session time zone to UTC.
-2. Restrict the Python fallback in `_exact_comparison()` to decimal columns so other type mismatches
-   raise rather than silently fail.
+1. `_naive_timestamp_as_utc()` in [combiner.py](../../../../data_validation/combiner.py) treats the
+   naive side as UTC when one side of a row validation comparison is time zone aware and the other
+   naive. Spanner and BigQuery store UTC, and DVT sets the BigQuery and Oracle session time zones to
+   UTC. Column validations are unaffected, they compare timestamps as epoch seconds.
+2. The Python fallback in `_exact_comparison()` is restricted to decimal columns, so other type
+   mismatches raise rather than silently fail.
+
+**Tests:** `test_generate_report_row_validation_time_zone_aware_vs_naive` and
+`test_exact_comparison_non_decimal_type_mismatch_raises` in `tests/unit/test_combiner.py`.
 
 ### 15. 1M-row PyArrow fetch batches (fixed)
 
@@ -666,4 +672,5 @@ Unit tests `test_sql_to_pyarrow_batches_default_chunk_size` and
   changes. Their test files may have YAML line count expectations affected by problem 1.
 - The full Oracle suite (beyond column validations and Oracle to PostgreSQL) has not been run.
 - Spanner has only been verified with `test_spanner.py` (Spanner to Spanner and Spanner to BigQuery).
-  Problem 14 (time zone aware vs naive timestamps) may also affect other engine pairs.
+- The fix for problem 14 also applies to other engine pairs with time zone aware vs naive timestamps,
+  but has only been verified with Spanner to BigQuery.
