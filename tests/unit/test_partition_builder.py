@@ -668,18 +668,20 @@ def test_class_object_creation(module_under_test):
             'SELECT t0."course_id", t0."quarter_id", t0."recd_timestamp",\n       t0."registration_date", t0."approved", t0."grade"\nFROM (\n  select * from udf.test_generate_partitions_v2 where course_id < \'ALG003\'\n) t0\nWHERE (t0."course_id" < \'ALG002\') OR ((t0."course_id" = \'ALG002\') AND (t0."quarter_id" < 1234))',
             '("course_id" < \'ALG002\') OR (("course_id" = \'ALG002\') AND ("quarter_id" < 1234))',
         ),
-        ("SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '", "t0.a < ' WHERE '"),
+        ("SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '", "a < ' WHERE '"),
         ('SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2', '"at0.b" < 2'),
+        (
+            "SELECT t0.\"WHERE\" FROM (\n  select * from sch.tbl where b = 1\n) t0\nWHERE t0.\"WHERE\" IN ('(', 't0.x')",
+            "\"WHERE\" IN ('(', 't0.x')",
+        ),
+        (
+            "SELECT t0.* FROM sch.tbl t0\nWHERE (t0.id IN (select id from sch.other where flag = 1)) AND (t0.id < 5)",
+            "(id IN (select id from sch.other where flag = 1)) AND (id < 5)",
+        ),
     ],
 )
 @mock.patch("data_validation.util.ibis_table_to_sql")
 def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
-    failed_cases = [
-        "SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '",
-        'SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2',
-    ]
-    if ibis_table_str in failed_cases:
-        pytest.skip("Skipping test_extract_where due to issue 1503")
     mocked_to_sql.return_value = ibis_table_str
     assert (
         PartitionBuilder._extract_where("dummy ibis table", _get_pandas_client())
