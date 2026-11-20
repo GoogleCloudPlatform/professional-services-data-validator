@@ -16,10 +16,14 @@
 
 from unittest import mock
 
+from google.cloud.spanner_v1 import param_types
 import pytest
 
 from data_validation import clients, consts, exceptions
-from third_party.ibis.ibis_cloud_spanner import SPANNER_DIALECT_QUERY
+from third_party.ibis.ibis_cloud_spanner import (
+    SPANNER_DIALECT_QUERY,
+    SPANNER_PRIMARY_KEY_COLUMNS_QUERY,
+)
 
 SPANNER_CONN_CONFIG = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_SPANNER,
@@ -76,3 +80,55 @@ def test_get_data_client_postgresql_dialect(mock_client_class):
     ):
         clients.get_data_client(SPANNER_CONN_CONFIG)
     mock_snapshot.execute_sql.assert_called_once_with(SPANNER_DIALECT_QUERY)
+
+
+@pytest.mark.parametrize(
+    "pk_rows,expected",
+    [
+        ([["id"]], ["id"]),
+        # Composite key, the query orders by ordinal_position.
+        ([["key1"], ["key2"], ["key3"]], ["key1", "key2", "key3"]),
+        # Views and tables declared with PRIMARY KEY () have no key columns.
+        ([], []),
+    ],
+)
+@mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
+def test_list_primary_key_columns(mock_client_class, pk_rows, expected):
+    """Primary key columns come from a bound information_schema data query."""
+    mock_snapshot = _mock_spanner_client(mock_client_class, [["GOOGLE_STANDARD_SQL"]])
+    ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
+    mock_snapshot.execute_sql.reset_mock()
+    mock_snapshot.execute_sql.return_value = iter(pk_rows)
+
+    assert ibis_client.list_primary_key_columns("my-database", "my_table") == expected
+    mock_snapshot.execute_sql.assert_called_once_with(
+        SPANNER_PRIMARY_KEY_COLUMNS_QUERY,
+        params={"table_name": "my_table"},
+        param_types={"table_name": param_types.STRING},
+    )
+
+
+@pytest.mark.parametrize(
+    "database",
+    [
+        # The schema part of a table name, e.g. a BigQuery dataset when Spanner is the target.
+        "other-schema",
+        None,
+    ],
+)
+@mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
+def test_list_primary_key_columns_uses_connected_database(mock_client_class, database):
+    """The primary key query always runs against the connected Spanner database."""
+    mock_snapshot = _mock_spanner_client(mock_client_class, [["GOOGLE_STANDARD_SQL"]])
+    ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
+    mock_instance = mock_client_class.return_value.instance.return_value
+    mock_instance.database.assert_called_once_with(SPANNER_CONN_CONFIG["database_id"])
+    mock_instance.database.reset_mock()
+    mock_snapshot.execute_sql.reset_mock()
+    mock_snapshot.execute_sql.return_value = iter([["id"]])
+
+    assert ibis_client.list_primary_key_columns(database, "my_table") == ["id"]
+    # No other database handle is opened, the connection's database is used.
+    mock_instance.database.assert_not_called()
+    assert ibis_client.database_name.database_id == SPANNER_CONN_CONFIG["database_id"]
+    mock_snapshot.execute_sql.assert_called_once()

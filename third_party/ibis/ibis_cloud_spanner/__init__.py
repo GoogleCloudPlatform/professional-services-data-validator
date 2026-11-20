@@ -43,6 +43,15 @@ SPANNER_NOT_NULL_COLUMNS_QUERY = (
     " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
     " AND is_nullable = 'NO'"
 )
+# Spanner lists a table's primary key in information_schema.index_columns as an index of
+# type PRIMARY_KEY. Views and tables declared with PRIMARY KEY () return no rows.
+# Only the default schema is checked because DVT table naming cannot express named schemas.
+SPANNER_PRIMARY_KEY_COLUMNS_QUERY = (
+    "SELECT column_name FROM information_schema.index_columns"
+    " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
+    " AND index_type = 'PRIMARY_KEY'"
+    " ORDER BY ordinal_position"
+)
 
 
 class Backend(BaseSQLBackend):
@@ -270,10 +279,30 @@ class Backend(BaseSQLBackend):
     def fetch_from_cursor():
         pass
 
-    def list_primary_key_columns(self, database: str, table: str) -> list:
-        """Return a list of primary key column names."""
-        # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
-        return None
+    def list_primary_key_columns(self, database: Optional[str], table: str) -> list:
+        """Return a list of primary key column names in key order.
+
+        Uses a data query rather than the Admin API to avoid Admin API quota and extra permissions.
+        Interleaved child tables return their full key, including inherited parent key columns.
+
+        Args:
+            database: Unused. A Spanner connection is scoped to a single database and DVT
+                runs all table, schema and query calls against the connected database, the
+                schema part of a table name is not a Spanner database id.
+            table: The table name, matched case insensitively.
+
+        Returns:
+            A list of column names, [] for views and tables declared with PRIMARY KEY ().
+        """
+        with self.database_name.snapshot() as snapshot:
+            return [
+                row[0]
+                for row in snapshot.execute_sql(
+                    SPANNER_PRIMARY_KEY_COLUMNS_QUERY,
+                    params={"table_name": table},
+                    param_types={"table_name": param_types.STRING},
+                )
+            ]
 
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""
