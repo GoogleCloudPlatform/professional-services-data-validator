@@ -737,6 +737,42 @@ def _grouped_count_run_metadata():
             ("grp",),
             {'{"grp": null}': ("4", "4", consts.VALIDATION_STATUS_SUCCESS)},
         ),
+        # Literal "__dvt_null__" string key must not collide with NULL.
+        (
+            pyarrow.table({"grp": ["__dvt_null__"], "count": [5]}),
+            pyarrow.table(
+                {"grp": pyarrow.array([None], type=pyarrow.string()), "count": [5]}
+            ),
+            ("grp",),
+            {
+                '{"grp": "__dvt_null__"}': ("5", None, consts.VALIDATION_STATUS_FAIL),
+                '{"grp": null}': (None, "5", consts.VALIDATION_STATUS_FAIL),
+            },
+        ),
+        # Empty string key must not collide with NULL (dummy fill value is "").
+        (
+            pyarrow.table({"grp": ["", None], "count": [5, 3]}),
+            pyarrow.table({"grp": [None, ""], "count": [3, 5]}),
+            ("grp",),
+            {
+                '{"grp": ""}': ("5", "5", consts.VALIDATION_STATUS_SUCCESS),
+                '{"grp": null}': ("3", "3", consts.VALIDATION_STATUS_SUCCESS),
+            },
+        ),
+        # All-null (pa.null()) key column on one or both sides.
+        (
+            pyarrow.table(
+                {"grp": pyarrow.array([None], type=pyarrow.null()), "count": [5]}
+            ),
+            pyarrow.table(
+                {"grp": pyarrow.array([1, None], type=pyarrow.int64()), "count": [1, 5]}
+            ),
+            ("grp",),
+            {
+                '{"grp": null}': ("5", "5", consts.VALIDATION_STATUS_SUCCESS),
+                '{"grp": "1"}': (None, "1", consts.VALIDATION_STATUS_FAIL),
+            },
+        ),
     ],
 )
 def test_generate_report_with_null_group_keys(
@@ -759,7 +795,10 @@ def test_generate_report_with_null_group_keys(
     assert len(report) == len(expected)
     for group, (src, tgt, status) in expected.items():
         assert actual[group][2] == status
-        assert actual[group][0] == src
+        if src is None:
+            assert actual[group][0] in (None, "nan")
+        else:
+            assert actual[group][0] == src
         if tgt is None:
             assert actual[group][1] in (None, "nan")
         else:
@@ -782,9 +821,51 @@ def test_generate_report_with_null_group_keys(
                 [decimal.Decimal(2), decimal.Decimal(1), None], pyarrow.decimal128(5, 0)
             ),
         ),
+        # Non-zero decimal scale vs int64 ("1.00" vs "1" would fail under string casting).
+        (
+            pyarrow.array(
+                [decimal.Decimal("1.00"), decimal.Decimal("2.00"), None],
+                pyarrow.decimal128(10, 2),
+            ),
+            pyarrow.array([2, 1, None], pyarrow.int64()),
+        ),
+        # Different decimal128 scales needing decimal256 promotion.
+        (
+            pyarrow.array(
+                [decimal.Decimal("1.00"), decimal.Decimal("2.00"), None],
+                pyarrow.decimal128(38, 2),
+            ),
+            pyarrow.array(
+                [decimal.Decimal("2.000000000"), decimal.Decimal("1.000000000"), None],
+                pyarrow.decimal128(38, 9),
+            ),
+        ),
+        (
+            pyarrow.array([1.0, 2.0, None], pyarrow.float64()),
+            pyarrow.array([2, 1, None], pyarrow.int64()),
+        ),
         (
             pyarrow.array([1, 2, None], pyarrow.int32()),
             pyarrow.array([2, 1, None], pyarrow.int64()),
+        ),
+        # Time zone aware UTC vs naive timestamp join keys.
+        (
+            pyarrow.array(
+                [
+                    datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc),
+                    datetime.datetime(2020, 1, 2, tzinfo=datetime.timezone.utc),
+                    None,
+                ],
+                pyarrow.timestamp("us", tz="UTC"),
+            ),
+            pyarrow.array(
+                [
+                    datetime.datetime(2020, 1, 2),
+                    datetime.datetime(2020, 1, 1),
+                    None,
+                ],
+                pyarrow.timestamp("us"),
+            ),
         ),
     ],
 )
@@ -800,9 +881,55 @@ def test_generate_report_with_mismatched_key_types(
     assert set(report[consts.VALIDATION_STATUS]) == {consts.VALIDATION_STATUS_SUCCESS}
 
 
-def test_generate_report_with_incompatible_key_types(module_under_test):
-    source = pyarrow.table({"id": ["a", "b"], "count": [1, 2]})
-    target = pyarrow.table({"id": [1, 2], "count": [1, 2]})
+@pytest.mark.parametrize("binary_type", [pyarrow.binary(), pyarrow.large_binary()])
+def test_generate_report_with_binary_join_keys(module_under_test, binary_type):
+    """Non-UTF-8 binary join keys must join cleanly and format as hex, without b''/NULL collision."""
+    source = pyarrow.table(
+        {
+            "id": pyarrow.array([b"\xac\xed\x00\x05", b"", None], type=binary_type),
+            "count": [5, 7, 3],
+        }
+    )
+    target = pyarrow.table(
+        {
+            "id": pyarrow.array([None, b"\xac\xed\x00\x05", b""], type=binary_type),
+            "count": [3, 5, 7],
+        }
+    )
+    report = module_under_test.generate_report(
+        _grouped_count_run_metadata(), source, target, join_on_fields=("id",)
+    )
+    actual = {
+        row[consts.GROUP_BY_COLUMNS]: (
+            row[consts.SOURCE_AGG_VALUE],
+            row[consts.TARGET_AGG_VALUE],
+            row[consts.VALIDATION_STATUS],
+        )
+        for row in report.to_dict(orient="records")
+    }
+    assert actual == {
+        '{"id": "aced0005"}': ("5", "5", consts.VALIDATION_STATUS_SUCCESS),
+        '{"id": ""}': ("7", "7", consts.VALIDATION_STATUS_SUCCESS),
+        '{"id": null}': ("3", "3", consts.VALIDATION_STATUS_SUCCESS),
+    }
+
+
+@pytest.mark.parametrize(
+    ("source_key", "target_key"),
+    [
+        (pyarrow.array(["a", "b"]), pyarrow.array([1, 2])),
+        # int64 value not exactly representable in float64 must raise rather than lose precision.
+        (
+            pyarrow.array([4938271605061728382], type=pyarrow.int64()),
+            pyarrow.array([4938271605061728383.0], type=pyarrow.float64()),
+        ),
+    ],
+)
+def test_generate_report_with_incompatible_key_types(
+    module_under_test, source_key, target_key
+):
+    source = pyarrow.table({"id": source_key, "count": list(range(len(source_key)))})
+    target = pyarrow.table({"id": target_key, "count": list(range(len(target_key)))})
     with pytest.raises(ValueError, match="Unable to join on key id"):
         module_under_test.generate_report(
             _grouped_count_run_metadata(), source, target, join_on_fields=("id",)
