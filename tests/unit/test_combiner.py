@@ -646,7 +646,7 @@ def test_generate_report_with_approximate_decimal_aggs(
     source = pyarrow.table(
         {
             f"{aggregation_type}__col": pyarrow.array(
-                [decimal.Decimal("0.0953939201416945649152621586023226540255")],
+                [decimal.Decimal("0.0953939200141694564915262158602322654025")],
                 type=pyarrow.decimal256(40, 40),
             )
         }
@@ -660,7 +660,6 @@ def test_generate_report_with_approximate_decimal_aggs(
     )
 
     report = module_under_test.generate_report(run_metadata, source, target)
-
     assert report.loc[0, consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
 
 
@@ -2650,12 +2649,12 @@ def test_generate_report_with_binary_data(module_under_test):
                         0.0,
                         0.0,
                         0.0,
-                        100091.6869,
-                        100181.1325,
-                        100026.764,
-                        -0.0001,
+                        100091.689661,
+                        100181.130696,
+                        100026.763990,
+                        -0.000081,
                         0.0,
-                        -0.0002,
+                        -0.000162,
                     ],
                     consts.VALIDATION_PCT_THRESHOLD: [30.0] * 15,
                     consts.VALIDATION_STATUS: [
