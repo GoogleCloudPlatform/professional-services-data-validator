@@ -19,6 +19,7 @@ original data type is used.
 """
 
 import datetime
+import decimal
 import json
 import logging
 from typing import TYPE_CHECKING
@@ -106,6 +107,56 @@ def _naive_timestamp_as_utc(
     elif tgt_col.type.tz and not src_col.type.tz:
         src_col = pc.cast(src_col, pa.timestamp(src_col.type.unit, tz="UTC"))
     return src_col, tgt_col
+
+
+def _align_key_columns(
+    src_col: pa.ChunkedArray, tgt_col: pa.ChunkedArray, col_name: str
+) -> tuple[pa.ChunkedArray, pa.ChunkedArray]:
+    src_col, tgt_col = _naive_timestamp_as_utc(src_col, tgt_col)
+    if src_col.type != tgt_col.type:
+        try:
+            unified = pa.unify_schemas(
+                [
+                    pa.schema([(col_name, src_col.type)]),
+                    pa.schema([(col_name, tgt_col.type)]),
+                ],
+                promote_options="permissive",
+            )
+            common_type = unified.field(col_name).type
+            src_col = pc.cast(src_col, common_type)
+            tgt_col = pc.cast(tgt_col, common_type)
+        except (
+            pa.ArrowTypeError,
+            pa.ArrowInvalid,
+            pa.ArrowNotImplementedError,
+        ) as exc:
+            raise ValueError(f"Unable to join on key {col_name}") from exc
+    if pa.types.is_null(src_col.type):
+        src_col = pc.cast(src_col, pa.int8())
+        tgt_col = pc.cast(tgt_col, pa.int8())
+    return src_col, tgt_col
+
+
+def _dummy_fill_scalar(arrow_type: pa.DataType) -> pa.Scalar:
+    if pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+        return pa.scalar("", type=arrow_type)
+    if pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
+        return pa.scalar(b"", type=arrow_type)
+    if pa.types.is_boolean(arrow_type):
+        return pa.scalar(False, type=arrow_type)
+    if pa.types.is_decimal(arrow_type):
+        return pa.scalar(decimal.Decimal(0), type=arrow_type)
+    # Handles int, float, date32/64, timestamp, and time32/64
+    return pa.scalar(0, type=arrow_type)
+
+
+def _format_key_value(col: pa.ChunkedArray):
+    if pa.types.is_binary(col.type) or pa.types.is_large_binary(col.type):
+        return pa.array(
+            [item.hex() if item is not None else None for item in col.to_pylist()],
+            type=pa.string(),
+        )
+    return pc.cast(col, pa.string())
 
 
 def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
@@ -250,27 +301,32 @@ def join_and_unpivot(
             for col in target_table.column_names
         ]
     )
-    NULL_SENTINEL = "__dvt_null__"
-
-    # Cast PK / group-by columns to string and replace NULLs with sentinel so NULL == NULL in join
-    # All primary key columns are cast to string, so if they are of disparate types, int, decimal
-    # the join will still succeed.
+    # Align PK / group-by columns to a common compatible Arrow type and pair each with
+    # an is-null flag so NULL == NULL matches in the join without sentinel collisions.
+    join_keys = list(pk_columns)
     for col in join_on_fields:
+        src_col, tgt_col = _align_key_columns(
+            source_renamed[col], target_renamed[col], col
+        )
+        is_null_col = f"__dvt_is_null_{col}"
+        dummy = _dummy_fill_scalar(src_col.type)
+
         src_idx = source_renamed.schema.get_field_index(col)
         source_renamed = source_renamed.set_column(
-            src_idx,
-            col,
-            pc.fill_null(pc.cast(source_renamed[col], pa.string()), NULL_SENTINEL),
+            src_idx, col, pc.fill_null(src_col, dummy)
         )
+        source_renamed = source_renamed.append_column(is_null_col, pc.is_null(src_col))
+
         tgt_idx = target_renamed.schema.get_field_index(col)
         target_renamed = target_renamed.set_column(
-            tgt_idx,
-            col,
-            pc.fill_null(pc.cast(target_renamed[col], pa.string()), NULL_SENTINEL),
+            tgt_idx, col, pc.fill_null(tgt_col, dummy)
         )
+        target_renamed = target_renamed.append_column(is_null_col, pc.is_null(tgt_col))
+
+        join_keys.append(is_null_col)
 
     aligned = source_renamed.join(
-        target_renamed, keys=pk_columns, join_type="full outer"
+        target_renamed, keys=join_keys, join_type="full outer"
     )
     num_rows = aligned.num_rows
     slices = []
@@ -292,19 +348,17 @@ def join_and_unpivot(
 
     # validation result needs to contain primary key/group by values for status - if present
     if join_on_fields:
-        pk_table = aligned.select(join_on_fields)
-        for i, col in enumerate(join_on_fields):
-            pk_table = pk_table.set_column(
-                i,
-                col,
-                pc.if_else(
-                    pc.equal(pk_table[col], NULL_SENTINEL),
-                    pa.scalar(None, type=pa.string()),
-                    pk_table[col],
-                ),
+        pk_cols = {}
+        for col in join_on_fields:
+            is_null_col = f"__dvt_is_null_{col}"
+            restored = pc.if_else(
+                aligned[is_null_col],
+                pa.scalar(None, type=aligned[col].type),
+                aligned[col],
             )
+            pk_cols[col] = _format_key_value(restored)
         group_by_cols = pa.array(
-            [json.dumps(row) for row in pk_table.to_pylist()],
+            [json.dumps(row) for row in pa.table(pk_cols).to_pylist()],
             type=pa.string(),
         )
     else:
@@ -391,7 +445,6 @@ def join_and_unpivot(
             pct_difference = pc.if_else(
                 pc.equal(difference, 0.0),
                 0.0,
-                pc.round(
                     pc.divide(
                         pc.multiply(100.0, difference),
                         pc.if_else(
@@ -400,8 +453,6 @@ def join_and_unpivot(
                             pc.cast(src_col, pa.float64(), safe=False),
                         ),
                     ),
-                    ndigits=4,
-                ),
             )
             if (
                 _aggregation_type_not_lossy(validation.aggregation_type)

@@ -479,12 +479,10 @@ class DataValidation(object):
         except Exception as e:
             if self.verbose:
                 logging.error("-- ** Logging Source DF ** --")
-                # this is likely a bug, dtypes does not exist for PyArrow tables, but it is useful for debugging so leaving it in for now.
-                logging.error(source_tbl.dtypes)
+                logging.error(source_tbl.schema)
                 logging.error(source_tbl)
                 logging.error("-- ** Logging Target DF ** --")
-                # this is likely a bug, dtypes does not exist for PyArrow tables
-                logging.error(target_tbl.dtypes)
+                logging.error(target_tbl.schema)
                 logging.error(target_tbl)
             raise e
 
