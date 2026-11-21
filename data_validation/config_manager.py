@@ -988,7 +988,7 @@ class ConfigManager(object):
                 depth = 1
 
             calc_func = consts.CALC_FIELD_EPOCH_SECONDS
-            if agg_type == consts.CONFIG_TYPE_SUM:
+            if False and agg_type == consts.CONFIG_TYPE_SUM:
                 # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
                 # See issue 1391 for details.
                 final_cast_type = "string"
@@ -1256,7 +1256,7 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
-                if self._decimal_column_too_big_for_pandas(
+                if False and self._decimal_column_too_big_for_pandas(
                     source_column_ibis_type,
                     target_column_ibis_type,
                     margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),

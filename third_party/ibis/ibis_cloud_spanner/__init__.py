@@ -29,6 +29,10 @@ from third_party.ibis.ibis_cloud_spanner.datatypes import (
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
+from third_party.ibis.ibis_cloud_spanner.to_pyarrow import (
+    DEFAULT_CHUNK_SIZE,
+    record_batches_from_result,
+)
 
 SPANNER_DIALECT_QUERY = (
     "SELECT option_value FROM information_schema.database_options"
@@ -229,6 +233,42 @@ class Backend(BaseSQLBackend):
             result = pandas_df.to_pandas(snapshot, sql, query_parameters=None)
 
         return result
+
+    def to_pyarrow_batches(
+        self,
+        expr: ir.Expr,
+        *,
+        params: Mapping[ir.Scalar, Any] = None,
+        limit: str = None,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        **kwargs: Any,
+    ):
+        """Execute expression and return a RecordBatchReader of the results.
+
+        Overrides the generic SQL backend version which needs a DB-API cursor with
+        fetchmany(). Column types come from the Spanner result's field types rather than
+        being inferred by PyArrow, see to_pyarrow.py. All batches are built inside the
+        snapshot because Spanner results are streamed lazily and must be read while the
+        snapshot is open. DVT's to_pyarrow() reads every batch anyway.
+        """
+        pa = self._import_pyarrow()
+        table_expr = expr.as_table()
+        query_ast = self.compiler.to_ast_ensure_limit(table_expr, limit, params=params)
+        sql = query_ast.compile()
+        self._log(sql)
+
+        self._register_in_memory_tables(expr)
+
+        # Reuse the Database created at connect time. Database objects own a session pool and
+        # a multiplexed session (with a maintenance thread), creating one per query leaks both.
+        with self.database_name.snapshot() as snapshot:
+            schema, batches = record_batches_from_result(
+                snapshot.execute_sql(sql), chunk_size=chunk_size
+            )
+
+        if schema is None:
+            schema = table_expr.schema().to_pyarrow()
+        return pa.ipc.RecordBatchReader.from_batches(schema, batches)
 
     def _execute(self, stmt, results=True, query_parameters=None):
         db = self.instance.database(self.dataset_id)
