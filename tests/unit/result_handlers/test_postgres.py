@@ -22,7 +22,6 @@ import pytest
 import sqlalchemy
 
 from data_validation import consts
-from data_validation.result_handlers import postgres
 
 
 @pytest.fixture
@@ -32,7 +31,7 @@ def module_under_test():
     return postgres
 
 
-def test_concurrent_missing_results_table_is_created_once():
+def test_concurrent_missing_results_table_is_created_once(module_under_test):
     state_lock = threading.Lock()
     first_lookup_barrier = threading.Barrier(2)
     table_created = False
@@ -65,12 +64,13 @@ def test_concurrent_missing_results_table_is_created_once():
         client.create_table.side_effect = create_table
 
     handlers = [
-        postgres.PostgresResultHandler(client, table_id="results") for client in clients
+        module_under_test.PostgresResultHandler(client, table_id="results")
+        for client in clients
     ]
     result_df = mock.Mock(empty=True)
 
     with mock.patch.object(
-        postgres.clients, "get_ibis_table", side_effect=get_ibis_table
+        module_under_test.clients, "get_ibis_table", side_effect=get_ibis_table
     ):
         with ThreadPoolExecutor(max_workers=2) as executor:
             list(
@@ -80,7 +80,7 @@ def test_concurrent_missing_results_table_is_created_once():
             )
 
     assert len(created_tables) == 1
-    assert created_tables[0] == ("results", postgres.RESULTS_TABLE_SCHEMA)
+    assert created_tables[0] == ("results", module_under_test.RESULTS_TABLE_SCHEMA)
     assert all(lookup_count_by_client[id(client)] == 2 for client in clients)
 
 
