@@ -445,14 +445,14 @@ def join_and_unpivot(
             pct_difference = pc.if_else(
                 pc.equal(difference, 0.0),
                 0.0,
-                    pc.divide(
-                        pc.multiply(100.0, difference),
-                        pc.if_else(
-                            pc.equal(src_col, pa.scalar(0, type=src_col.type)),
-                            pc.cast(tgt_col, pa.float64(), safe=False),
-                            pc.cast(src_col, pa.float64(), safe=False),
-                        ),
+                pc.divide(
+                    pc.multiply(100.0, difference),
+                    pc.if_else(
+                        pc.equal(src_col, pa.scalar(0, type=src_col.type)),
+                        pc.cast(tgt_col, pa.float64(), safe=False),
+                        pc.cast(src_col, pa.float64(), safe=False),
                     ),
+                ),
             )
             if (
                 _aggregation_type_not_lossy(validation.aggregation_type)
