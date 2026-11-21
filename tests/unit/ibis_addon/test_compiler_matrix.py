@@ -22,6 +22,8 @@ from ibis.backends.mssql.compiler import MsSqlCompiler
 from ibis.backends.mysql.compiler import MySQLCompiler
 from ibis.backends.postgres.compiler import PostgreSQLCompiler
 
+from data_validation import consts
+
 # Import required in order to register DVT operations.
 import third_party.ibis.ibis_addon.operations  # noqa: F401
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
@@ -68,6 +70,16 @@ TABLE = ibis.table(
         "b": "binary",
         "d": "decimal(10, 2)",
         "ts": "timestamp",
+    },
+    name="t",
+)
+
+SPANNER_TABLE = ibis.table(
+    {
+        "d": "date",
+        "ts": "timestamp('UTC')",
+        "s": "string",
+        "i": "int32",
     },
     name="t",
 )
@@ -266,6 +278,96 @@ def test_bigquery_epoch_seconds_compiles_timestamp_cast():
     assert "UNIX_SECONDS(CAST(t0.`ts` AS TIMESTAMP))" in sql
 
 
+@pytest.mark.parametrize(
+    "expr,expected_fragments",
+    [
+        pytest.param(
+            SPANNER_TABLE.d.epoch_seconds(),
+            ["UNIX_SECONDS(TIMESTAMP(t0.`d`, 'UTC'))"],
+            id="date_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.epoch_seconds(),
+            ["UNIX_SECONDS(t0.`ts`)"],
+            id="timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp"),
+            ["TIMESTAMP(t0.`d`, 'UTC')"],
+            id="date_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp('UTC')"),
+            ["TIMESTAMP(t0.`d`, 'UTC')"],
+            id="date_cast_utc_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("timestamp"),
+            ["t0.`ts` AS `x`"],
+            id="timestamp_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.d.cast("timestamp").epoch_seconds(),
+            ["UNIX_SECONDS(TIMESTAMP(t0.`d`, 'UTC'))"],
+            id="date_cast_timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("timestamp").epoch_seconds(),
+            ["UNIX_SECONDS(t0.`ts`)"],
+            id="timestamp_cast_timestamp_epoch_seconds",
+        ),
+        pytest.param(
+            SPANNER_TABLE.s.cast("timestamp"),
+            ["CAST(t0.`s` AS TIMESTAMP)"],
+            id="string_cast_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("timestamp"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_naive_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("timestamp('UTC')"),
+            ["TIMESTAMP_SECONDS(t0.`i`)"],
+            id="int_cast_utc_timestamp",
+        ),
+        pytest.param(
+            SPANNER_TABLE.i.cast("int64"),
+            ["CAST(t0.`i` AS INT64)"],
+            id="int_cast_int64",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("string"),
+            ["CAST(t0.`ts` AS STRING)"],
+            id="timestamp_cast_string",
+        ),
+        pytest.param(
+            SPANNER_TABLE.ts.cast("date"),
+            ["DATE(t0.`ts`, 'UTC')"],
+            id="timestamp_cast_date",
+        ),
+    ],
+)
+def test_spanner_epoch_seconds_and_timestamp_casts(expr, expected_fragments):
+    """Spanner has no DATETIME type and UNIX_SECONDS does not accept DATE (issue-1876)."""
+    sql = _compile(SpannerCompiler, expr.name("x"))
+
+    _assert_fragments(
+        sql,
+        expected_fragments,
+        ["DATETIME", "UNIX_SECONDS(t0.`d`)", "CAST(t0.`d` AS TIMESTAMP)"],
+    )
+
+
+def test_spanner_cast_non_utc_timestamp_raises():
+    """Spanner TIMESTAMP casts only support naive or UTC targets."""
+    with pytest.raises(TypeError, match="other than 'UTC'"):
+        _compile(
+            SpannerCompiler,
+            SPANNER_TABLE.d.cast("timestamp('Europe/London')").name("x"),
+        )
+
+
 def test_postgres_decimal_string_cast_compiles_to_char():
     sql = _compile(PostgreSQLCompiler, TABLE.d.cast("string").name("dstr"))
 
@@ -341,3 +443,32 @@ def test_mssql_fillna_empty_string_inlined():
     sql = _compile(MsSqlCompiler, TABLE.s.fillna("").name("ifnull_s"))
 
     assert "coalesce(t0.s, '')" in sql
+
+
+@pytest.mark.skipif(OracleCompiler is None, reason=ORACLE_SKIP_REASON)
+def test_oracle_binary_uuid_string_cast_keeps_null():
+    """A NULL binary UUID must stay NULL (issue 1716).
+
+    Oracle treats NULL as an empty string in concatenation, so injecting the
+    hyphens without a NULL check turned a NULL UUID into "----".
+    """
+    sql = _compile(
+        OracleCompiler,
+        TABLE.b.force_cast(consts.CONFIG_CAST_UUID_STRING).name("u"),
+    )
+    case_start = sql.find("CASE WHEN (t0.b IS NULL) THEN NULL ELSE concat(")
+    assert case_start != -1
+    # All the hyphen concatenation must be inside the CASE expression.
+    assert sql.find("concat(") == case_start + len(
+        "CASE WHEN (t0.b IS NULL) THEN NULL ELSE "
+    )
+    assert sql.split("\n")[0].strip().endswith("END AS u")
+
+
+def test_string_uuid_string_cast_unchanged():
+    sql = _compile(
+        PostgreSQLCompiler,
+        TABLE.s.force_cast(consts.CONFIG_CAST_UUID_STRING).name("u"),
+    )
+    assert "lower(CAST(t0.s AS TEXT))" in sql
+    assert "CASE" not in sql

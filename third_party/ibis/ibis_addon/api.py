@@ -17,6 +17,7 @@ import functools
 import inspect
 import re
 
+import ibis
 from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
@@ -37,7 +38,7 @@ def _uuid_string_cast(self):
         # I tried to use Ibis join() but couldn't get sensible SQL out of it, example:
         #   ibis.literal("-").join([expr.substr(0, 8), expr.substr(8, 4), ...])
         # So I had to resort to the less ideal expression below.
-        return (
+        hyphenated = (
             expr.substr(0, 8)
             .concat("-")
             .concat(expr.substr(8, 4))
@@ -48,6 +49,9 @@ def _uuid_string_cast(self):
             .concat("-")
             .concat(expr.substr(20, 12))
         )
+        # Oracle treats NULL as an empty string when concatenating, so without this
+        # check a NULL UUID would come out as "----".
+        return self.isnull().ifelse(ibis.null(), hyphenated)
     else:
         return expr.lower()
 

@@ -16,9 +16,20 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
+import numpy
+import pandas
+import pytest
 import sqlalchemy
 
+from data_validation import consts
 from data_validation.result_handlers import postgres
+
+
+@pytest.fixture
+def module_under_test():
+    from data_validation.result_handlers import postgres
+
+    return postgres
 
 
 def test_concurrent_missing_results_table_is_created_once():
@@ -71,3 +82,27 @@ def test_concurrent_missing_results_table_is_created_once():
     assert len(created_tables) == 1
     assert created_tables[0] == ("results", postgres.RESULTS_TABLE_SCHEMA)
     assert all(lookup_count_by_client[id(client)] == 2 for client in clients)
+
+
+@pytest.mark.parametrize(
+    "labels,expected",
+    [
+        ([], "{}"),
+        ([("a", "1"), ("b", "2")], '{"a=1","b=2"}'),
+        ([numpy.array(["a", "1"])], '{"a=1"}'),
+        ([("env", "it's")], '{"env=it\'s"}'),
+        ([("env", 'it"s')], r'{"env=it\"s"}'),
+        ([("path", "c:\\dir")], r'{"path=c:\\dir"}'),
+        ([("a", "{x,y}")], '{"a={x,y}"}'),
+        ([("a", " x ")], '{"a= x "}'),
+        (["unexpected"], '{"unexpected"}'),
+    ],
+)
+def test_dataframe_to_sql_labels_array_literal(module_under_test, labels, expected):
+    """Test labels are converted to PostgreSQL array literals with each element quoted and escaped."""
+    handler = module_under_test.PostgresResultHandler(mock.Mock())
+    result_df = pandas.DataFrame({consts.CONFIG_LABELS: [labels]})
+    with mock.patch.object(pandas.DataFrame, "to_sql") as mock_to_sql:
+        handler._dataframe_to_sql("schema_name", "table_name", result_df)
+    mock_to_sql.assert_called_once()
+    assert result_df[consts.CONFIG_LABELS][0] == expected

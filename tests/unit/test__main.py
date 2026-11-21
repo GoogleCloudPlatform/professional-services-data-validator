@@ -14,6 +14,7 @@
 
 import argparse
 import io
+import logging
 import sys
 from unittest import mock
 import pytest
@@ -133,6 +134,13 @@ CONNECTION_DESCRIBE_ARGS = {
     "connect_cmd": "describe",
     "connection_name": "dummy-bq-connection",
     "output_format": "yaml",
+}
+CONNECTION_TEST_ARGS = {
+    "verbose": False,
+    "log_level": "INFO",
+    "command": "connections",
+    "connect_cmd": "test",
+    "connection_name": "dummy-bq-connection",
 }
 CONNECTION_DELETE_ARGS = {
     "verbose": False,
@@ -339,6 +347,48 @@ def test_successful_connection_delete_with_mocked_delete_connection(
     main.main()
     mock_args.assert_called_once()
     mock_run.assert_called_once()
+
+
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONNECTION_TEST_ARGS),
+)
+def test_successful_connection_test(
+    mock_args, mock_get_connection, mock_get_data_client
+):
+    main.main()
+
+    mock_get_connection.assert_called_once_with("dummy-bq-connection")
+    mock_get_data_client.assert_called_once_with(TEST_CONN, verify_connection=True)
+
+
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
+def test_run_connection_test_logs_success(
+    mock_get_connection, mock_get_data_client, caplog
+):
+    caplog.set_level(logging.INFO)
+    main.run_connection_test("dummy-bq-connection")
+
+    assert "Connection dummy-bq-connection is working" in caplog.text
+
+
+@mock.patch(
+    "data_validation.clients.get_data_client",
+    side_effect=exceptions.DataClientConnectionFailure("could not connect"),
+)
+@mock.patch("data_validation.cli_tools.get_connection", return_value=TEST_CONN)
+def test_run_connection_test_fails_when_database_is_not_reachable(
+    mock_get_connection, mock_get_data_client, caplog
+):
+    caplog.set_level(logging.INFO)
+
+    with pytest.raises(exceptions.DataClientConnectionFailure):
+        main.run_connection_test("dummy-bq-connection")
+
+    assert "is working" not in caplog.text
 
 
 @mock.patch(
@@ -616,3 +666,55 @@ def test_use_utf8_stdout_not_windows(monkeypatch, platform):
     monkeypatch.setattr(sys, "stdout", stdout)
     main._use_utf8_stdout()
     stdout.reconfigure.assert_not_called()
+
+
+@pytest.fixture(autouse=True)
+def restore_root_logger():
+    """Isolate the root logger's handlers and level for each test.
+
+    main() calls logging.basicConfig(force=True), which removes and closes
+    every root handler. Swapping in a fresh handler list keeps the handlers
+    that existed before the test out of reach, and they are put back
+    afterwards so no logging state leaks into later tests.
+    """
+    root = logging.getLogger()
+    saved_handlers, saved_level = root.handlers, root.level
+    root.handlers = []
+    yield
+    root.handlers = saved_handlers
+    root.setLevel(saved_level)
+
+
+@mock.patch("data_validation.__main__.validate")
+def test_deprecated_option_does_not_suppress_logging(mock_validate, monkeypatch):
+    """A deprecated option logs a warning while parsing arguments, which must
+    not stop main() from applying the requested log level (issue 1548)."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "data-validation",
+            "validate",
+            "row",
+            "-sc",
+            TEST_CONN,
+            "-tc",
+            TEST_CONN,
+            "-tbls",
+            "my_schema.my_table",
+            "--hash",
+            "*",
+            "-pk",
+            "id",
+            "-tsp",
+        ],
+    )
+    # pytest attaches its capture handlers when the test body starts, after
+    # fixtures run. Remove them to simulate a fresh CLI process.
+    logging.root.handlers.clear()
+    logging.root.setLevel(logging.WARNING)
+
+    main.main()
+
+    mock_validate.assert_called_once()
+    assert logging.getLogger().level == logging.INFO

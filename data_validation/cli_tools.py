@@ -580,6 +580,12 @@ def _configure_connection_parser(subparsers):
         default="yaml",
         help="Output format for the configuration (default: yaml)",
     )
+    test_parser = connect_subparsers.add_parser(
+        "test", help="Test that an existing connection is working"
+    )
+    test_parser.add_argument(
+        "--connection-name", "-c", required=True, help="Name of connection to test"
+    )
 
 
 def _configure_database_specific_parsers(parser):
@@ -1341,8 +1347,24 @@ def list_validations(config_dir="./"):
     return [file_name for file_name in files if file_name.endswith(".yaml")]
 
 
+def list_validation_files(config_dir: str) -> list:
+    """Return the sorted validation YAML file names found in config_dir.
+
+    An empty directory is treated as an error rather than as zero work to do. This
+    matters most for Cloud Storage, where a misspelt prefix such as
+    gs://my-bucket/typo-dir/ is not an error in itself, it simply matches no objects.
+    Without this check DVT would report a successful run having validated nothing.
+    """
+    config_file_names = sorted(list_validations(config_dir=config_dir))
+    if not config_file_names:
+        raise ValueError(
+            f"No validation YAML files found in config directory: {config_dir}"
+        )
+    return config_file_names
+
+
 def print_validations_in_dir(config_dir="./"):
-    validations = list_validations(config_dir=config_dir)
+    validations = list_validation_files(config_dir)
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
         logging.info(validation_name)
@@ -1454,7 +1476,9 @@ def get_arg_list(arg_value, default_value=None):
     if not arg_value:
         return default_value
 
-    return _read_json_value(arg_value) or arg_value.split(",")
+    # Trim each item so "col_a, col_b" is the same as "col_a,col_b". Column names
+    # with surrounding spaces are not something we need to support.
+    return _read_json_value(arg_value) or [_.strip() for _ in arg_value.split(",")]
 
 
 def _read_json_value(arg_value: str) -> list:
@@ -1548,8 +1572,8 @@ def get_query_from_file(filename):
     try:
         query = gcs_helper.read_file(filename, download_as_text=True)
         query = query.rstrip(";\n")
-    except IOError:
-        logging.error("Cannot read query file: ", filename)
+    except IOError as e:
+        logging.error(f"Cannot read query file {filename}: {e}")
 
     if not query or query.isspace():
         raise ValueError(

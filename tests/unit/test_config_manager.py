@@ -838,3 +838,24 @@ def test_config_manager_random_row_batch_size_when_random_rows_disabled(
     assert mgr.random_row_batch_size() == 5000
     assert mgr._config[consts.CONFIG_RANDOM_ROW_BATCH_SIZE] == 5000
     assert mgr.get_random_row_batch_size() is None
+
+
+@pytest.mark.parametrize(
+    "source_pks,target_pks,expected",
+    [
+        (["b"], ["c"], ["b"]),
+        (None, ["a", "C"], ["a", "C"]),
+        (None, None, []),
+        # Target-only key columns, e.g. the rowid added by GCP DMS (issue 1663).
+        (None, ["rowid"], []),
+        (None, ["a", "rowid"], []),
+    ],
+)
+def test_auto_list_primary_keys(module_under_test, source_pks, target_pks, expected):
+    source_client, target_client = MockIbisClient(), MockIbisClient()
+    source_client.list_primary_key_columns = mock.Mock(return_value=source_pks)
+    target_client.list_primary_key_columns = mock.Mock(return_value=target_pks)
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG, source_client, target_client, verbose=False
+    )
+    assert config_manager.auto_list_primary_keys() == expected

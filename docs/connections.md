@@ -69,6 +69,12 @@ data-validation connections delete -c CONN_NAME
 data-validation connections describe -c CONN_NAME
 ```
 
+## Test an existing connection
+
+```sh
+data-validation connections test -c CONN_NAME
+```
+
 ## List supported connection types
 
 ```sh
@@ -149,6 +155,8 @@ BigQuery is a [Client based API](https://docs.cloud.google.com/docs/quotas/quota
 * bigquery.tables.updateData (BigQuery Data Editor)
 
 ## Google Spanner
+
+Only GoogleSQL dialect databases are supported, PostgreSQL dialect databases are not supported.
 
 ```
 data-validation connections add

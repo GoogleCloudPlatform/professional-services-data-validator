@@ -123,17 +123,19 @@ def list_schemas(self, like=None):
 def _list_primary_key_columns(self, database: str, table: str) -> list:
     """Return a list of primary key column names."""
     # From https://wiki.postgresql.org/wiki/Retrieve_primary_key_columns
+    # The schema and table names are quoted with format('%I') so that mixed case
+    # names are not folded to lower case when cast to regclass.
     list_pk_col_sql = """
         SELECT a.attname
         FROM   pg_index i
         JOIN   pg_attribute a ON a.attrelid = i.indrelid
                              AND a.attnum = ANY(i.indkey)
-        WHERE  i.indrelid = CAST(:raw_name AS regclass)
+        WHERE  i.indrelid = CAST(format('%I.%I', :schema_name, :table_name) AS regclass)
         AND    i.indisprimary
         """
     with self.begin() as con:
         result = con.execute(
-            sa.text(list_pk_col_sql).bindparams(raw_name=f"{database}.{table}")
+            sa.text(list_pk_col_sql).bindparams(schema_name=database, table_name=table)
         )
         return [_[0] for _ in result.cursor.fetchall()]
 

@@ -127,10 +127,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
         def label_to_string(label) -> str:
             if isinstance(label, (list, tuple, numpy.ndarray)) and len(label) == 2:
                 # This is the expected format
-                return f"'{label[0]}={label[1]}'"
-            else:
-                # Anything else
-                return f"'{label}'"
+                label = f"{label[0]}={label[1]}"
+            # Double quote each array element and escape any backslashes and double quotes, see:
+            # https://www.postgresql.org/docs/current/arrays.html#ARRAYS-IO
+            escaped_label = str(label).replace("\\", "\\\\").replace('"', '\\"')
+            return f'"{escaped_label}"'
 
         def labels_to_array_literal(labels):
             """Convert Pandas labels array into a PostgreSQL array literal."""

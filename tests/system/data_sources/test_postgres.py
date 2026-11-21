@@ -833,6 +833,20 @@ def test_row_validation_core_types_auto_pks():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_camel_case_auto_pks():
+    """Test auto population of -pks from PostgreSQL defined constraint on a table with camel case identifiers."""
+    row_validation_test(
+        tables="pso_data_validator.DvtCaseCamel",
+        tc="mock-conn",
+        hash="*",
+        primary_keys=None,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_comp_fields_pg_types():
     """PostgreSQL to PostgreSQL dvt_pg_types row validation --comp-fields"""
     row_validation_test(
@@ -1005,7 +1019,7 @@ def test_column_validation_pangrams_to_bigquery():
     This is testing comparisons across a wider set of characters than standard test data.
     """
     column_validation_test(
-        tc="mock-conn",
+        tc="bq-conn",
         tables="pso_data_validator.dvt_pangrams",
         sum_cols="words",
         min_cols="words",
@@ -1458,9 +1472,9 @@ def test_result_handler_postgres_with_labels(mock_list, caplog):
     run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
-    # Labels columns should NOT be empty.
+    # Labels column should contain the label values exactly as provided.
     rows = raw_query_rows(
-        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{a=1,b=2}}'",
         conn="mock-conn",
     )
     # Ensure that we added the data to the results table.

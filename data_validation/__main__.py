@@ -301,7 +301,7 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
             primary_keys = config_manager.auto_list_primary_keys()
         if not primary_keys:
             raise ValueError(
-                "No primary keys were provided and neither the source or target tables have primary keys. Please include --primary-keys argument"
+                "No primary keys were provided and neither the source or target tables have usable primary keys. Please include --primary-keys argument"
             )
         primary_keys = [_.casefold() for _ in primary_keys]
         config_manager.append_primary_keys(
@@ -513,6 +513,14 @@ def run(args) -> None:
         run_validations(args, config_managers)
 
 
+def run_connection_test(connection_name: str) -> None:
+    """Connect to the database of a stored connection to check it is working."""
+    conn = cli_tools.get_connection(connection_name)
+    with clients.get_data_client_ctx(conn, verify_connection=True):
+        pass
+    logging.info(f"Success! Connection {connection_name} is working")
+
+
 def run_connections(args):
     """Run commands related to connection management."""
     if args.connect_cmd == "list":
@@ -521,6 +529,8 @@ def run_connections(args):
         cli_tools.delete_connection(args.connection_name)
     elif args.connect_cmd == "describe":
         cli_tools.describe_connection(args.connection_name, args.output_format)
+    elif args.connect_cmd == "test":
+        run_connection_test(args.connection_name)
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         # Test getting a client to validate connection details
@@ -581,10 +591,13 @@ def main():
     _use_utf8_stdout()
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
+    # force=True because a warning logged while parsing arguments (e.g. for a
+    # deprecated option) has already configured the root logger with defaults.
     logging.basicConfig(
         level=LOG_LEVEL_MAP[args.log_level],
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
+        force=True,
     )
     if args.command == "connections":
         run_connections(args)

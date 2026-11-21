@@ -19,6 +19,7 @@ from google.api_core import client_options
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
+from google.cloud.spanner_v1 import param_types
 from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
@@ -28,6 +29,29 @@ from third_party.ibis.ibis_cloud_spanner.datatypes import (
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
+
+SPANNER_DIALECT_QUERY = (
+    "SELECT option_value FROM information_schema.database_options"
+    " WHERE option_name = 'database_dialect'"
+)
+SPANNER_DIALECT_POSTGRESQL = "POSTGRESQL"
+# The table's Spanner type metadata has no nullability, so NOT NULL columns come from here.
+# Spanner resolves table names case insensitively but information_schema stores them as
+# created, so the name is compared in lower case.
+SPANNER_NOT_NULL_COLUMNS_QUERY = (
+    "SELECT column_name FROM information_schema.columns"
+    " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
+    " AND is_nullable = 'NO'"
+)
+# Spanner lists a table's primary key in information_schema.index_columns as an index of
+# type PRIMARY_KEY. Views and tables declared with PRIMARY KEY () return no rows.
+# Only the default schema is checked because DVT table naming cannot express named schemas.
+SPANNER_PRIMARY_KEY_COLUMNS_QUERY = (
+    "SELECT column_name FROM information_schema.index_columns"
+    " WHERE table_schema = '' AND LOWER(table_name) = LOWER(@table_name)"
+    " AND index_type = 'PRIMARY_KEY'"
+    " ORDER BY ordinal_position"
+)
 
 
 class Backend(BaseSQLBackend):
@@ -56,6 +80,26 @@ class Backend(BaseSQLBackend):
             self.data_instance,
             self.dataset,
         ) = parse_instance_and_dataset(instance_id, database_id)
+        self._check_database_dialect()
+
+    def _check_database_dialect(self) -> None:
+        """Raise a clear exception if the database is not a GoogleSQL dialect database.
+
+        The Spanner backend generates GoogleSQL, it does not support PostgreSQL dialect databases.
+
+        The dialect is read with a data query rather than Database.database_dialect because
+        that property calls Database.reload() which makes two Admin API calls (GetDatabaseDdl
+        and GetDatabase). Those calls consume Admin API quota and require extra permissions.
+        The query below is valid in both GoogleSQL and PostgreSQL dialects.
+        """
+        with self.database_name.snapshot() as snapshot:
+            rows = list(snapshot.execute_sql(SPANNER_DIALECT_QUERY))
+        dialect = rows[0][0] if rows else None
+        if dialect == SPANNER_DIALECT_POSTGRESQL:
+            raise NotImplementedError(
+                f"Spanner database {self.database_name.database_id} uses the PostgreSQL dialect "
+                "which is not supported, only GoogleSQL dialect databases are supported"
+            )
 
     def _parse_instance_and_dataset(self, dataset):
         if not dataset and not self.dataset:
@@ -148,7 +192,22 @@ class Backend(BaseSQLBackend):
             database = self.dataset_id
         db_value = self.instance.database(database)
         spanner_table = db_value.table(table_id)
-        return schema_from_spanner(spanner_table.schema)
+        schema = schema_from_spanner(spanner_table.schema)
+        with db_value.snapshot() as snapshot:
+            not_null = {
+                row[0]
+                for row in snapshot.execute_sql(
+                    SPANNER_NOT_NULL_COLUMNS_QUERY,
+                    params={"table_name": table_id},
+                    param_types={"table_name": param_types.STRING},
+                )
+            }
+        return sch.Schema(
+            {
+                name: dtype.copy(nullable=False) if name in not_null else dtype
+                for name, dtype in schema.items()
+            }
+        )
 
     def execute(
         self,
@@ -220,10 +279,30 @@ class Backend(BaseSQLBackend):
     def fetch_from_cursor():
         pass
 
-    def list_primary_key_columns(self, database: str, table: str) -> list:
-        """Return a list of primary key column names."""
-        # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
-        return None
+    def list_primary_key_columns(self, database: Optional[str], table: str) -> list:
+        """Return a list of primary key column names in key order.
+
+        Uses a data query rather than the Admin API to avoid Admin API quota and extra permissions.
+        Interleaved child tables return their full key, including inherited parent key columns.
+
+        Args:
+            database: Unused. A Spanner connection is scoped to a single database and DVT
+                runs all table, schema and query calls against the connected database, the
+                schema part of a table name is not a Spanner database id.
+            table: The table name, matched case insensitively.
+
+        Returns:
+            A list of column names, [] for views and tables declared with PRIMARY KEY ().
+        """
+        with self.database_name.snapshot() as snapshot:
+            return [
+                row[0]
+                for row in snapshot.execute_sql(
+                    SPANNER_PRIMARY_KEY_COLUMNS_QUERY,
+                    params={"table_name": table},
+                    param_types={"table_name": param_types.STRING},
+                )
+            ]
 
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""

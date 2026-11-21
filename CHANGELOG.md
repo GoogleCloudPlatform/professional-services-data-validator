@@ -2,6 +2,22 @@
 
 ## Untagged
 
+## [8.10.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.1...v8.10.2) (2026-11-11)
+
+
+### Bug Fixes
+
+* cap SQL Server random row batch size to avoid parameter limit ([#1835](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1835)) ([#1863](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1863)) ([0b676f7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0b676f76a113ac06621d9dfd3571a151fc016162))
+* Clear message when trying to connect to Spanner PostgreSQL dialect database ([#1879](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1879)) ([7023b0b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7023b0b2f73ee21a2c90ecef3e0da1235dbc41a1))
+* Corrects Spanner FLOAT32 type support ([#1878](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1878)) ([16f2608](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/16f26083dbe89576d8e9c3404028a1b06f15fc71))
+* Do not split --filters on PostgreSQL style :: type casts ([#1861](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1861)) ([8d20863](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8d20863055eaef5c12fcf9191e169581f51d9e62))
+* Fail configs list when no validation YAML files are found ([#1869](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1869)) ([5663041](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5663041b48f369507a782e8722ac439e4e6c9b1d))
+* Ignore a target primary key with columns missing from the source ([#1870](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1870)) ([9669eef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9669eef0b8a6c396746dc96c108db24e51ed35eb))
+* Keep NULL binary UUIDs as NULL when casting them to strings ([#1872](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1872)) ([bdd1a40](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bdd1a40a56d5064f0dd48c39264d61e6d2bfd7f9))
+* Keep the requested log level when a deprecated option is used ([#1868](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1868)) ([6615f23](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6615f232a7d28e43f51631c81c2953b34551b829))
+* List the files in a GCS directory given without a trailing slash ([#1874](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1874)) ([b56a5c4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b56a5c4495cd17b0dc7f0bb47781dbb77970e4c5))
+* Trim spaces around items in comma separated column arguments ([#1883](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1883)) ([1bac918](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1bac918c443e4c9c36c3068d07b7874788e793e3))
+
 ## [8.10.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.0...v8.10.1) (2026-10-23)
 
 
