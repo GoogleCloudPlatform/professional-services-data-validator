@@ -28,6 +28,7 @@ import pandas
 from data_validation import cli_tools, consts, exceptions
 from data_validation.config_manager import ConfigManager
 from data_validation.partition_builder import PartitionBuilder
+from data_validation.query_builder.query_builder import FilterField, QueryBuilder
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -793,6 +794,53 @@ def test_get_partition_key_filters_for_partition_mode(
         check_no_yaml_files.assert_not_called()
 
     assert partition_filters == [[expected_source, expected_target]]
+
+
+def test_rows_per_partition_uses_filtered_counts_and_boundaries(module_under_test):
+    client = ibis.sqlite.connect(":memory:")
+    client.create_table("source_table", obj=pandas.DataFrame({"id": range(10)}))
+    client.create_table("target_table", obj=pandas.DataFrame({"id": range(14)}))
+    source_builder = QueryBuilder([], [], [FilterField.greater_than("id", 3)], [], [])
+    target_builder = QueryBuilder([], [], [FilterField.greater_than("id", 7)], [], [])
+    config_manager = mock.Mock(
+        primary_keys=[{"source_column": "id", "target_column": "id"}],
+        source_client=client,
+        target_client=client,
+        source_schema=None,
+        target_schema=None,
+        source_table="source_table",
+        target_table="target_table",
+        source_query=None,
+        target_query=None,
+    )
+    target_rows = module_under_test.PartitionRowBuilder(
+        ["id"], client, None, "target_table", None, target_builder
+    )
+    assert target_rows.get_count() == 6
+
+    args = TABLE_PART_ARGS.copy()
+    partition_num_index = args.index("--partition-num")
+    args[partition_num_index : partition_num_index + 2] = ["--rows-per-partition", "4"]
+    builder = module_under_test.PartitionBuilder(
+        [config_manager], cli_tools.configure_arg_parser().parse_args(args)
+    )
+
+    def get_rows(table_expr, _client):
+        return ",".join(str(value) for value in table_expr.execute()["id"])
+
+    with mock.patch.object(
+        module_under_test, "ValidationBuilder"
+    ) as validation_builder, mock.patch.object(
+        module_under_test.cli_tools, "check_no_yaml_files"
+    ) as check_no_yaml_files, mock.patch.object(
+        module_under_test.PartitionBuilder, "_extract_where", new=staticmethod(get_rows)
+    ):
+        validation_builder.return_value.source_builder = source_builder
+        validation_builder.return_value.target_builder = target_builder
+        partition_filters = builder._get_partition_key_filters()
+
+    check_no_yaml_files.assert_called_once_with(2, builder.args.parts_per_file)
+    assert partition_filters == [[["4,5,6,7", "8,9"], ["", "8,9,10,11,12,13"]]]
 
 
 def test_rows_per_partition_generated_sql_filters(module_under_test):
