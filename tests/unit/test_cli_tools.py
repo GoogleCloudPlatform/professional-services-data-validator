@@ -246,6 +246,22 @@ def test_configure_arg_parser_list_connections():
     assert args.connect_cmd == "list"
 
 
+def test_configure_arg_parser_test_connection():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(["connections", "test", "-c", "my_conn"])
+
+    assert args.command == "connections"
+    assert args.connect_cmd == "test"
+    assert args.connection_name == "my_conn"
+
+
+def test_configure_arg_parser_test_connection_needs_name(capsys):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["connections", "test"])
+    assert "--connection-name" in capsys.readouterr().err
+
+
 def test_get_connection_config_from_args():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
@@ -1093,6 +1109,19 @@ def test__get_pre_build_configs_cols_from_arg(
 def test_get_query_from_file(test_input: str):
     query = cli_tools.get_query_from_file(test_input)
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+def test_get_query_from_file_unreadable(tmp_path, caplog):
+    """An unreadable query file should be logged with its path and reason."""
+    missing_file = str(tmp_path / "missing.sql")
+    with pytest.raises(ValueError):
+        cli_tools.get_query_from_file(missing_file)
+    messages = [
+        record.getMessage() for record in caplog.records if record.levelname == "ERROR"
+    ]
+    assert len(messages) == 1
+    assert missing_file in messages[0]
+    assert "No such file or directory" in messages[0]
 
 
 @pytest.mark.parametrize(

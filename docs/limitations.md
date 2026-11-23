@@ -42,6 +42,7 @@
 ## Spanner
 
 - Only GoogleSQL dialect databases are supported. Connecting to a PostgreSQL dialect database fails with an error. See [issue-1877](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1877) for details.
+- Spanner does not support the `ROW_NUMBER()` window function. At the current time this prevents Spanner from being the source table in a `generate-table-partitions` command. A simple workaround is to flip the source and target connections. See [issue-1059](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1059) for details.
 
 ## SQL Server
 
