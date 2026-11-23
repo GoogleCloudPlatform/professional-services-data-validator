@@ -76,6 +76,8 @@ def _construct_yaml_tuple(loader, node):
 
 yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/tuple", _construct_yaml_tuple)
 
+MAX_CONFIG_CONCURRENCY = 128
+
 
 CONNECTION_SOURCE_FIELDS = {
     consts.SOURCE_TYPE_BIGQUERY: [
@@ -519,6 +521,12 @@ def _configure_validation_config_parser(subparsers):
         "-kc",
         action="store_true",
         help="Use with --config-dir when running DVT as an indexed Kubernetes Job or Cloud Run Job. Each task runs the single YAML file matching its index (JOB_COMPLETION_INDEX or CLOUD_RUN_TASK_INDEX) in the sorted list of files in the directory.",
+    )
+    run_parser.add_argument(
+        "--concurrency",
+        type=_check_config_concurrency,
+        default=1,
+        help=f"Maximum YAML config files to validate in parallel with --config-dir (1-{MAX_CONFIG_CONCURRENCY}; default: 1). Values greater than 1 cannot be used with --kube-completions.",
     )
 
     get_parser = configs_subparsers.add_parser(
@@ -1182,6 +1190,15 @@ def _check_positive(value: int, lower_bound: int = 1) -> int:
 
 def _check_gt_one(value: int) -> int:
     return _check_positive(value, lower_bound=2)
+
+
+def _check_config_concurrency(value: int) -> int:
+    concurrency = _check_positive(value)
+    if concurrency > MAX_CONFIG_CONCURRENCY:
+        raise argparse.ArgumentTypeError(
+            f"concurrency must be between 1 and {MAX_CONFIG_CONCURRENCY}: {value}"
+        )
+    return concurrency
 
 
 def check_no_yaml_files(partition_num: int, parts_per_file: int):

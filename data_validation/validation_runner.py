@@ -15,7 +15,7 @@
 import json
 import logging
 
-from data_validation import clients, exceptions, util
+from data_validation import clients, consts, exceptions, util
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -53,9 +53,15 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
             cached_source_client=source_client,
             cached_target_client=target_client,
         ) as validator:
+            logging.info(
+                "Run id %s started for table %s (config file: %s)",
+                validator.run_metadata.run_id,
+                config_manager.full_source_table,
+                config_manager.config.get(consts.CONFIG_FILE),
+            )
 
             if dry_run:
-                print(
+                util.print_output(
                     json.dumps(
                         {
                             "source_query": util.ibis_table_to_sql(

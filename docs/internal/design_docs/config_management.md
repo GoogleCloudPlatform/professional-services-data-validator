@@ -69,12 +69,38 @@ data-validation configs run --config-dir <path_to_directory>
 ```
 *   **Non-Recursive Behavior**: `configs run` lists and executes `.yaml` files **only** in the immediate directory (sorted alphabetically by filename). It does not traverse subdirectories.
 *   **Empty Directory Validation**: If no `.yaml` files exist in the target directory (for example, due to a misspelled Cloud Storage prefix), DVT raises a `ValueError` rather than silently reporting a successful no-op run.
-*   **Continue-on-Error Execution**: Files are executed sequentially. If a validation file raises an exception, the error (with stack trace) is logged and execution continues through the remaining files; a `ValidationException` is raised once all files have been attempted.
+*   **Continue-on-Error Execution**: Files are executed sequentially by default. If a validation file raises an exception, the error (with stack trace) is logged and execution continues through the remaining files; a `ValidationException` is raised once all files have been attempted.
 *   **Executing Partitioned Validations**: Because `generate-table-partitions` nests files under `<config_dir>/<schema>.<table_name>/`, you **must target the specific table subdirectory** to run them:
     ```bash
     data-validation configs run --config-dir my_partitions/dbo.customers/
     ```
 *   **YAML Exclusivity**: CLI execution via `configs run` only supports YAML files. Any `.json` files in the directory are ignored (as `list_validations` filters strictly for `.yaml` extensions).
+
+#### Config Directory Concurrency
+
+Use `data-validation configs run --config-dir configs --concurrency 4` to run
+up to four YAML files concurrently. The allowed range is 1 to 128; the default
+of 1 preserves sorted serial execution. Validations within a file remain serial.
+Each file builds its own source and target clients, and DVT attempts cleanup
+when the file finishes. The existing cleanup helper disposes Oracle and
+PostgreSQL clients; it does not support all backends.
+
+All files are attempted even if loading or executing one fails, and a combined
+validation exception is raised afterwards. A failure can stop remaining
+validations in its file, as with serial runs. Reported validation failures are
+not execution exceptions.
+
+Complete report and dry-run output blocks are serialized, but file completion
+order is not guaranteed. Run-ID/config-file logging helps identify validations
+when logs interleave. Concurrent CSV/JSON output remains per validation, not a
+single combined document.
+
+Choose the worker count according to database connection and workload limits,
+and available local memory and CPU. Source and target queries can also run
+concurrently within each validation. The flag bounds active files, not database
+connections or queries. Values greater than 1 require `--config-dir` and cannot
+be combined with `--kube-completions`; indexed execution retains its existing
+single-file selection behavior.
 
 ### B. Distributed Orchestration (`--kube-completions`)
 For large-scale migrations, validations stored in a directory (either flat table-per-file directories or partitioned subdirectories) can be executed concurrently in containerized environments like Kubernetes (Indexed Jobs) or Cloud Run (Jobs).
