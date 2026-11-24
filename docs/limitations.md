@@ -59,7 +59,7 @@
 
 ## Sybase ASE
 
-- Requires the `sqlalchemy_sybase` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
+- Requires the `sqlalchemy_sybase` package to be installed as an extra dependency plus an OS level ODBC driver manager and client. Due to [Issue 1914](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1914), you may have to use a pyodbc version less than 5.4
 - Sybase ASE does not have a SHA-256 hash function, therefore row validations much use `--comparison-fields` or `--concat` only.
 - Sybase ASE does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
 - The `text` data type is not currently supported because many Sybase ASE SQL functions do not support the data type.
