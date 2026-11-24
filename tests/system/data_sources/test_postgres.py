@@ -1064,6 +1064,21 @@ def test_custom_query_validation_core_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_validation_cte():
+    """PostgreSQL to PostgreSQL custom-query validation with a single line WITH query"""
+    query = "with cte as (select * from pso_data_validator.dvt_core_types) select * from cte"
+    custom_query_validation_test(
+        tc="mock-conn",
+        source_query=query,
+        target_query=query,
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_find_tables():
     """PostgreSQL to BigQuery test of find-tables command."""
     find_tables_test()
