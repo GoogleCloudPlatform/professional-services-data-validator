@@ -15,7 +15,6 @@
 import copy
 import pytest
 from unittest import mock
-import ibis.expr.datatypes as dt
 
 from data_validation import consts
 
