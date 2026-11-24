@@ -66,12 +66,16 @@ def test_dtype_from_spanner_field_array(element_type_code, expected_dtype):
 @pytest.mark.parametrize(
     "type_code",
     [
-        TypeCode.STRUCT,
-        TypeCode.PROTO,
-        TypeCode.ENUM,
-        TypeCode.INTERVAL,
-        TypeCode.UUID,
-        TypeCode.TYPE_CODE_UNSPECIFIED,
+        getattr(TypeCode, name)
+        for name in (
+            "STRUCT",
+            "PROTO",
+            "ENUM",
+            "INTERVAL",
+            "UUID",
+            "TYPE_CODE_UNSPECIFIED",
+        )
+        if hasattr(TypeCode, name)
     ],
 )
 def test_dtype_from_spanner_field_unsupported(type_code):
@@ -109,10 +113,10 @@ def test_backend_get_schema_with_unsupported_type():
     backend.instance = mock.MagicMock()
     backend.instance.database.return_value.table.return_value.schema = [
         StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
-        StructType.Field(name="col_uuid", type_=Type(code=TypeCode.UUID)),
+        StructType.Field(name="col_struct", type_=Type(code=TypeCode.STRUCT)),
     ]
 
-    with pytest.raises(TypeError, match="^Unsupported Spanner data type: UUID$"):
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: STRUCT$"):
         backend.get_schema("dvt_core_types")
 
 

@@ -33,11 +33,12 @@ _DTYPE_TO_IBIS_TYPE = {
 
 def dtype_from_spanner_field(field: Type) -> dt.DataType:
     """Convert Spanner `Type` to an ibis type."""
+    code = field.code
     try:
-        typ = TypeCode(field.code)
+        typ = TypeCode(code)
     except ValueError:
         # A type newer than the installed google-cloud-spanner arrives as a raw int.
-        raise TypeError(f"Unsupported Spanner data type: {field.code}") from None
+        raise TypeError(f"Unsupported Spanner data type: {code}") from None
     if typ == TypeCode.ARRAY:
         return dt.Array(dtype_from_spanner_field(field.array_element_type))
     try:
