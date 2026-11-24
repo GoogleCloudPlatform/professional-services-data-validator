@@ -364,21 +364,26 @@ def join_and_unpivot(
     else:
         group_by_cols = string_nulls_col
 
-    # Row validations has nulls for differences and column validation has nulls for primary_keys.
-    if is_value_comparison:
-        primary_keys = pa.repeat(
-            "{" + ", ".join(join_on_fields) + "}" if join_on_fields else None,
-            num_rows,
-        )
-    else:
-        primary_keys = string_nulls_col
-
     # 4. Loop over each value column and compare using native Arrow types
     #    and create the report for that specific validation.
     for col in value_columns:
         validation = run_metadata.validations[col]
         src_col = aligned[f"{col}_source"]
         tgt_col = aligned[f"{col}_target"]
+
+        # Row validations has nulls for differences and column validation has nulls for primary_keys.
+        # validation.primary_keys keeps the user's key order, join_on_fields is a set.
+        if is_value_comparison:
+            primary_keys = pa.repeat(
+                (
+                    "{" + ", ".join(validation.primary_keys) + "}"
+                    if validation.primary_keys
+                    else None
+                ),
+                num_rows,
+            )
+        else:
+            primary_keys = string_nulls_col
 
         src_agg_val = _format_value(src_col)
         tgt_agg_val = _format_value(tgt_col)

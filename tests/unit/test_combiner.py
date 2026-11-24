@@ -552,6 +552,30 @@ def _row_validation_run_metadata(columns):
     )
 
 
+def test_generate_report_row_validation_composite_primary_keys_order(
+    module_under_test,
+):
+    """primary_keys must follow the user's key order, not the order of join_on_fields.
+
+    DataValidation passes join_on_fields as a set, so its order can change between runs.
+    """
+    run_metadata = _row_validation_run_metadata(["value"])
+    run_metadata.validations["value"].primary_keys = ["id", "region"]
+    source_table = pyarrow.table({"id": [1, 2], "region": ["a", "b"], "value": [1, 2]})
+    target_table = pyarrow.table({"id": [1, 2], "region": ["a", "b"], "value": [1, 2]})
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source_table,
+        target_table,
+        # Deliberately not in primary_keys order.
+        join_on_fields=("region", "id"),
+        is_value_comparison=True,
+    )
+
+    assert list(report[consts.CONFIG_PRIMARY_KEYS]) == ["{id, region}"] * 2
+
+
 def test_generate_report_row_validation_does_not_round_float_to_decimal(
     module_under_test,
 ):
