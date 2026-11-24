@@ -19,7 +19,6 @@ import ibis.expr.schema as sch
 import sqlalchemy as sa
 from ibis.backends.postgres import Backend as PostgresBackend
 from ibis.backends.postgres.datatypes import SqlglotPostgresType
-import re
 
 
 def do_connect(
@@ -75,11 +74,7 @@ def _metadata(self, query: str) -> sch.Schema:
     # This function is called when ibis has to figure out the datatypes of columns in a custom query validation OR
     # when ibis encounters a column with a datatype not supported in https://ibis-project.org/reference/datatypes
     # In the latter case, this just returns None for that column, resulting in a NotImplementedError elsewhere.
-    query = (
-        f"({query})"
-        if re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
-        else query
-    )
+    # The query argument is either a table name or a query already wrapped in brackets by _get_schema_using_query().
     with self.begin() as con:
         cur = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 0")
         # Table OID below is cast to bigint because OID is based on
@@ -99,6 +94,12 @@ def _metadata(self, query: str) -> sch.Schema:
                     LEFT JOIN pg_attribute t1 USING (attrelid, attnum) ORDER BY col_ord"""
         )
     yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+
+
+def _get_schema_using_query(self, query: str) -> sch.Schema:
+    # Wrap the query in brackets here, where we know it is a query, because _metadata() is also called
+    # with a table name. This lets queries starting with WITH, VALUES or a comment be used as a subquery.
+    return sch.Schema.from_tuples(self._metadata(f"({query})"))
 
 
 def _get_type(typestr: str) -> dt.DataType:
@@ -197,6 +198,7 @@ def _is_char_type_padded(self, char_type: Tuple) -> bool:
 
 
 PostgresBackend._metadata = _metadata
+PostgresBackend._get_schema_using_query = _get_schema_using_query
 PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns

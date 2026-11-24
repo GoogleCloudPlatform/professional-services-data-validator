@@ -106,3 +106,36 @@ def test_raw_column_metadata_qry(mock_begin, module_under_test):
     )
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT * FROM pso_data_validator.dvt_core_types",
+        "WITH cte AS (SELECT * FROM pso_data_validator.dvt_core_types) SELECT * FROM cte",
+        "/* comment */ SELECT * FROM pso_data_validator.dvt_core_types",
+        "VALUES (1)",
+    ],
+)
+@mock.patch("third_party.ibis.ibis_postgres.client.PostgresBackend.begin")
+def test_get_schema_using_query(mock_begin, module_under_test, query):
+    """Test that the query is used as a subquery whatever it starts with."""
+    mock_execute = mock_begin().__enter__().exec_driver_sql
+    mock_execute().cursor.description = []
+    mock_execute().__iter__.return_value = iter([("id", "integer")])
+    backend = module_under_test.PostgresBackend()
+    schema = backend._get_schema_using_query(query)
+    assert schema.names == ("id",)
+    executed_sql = [_.args[0] for _ in mock_execute.call_args_list if _.args]
+    assert executed_sql[0] == f"SELECT * FROM ({query}) t0 LIMIT 0"
+
+
+@mock.patch("third_party.ibis.ibis_postgres.client.PostgresBackend.begin")
+def test_metadata_table_name(mock_begin, module_under_test):
+    """Test that a table name is not wrapped in brackets."""
+    mock_execute = mock_begin().__enter__().exec_driver_sql
+    mock_execute().cursor.description = []
+    backend = module_under_test.PostgresBackend()
+    list(backend._metadata('"MySchema"."MyTable"'))
+    executed_sql = [_.args[0] for _ in mock_execute.call_args_list if _.args]
+    assert executed_sql[0] == 'SELECT * FROM "MySchema"."MyTable" t0 LIMIT 0'
