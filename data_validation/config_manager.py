@@ -939,7 +939,6 @@ class ConfigManager(object):
         """Append calculated field for length() or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth = 0
         cast_type = None
-        final_cast_type = None
         if any(_ in ["json", "!json"] for _ in [column_type, target_column_type]):
             # JSON data which needs casting to string before we apply a length function.
             pre_calculated_config = self.build_and_append_pre_agg_calc_config(
@@ -988,10 +987,6 @@ class ConfigManager(object):
                 depth = 1
 
             calc_func = consts.CALC_FIELD_EPOCH_SECONDS
-            if False and agg_type == consts.CONFIG_TYPE_SUM:
-                # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
-                # See issue 1391 for details.
-                final_cast_type = "string"
 
         elif column_type == "int32" or column_type == "!int32":
             calc_func = consts.CONFIG_CAST
@@ -1019,9 +1014,6 @@ class ConfigManager(object):
             ),
             consts.CONFIG_TYPE: agg_type,
         }
-        if final_cast_type:
-            # Adding to dict this way to avoid adding a lot of empty cast attributes.
-            aggregate_config[consts.CONFIG_CAST] = final_cast_type
 
         return aggregate_config
 
