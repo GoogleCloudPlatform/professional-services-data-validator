@@ -447,7 +447,7 @@ NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
-CAPLOG_DF_HEADER = "validation_name validation_type source_table_name"
+CAPLOG_DF_HEADER = "validation_name validation_type source_table_name source_column_name source_agg_value target_agg_value pct_difference validation_status"
 
 
 @pytest.fixture
@@ -780,7 +780,9 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
         for _ in caplog.records
         if _.message == f"Results written to BigQuery, run id: {run_id}"
     )
-    assert any(_ for _ in caplog.records if CAPLOG_DF_HEADER in _.message)
+    assert any(
+        _ for _ in caplog.records if CAPLOG_DF_HEADER in " ".join(_.message.split())
+    )
     assert any(_ for _ in caplog.records if f"fail {run_id}" in _.message)
 
 
@@ -837,7 +839,9 @@ def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq
     assert len(result_df) == 0
     # Only the "No results" message happens
     caplog_messages = [_.message for _ in caplog.records]
-    assert not any([_ for _ in caplog_messages if CAPLOG_DF_HEADER in _])
+    assert not any(
+        [_ for _ in caplog_messages if CAPLOG_DF_HEADER in " ".join(_.split())]
+    )
     assert BQRH_NO_WRITE_MESSAGE in caplog_messages
 
 
@@ -869,7 +873,7 @@ def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mo
     # The "Results written" message happens + info about the failed data
     caplog_messages = [_.message for _ in caplog.records]
     assert f"Results written to BigQuery, run id: {DUMMY_RUN_ID}" in caplog_messages
-    assert any([_ for _ in caplog_messages if CAPLOG_DF_HEADER in _])
+    assert any([_ for _ in caplog_messages if CAPLOG_DF_HEADER in " ".join(_.split())])
     assert any([_ for _ in caplog_messages if f"fail {DUMMY_RUN_ID}" in _])
 
 
