@@ -97,8 +97,12 @@ def _metadata(self, query: str) -> sch.Schema:
 
 
 def _get_schema_using_query(self, query: str) -> sch.Schema:
-    # Wrap the query in brackets here, where we know it is a query, because _metadata() is also called
-    # with a table name. This lets queries starting with WITH, VALUES or a comment be used as a subquery.
+    """Return an Ibis Schema for a PostgreSQL custom query.
+
+    Wraps `query` in parentheses here, where the input is known to be a SQL
+    query rather than a table name, so queries starting with WITH, VALUES, or
+    comments can be inspected as subqueries by `_metadata()`.
+    """
     return sch.Schema.from_tuples(self._metadata(f"({query})"))
 
 
