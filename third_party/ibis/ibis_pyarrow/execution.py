@@ -28,6 +28,9 @@ Standard upstream Ibis implementations:
       schema (e.g. STDDEV of numeric(10, 2) returning scale 20, or SUM exceeding
       statically inferred precision), casting directly to arrow_schema either
       truncates significant decimal digits or raises ArrowInvalid.
+  - ImpalaBackend.to_pyarrow & to_pyarrow_batches:
+      Cast each fetched column to the static schema, which rounds a DOUBLE
+      STDDEV of a DECIMAL(10, 2) column to 2 decimal places.
 """
 
 import decimal
@@ -42,6 +45,12 @@ try:
     from ibis.backends.snowflake import Backend as SnowflakeBackend
 except Exception:
     SnowflakeBackend = None
+
+try:
+    from ibis.backends.impala import Backend as ImpalaBackend
+    from ibis.backends.impala.client import ImpalaCursor
+except Exception:
+    ImpalaBackend = ImpalaCursor = None
 
 
 # Largest integer magnitude a float64 can represent exactly.
@@ -331,3 +340,16 @@ def _snowflake_to_pyarrow(self, expr, *, params=None, limit=None, **_):
 
 if SnowflakeBackend:
     SnowflakeBackend.to_pyarrow = _snowflake_to_pyarrow
+
+
+def _impala_cursor_fetchmany(self, size=None):
+    return self._cursor.fetchmany(size)
+
+
+if ImpalaBackend:
+    # Ibis's Impala to_pyarrow() casts each fetched column to the Ibis schema, rounding a DOUBLE
+    # STDDEV of DECIMAL(10, 2) to 0.10. Use DVT's cursor based path instead, which needs
+    # fetchmany() on Ibis's Impala cursor wrapper.
+    ImpalaCursor.fetchmany = _impala_cursor_fetchmany
+    ImpalaBackend.to_pyarrow = _base_to_pyarrow
+    ImpalaBackend.to_pyarrow_batches = _sql_to_pyarrow_batches
