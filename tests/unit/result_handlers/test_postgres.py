@@ -14,12 +14,14 @@
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy
 import pandas
 import pytest
 import sqlalchemy
+from sqlalchemy.dialects import postgresql
 
 from data_validation import consts
 
@@ -106,3 +108,28 @@ def test_dataframe_to_sql_labels_array_literal(module_under_test, labels, expect
         handler._dataframe_to_sql("schema_name", "table_name", result_df)
     mock_to_sql.assert_called_once()
     assert result_df[consts.CONFIG_LABELS][0] == expected
+
+
+@pytest.mark.parametrize(
+    "schema_name,table_name,expected",
+    [
+        ("dvt_results", "results", "dvt_results.results"),
+        ("dvt_results", "Results", 'dvt_results."Results"'),
+        ("dvt_results", "RESULTS", 'dvt_results."RESULTS"'),
+        ("MySchema", "Results", '"MySchema"."Results"'),
+        (None, "results", "results"),
+        (None, "Results", '"Results"'),
+    ],
+)
+def test_psql_insert_copy_table_name(
+    module_under_test, schema_name, table_name, expected
+):
+    """Test the COPY statement quotes the schema and table names when required."""
+    table = SimpleNamespace(schema=schema_name, name=table_name)
+    conn = mock.MagicMock(dialect=postgresql.dialect())
+    module_under_test._psql_insert_copy(table, conn, ["run_id"], [["abc"]])
+    cursor = conn.connection.cursor.return_value.__enter__.return_value
+    assert (
+        cursor.copy_expert.call_args.kwargs["sql"]
+        == f'COPY {expected} ("run_id") FROM STDIN WITH CSV'
+    )
