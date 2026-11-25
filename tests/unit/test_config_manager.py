@@ -15,6 +15,7 @@
 import copy
 import pytest
 from unittest import mock
+import ibis
 import ibis.expr.datatypes as dt
 
 from data_validation import consts
@@ -372,6 +373,39 @@ def test_build_config_aggregates_no_match(module_under_test):
         "sum", ["a"], False, ["float64"]
     )
     assert not aggregate_configs
+
+
+def test_build_config_aggregates_float32_cast_to_float64(module_under_test):
+    """sum/avg/std on float32 (either side) are cast to float64 first, min/max are not."""
+    config_manager = module_under_test.ConfigManager(
+        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    source = ibis.table([("f32", "float32"), ("f64", "float64")], name="s")
+    target = ibis.table([("f32", "float64"), ("f64", "float32")], name="t")
+    with mock.patch.object(
+        config_manager, "get_source_ibis_table", return_value=source
+    ), mock.patch.object(config_manager, "get_target_ibis_table", return_value=target):
+        for agg_type in ("sum", "avg", "std"):
+            aggregate_configs = config_manager.build_config_column_aggregates(
+                agg_type, ["f32", "f64"], False, []
+            )
+            assert [_[consts.CONFIG_SOURCE_COLUMN] for _ in aggregate_configs] == [
+                "cast_float64__f32",
+                "cast_float64__f64",
+            ]
+        for agg_type in ("min", "max"):
+            aggregate_configs = config_manager.build_config_column_aggregates(
+                agg_type, ["f32", "f64"], False, []
+            )
+            assert [_[consts.CONFIG_SOURCE_COLUMN] for _ in aggregate_configs] == [
+                "f32",
+                "f64",
+            ]
+    calculated_fields = config_manager.calculated_fields
+    assert [
+        (_[consts.CONFIG_FIELD_ALIAS], _[consts.CONFIG_DEFAULT_CAST])
+        for _ in calculated_fields
+    ] == [("cast_float64__f32", "float64"), ("cast_float64__f64", "float64")]
 
 
 def test_build_config_count_aggregate(module_under_test):

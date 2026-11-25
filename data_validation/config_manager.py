@@ -710,6 +710,10 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_float32(self, source_type: str, target_type: str) -> bool:
+        """Returns whether either source or target column is float32."""
+        return any(_ in ["float32", "!float32"] for _ in [source_type, target_type])
+
     def _is_db2_blob(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Db2 (LUW and z/OS) BLOB data type."""
         return self._is_raw_data_type(
@@ -988,6 +992,10 @@ class ConfigManager(object):
 
             calc_func = consts.CALC_FIELD_EPOCH_SECONDS
 
+        elif self._is_float32(column_type, target_column_type):
+            calc_func = consts.CONFIG_CAST
+            cast_type = "float64"
+
         elif column_type == "int32" or column_type == "!int32":
             calc_func = consts.CONFIG_CAST
             cast_type = "int64"
@@ -1106,6 +1114,15 @@ class ConfigManager(object):
                     # Convert to length for any min/max/sum on binary columns.
                     return True
             elif cast_to_bigint and column_type in ["int32", "!int32"]:
+                return True
+            elif self._is_float32(column_type, target_column_type) and agg_type in (
+                consts.CONFIG_TYPE_AVG,
+                consts.CONFIG_TYPE_STD,
+                consts.CONFIG_TYPE_SUM,
+            ):
+                # Engines return float32 sums in float32 and drivers render them differently,
+                # e.g. Oracle BINARY_FLOAT 370368.3125 vs PostgreSQL REAL 370368.3, so cast to
+                # float64 first.
                 return True
             elif column_type in [
                 "timestamp",
