@@ -1248,19 +1248,6 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
-                if False and self._is_high_precision_decimal(
-                    source_column_ibis_type,
-                    target_column_ibis_type,
-                ):
-                    if agg_type in (consts.CONFIG_TYPE_STD, consts.CONFIG_TYPE_AVG):
-                        # std and avg change the shape of the column result and we
-                        # can't know how to format them reliably, float64 is our best bet.
-                        # This may be lossy and generate false success validations.
-                        aggregate_config[consts.CONFIG_CAST] = "float64"
-                    else:
-                        # Other agg types should retain the shape of the results and can be
-                        # reliably formated as strings when the Pandas native types will overflow.
-                        aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 
