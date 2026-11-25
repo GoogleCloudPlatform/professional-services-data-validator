@@ -466,7 +466,9 @@ def integration_impala(session):
 def integration_sybase(session):
     """Run Sybase integration tests."""
     # See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1914
-    _setup_session_requirements(session, extra_packages=["pyodbc<5.4", "sqlalchemy_sybase"])
+    _setup_session_requirements(
+        session, extra_packages=["pyodbc<5.4", "sqlalchemy_sybase"]
+    )
 
     expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
     for env_var in expected_env_vars:
