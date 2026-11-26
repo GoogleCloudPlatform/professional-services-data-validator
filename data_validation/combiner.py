@@ -224,6 +224,71 @@ def _exact_comparison(src_col, tgt_col, float_nulls_col):
     return is_successful, float_nulls_col, float_nulls_col
 
 
+def _compare_numeric_aggregate(
+    src_col, tgt_col, validation, threshold, float_nulls_col
+):
+    """Compare numeric aggregate columns and return (status, difference, pct_difference)."""
+    # According to PR 195 https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/195
+    # date and timestamp aggregations should use epoch seconds for source and target values
+    if pa.types.is_date(src_col.type) or pa.types.is_timestamp(src_col.type):
+        src_col = pc.cast(pc.cast(src_col, pa.timestamp("s"), safe=False), pa.int64())
+    if pa.types.is_date(tgt_col.type) or pa.types.is_timestamp(tgt_col.type):
+        tgt_col = pc.cast(pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64())
+    try:
+        difference = pc.subtract_checked(tgt_col, src_col)
+    except (pa.ArrowInvalid, pa.ArrowNotImplementedError):
+        # The exact result overflows int64 or needs more than 76 decimal
+        # digits, so subtract as float64 instead.
+        difference = pc.subtract(
+            pc.cast(tgt_col, pa.float64(), safe=False),
+            pc.cast(src_col, pa.float64(), safe=False),
+        )
+    # difference is the same type as tgt_col and src_col, but needs to be
+    # float in the table, so casting it now.
+    difference = pc.cast(difference, pa.float64(), safe=False)
+    if validation.aggregation_type.lower() == consts.CONFIG_TYPE_STD:
+        # There are different methods to calculate standard deviation,
+        # and we ignore small differences less than consts.STD_SENSITIVITY.
+        difference = pc.if_else(
+            pc.less(pc.abs(difference), consts.STD_SENSITIVITY), 0.0, difference
+        )
+    pct_difference = pc.if_else(
+        pc.equal(difference, 0.0),
+        0.0,
+        pc.divide(
+            pc.multiply(100.0, difference),
+            pc.if_else(
+                pc.equal(src_col, pa.scalar(0, type=src_col.type)),
+                pc.cast(tgt_col, pa.float64(), safe=False),
+                pc.cast(src_col, pa.float64(), safe=False),
+            ),
+        ),
+    )
+    if (
+        _aggregation_type_not_lossy(validation.aggregation_type)
+        and validation.threshold < consts.VALIDATION_PCT_SENSITIVITY
+        and _exact_numeric_types(src_col, tgt_col)
+    ):
+        # User is looking for exact comparison
+        is_successful, _, _ = _exact_comparison(src_col, tgt_col, float_nulls_col)
+    else:
+        # We need to use threshold for success and failure
+        # Some aggregates can be null if all the values are null so handle null==null;
+        both_null = pc.and_kleene(
+            pc.is_null(src_col, nan_is_null=True),
+            pc.is_null(tgt_col, nan_is_null=True),
+        )
+        values_below_threshold = pc.fill_null(
+            pc.less_equal(pc.abs(pct_difference), threshold), False
+        )
+        is_successful = pc.if_else(
+            pc.or_kleene(both_null, values_below_threshold),
+            consts.VALIDATION_STATUS_SUCCESS,
+            consts.VALIDATION_STATUS_FAIL,
+        )
+    return is_successful, difference, pct_difference
+
+
 def _fillcolumn_string_scalar(value, num_rows) -> pa.ChunkedArray:
     # helper function to build a column from scalar
     return pa.repeat(pa.scalar(value, type=pa.string()), num_rows)
@@ -263,35 +328,13 @@ def generate_report(
     return result_df
 
 
-def join_and_unpivot(
-    run_metadata: "RunMetadata",
+def _join_source_and_target(
     source_table: pa.Table,
     target_table: pa.Table,
-    join_on_fields=(),
-    is_value_comparison=False,
-    verbose=False,
+    pk_columns,
+    join_on_fields,
 ) -> pa.Table:
-    if (
-        not join_on_fields
-    ):  # Plain column validation without a group by, has only one row, we inject a fake join key
-        # An aggregate query without a GROUP BY always returns exactly one row, even on an
-        # empty table. Any other row count fails loudly.
-        if source_table.num_rows != 1 or target_table.num_rows != 1:
-            raise ValueError(
-                "Expected exactly one row for column validation, received "
-                f"{source_table.num_rows} and {target_table.num_rows}"
-            )
-        source_table = source_table.add_column(0, "__dvt_fake_pk", [[0]])
-        target_table = target_table.add_column(0, "__dvt_fake_pk", [[0]])
-        pk_columns = ["__dvt_fake_pk"]
-    else:
-        pk_columns = join_on_fields
-
-    # 1. Each Value column represents a validation. We will process each column and generate a slice
-    #    of the validation report
-    value_columns = [col for col in source_table.column_names if col not in pk_columns]
-
-    # 2. Rename value columns so they don't collide, then join wide tables on PKs
+    """Rename value columns, align key types with NULL-safe flags, and full-outer-join."""
     source_renamed = source_table.rename_columns(
         [
             col if col in pk_columns else f"{col}_source"
@@ -328,8 +371,41 @@ def join_and_unpivot(
 
         join_keys.append(is_null_col)
 
-    aligned = source_renamed.join(
-        target_renamed, keys=join_keys, join_type="full outer"
+    return source_renamed.join(target_renamed, keys=join_keys, join_type="full outer")
+
+
+def join_and_unpivot(
+    run_metadata: "RunMetadata",
+    source_table: pa.Table,
+    target_table: pa.Table,
+    join_on_fields=(),
+    is_value_comparison=False,
+    verbose=False,
+) -> pa.Table:
+    """Join source and target Arrow tables on keys and unpivot each validation into report rows."""
+    if (
+        not join_on_fields
+    ):  # Plain column validation without a group by, has only one row, we inject a fake join key
+        # An aggregate query without a GROUP BY always returns exactly one row, even on an
+        # empty table. Any other row count fails loudly.
+        if source_table.num_rows != 1 or target_table.num_rows != 1:
+            raise ValueError(
+                "Expected exactly one row for column validation, received "
+                f"{source_table.num_rows} and {target_table.num_rows}"
+            )
+        source_table = source_table.add_column(0, "__dvt_fake_pk", [[0]])
+        target_table = target_table.add_column(0, "__dvt_fake_pk", [[0]])
+        pk_columns = ["__dvt_fake_pk"]
+    else:
+        pk_columns = join_on_fields
+
+    # 1. Each Value column represents a validation. We will process each column and generate a slice
+    #    of the validation report
+    value_columns = [col for col in source_table.column_names if col not in pk_columns]
+
+    # 2. Rename value columns so they don't collide, then join wide tables on PKs
+    aligned = _join_source_and_target(
+        source_table, target_table, pk_columns, join_on_fields
     )
     num_rows = aligned.num_rows
     slices = []
@@ -422,70 +498,9 @@ def join_and_unpivot(
         elif _is_numeric_type(src_col) and _is_numeric_type(
             tgt_col
         ):  # aggregated values, compare % difference against threshold
-            # According to PR 195 https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/195
-            # date and timestamp aggregations should use epoch seconds for source and target values
-            if pa.types.is_date(src_col.type) or pa.types.is_timestamp(src_col.type):
-                src_col = pc.cast(
-                    pc.cast(src_col, pa.timestamp("s"), safe=False), pa.int64()
-                )
-            if pa.types.is_date(tgt_col.type) or pa.types.is_timestamp(tgt_col.type):
-                tgt_col = pc.cast(
-                    pc.cast(tgt_col, pa.timestamp("s"), safe=False), pa.int64()
-                )
-            try:
-                difference = pc.subtract_checked(tgt_col, src_col)
-            except (pa.ArrowInvalid, pa.ArrowNotImplementedError):
-                # The exact result overflows int64 or needs more than 76 decimal
-                # digits, so subtract as float64 instead.
-                difference = pc.subtract(
-                    pc.cast(tgt_col, pa.float64(), safe=False),
-                    pc.cast(src_col, pa.float64(), safe=False),
-                )
-            # difference is the same type as tgt_col and src_col, but needs to be
-            # float in the table, so casting it now.
-            difference = pc.cast(difference, pa.float64(), safe=False)
-            if validation.aggregation_type.lower() == consts.CONFIG_TYPE_STD:
-                # There are different methods to calculate standard deviation,
-                # and we ignore small differences less than consts.STD_SENSITIVITY.
-                difference = pc.if_else(
-                    pc.less(pc.abs(difference), consts.STD_SENSITIVITY), 0.0, difference
-                )
-            pct_difference = pc.if_else(
-                pc.equal(difference, 0.0),
-                0.0,
-                pc.divide(
-                    pc.multiply(100.0, difference),
-                    pc.if_else(
-                        pc.equal(src_col, pa.scalar(0, type=src_col.type)),
-                        pc.cast(tgt_col, pa.float64(), safe=False),
-                        pc.cast(src_col, pa.float64(), safe=False),
-                    ),
-                ),
+            is_successful, difference, pct_difference = _compare_numeric_aggregate(
+                src_col, tgt_col, validation, threshold, float_nulls_col
             )
-            if (
-                _aggregation_type_not_lossy(validation.aggregation_type)
-                and validation.threshold < consts.VALIDATION_PCT_SENSITIVITY
-                and _exact_numeric_types(src_col, tgt_col)
-            ):
-                # User is looking for exact comparison
-                is_successful, _, _ = _exact_comparison(
-                    src_col, tgt_col, float_nulls_col
-                )
-            else:
-                # We need to use threshold for success and failure
-                # Some aggregates can be null if all the values are null so handle null==null;
-                both_null = pc.and_kleene(
-                    pc.is_null(src_col, nan_is_null=True),
-                    pc.is_null(tgt_col, nan_is_null=True),
-                )
-                values_below_threshold = pc.fill_null(
-                    pc.less_equal(pc.abs(pct_difference), threshold), False
-                )
-                is_successful = pc.if_else(
-                    pc.or_kleene(both_null, values_below_threshold),
-                    consts.VALIDATION_STATUS_SUCCESS,
-                    consts.VALIDATION_STATUS_FAIL,
-                )
         elif _is_string_type(src_col) and _is_string_type(tgt_col):
             # column aggregates should generally be numeric. Where we allow aggregates like
             # max, min of strings, uuid, binary, we have to set difference and pct_difference
@@ -500,7 +515,7 @@ def join_and_unpivot(
         # Reset threshold so the value of the sensitivity does not confuse users
         threshold = pa.repeat(validation.threshold, num_rows)
 
-        # 3. Cast display values to string so all slices share the same output schema
+        # Build the report slice for this validation
         validation_name_col = pa.repeat(col, num_rows)
         col_slice = pa.table(
             {
@@ -537,7 +552,7 @@ def join_and_unpivot(
             }
         )
         slices.append(col_slice)
-    # 4. Stack all per-column slices into the final unpivoted table
+    # 5. Stack all per-column slices into the final unpivoted table
     return pa.concat_tables(slices)
 
 
