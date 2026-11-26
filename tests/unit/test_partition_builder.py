@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import re
 import shutil
 import pytest
 import json
@@ -857,5 +858,9 @@ def test_get_partition_key_filters_too_few_rows(
     mock_args = parser.parse_args(TABLE_PART_ARGS)
 
     builder = module_under_test.PartitionBuilder([config_manager], mock_args)
-    with pytest.raises(exceptions.PartitionBuilderException, match="at least 2 rows"):
+    expected = re.escape(
+        f"{config_manager.full_source_table} has {rows} row(s); "
+        "it must have at least 2 rows"
+    )
+    with pytest.raises(exceptions.PartitionBuilderException, match=expected):
         builder._get_partition_key_filters()

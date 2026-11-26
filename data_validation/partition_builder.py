@@ -193,8 +193,9 @@ class PartitionBuilder:
                 target_count = target_count.values[0][0]
 
             if source_count < 2:
+                source_name = config_manager.full_source_table or "source query"
                 raise exceptions.PartitionBuilderException(
-                    f"Source table has {source_count} row(s); it must have at least 2 rows "
+                    f"{source_name} has {source_count} row(s); it must have at least 2 rows "
                     "to be split into partitions."
                 )
 
