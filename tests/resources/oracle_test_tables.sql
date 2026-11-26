@@ -1079,3 +1079,23 @@ BEGIN
 END;
 /
 
+DROP TABLE pso_data_validator.dvt_float_aggs;
+CREATE TABLE pso_data_validator.dvt_float_aggs
+(   id                 NUMBER(10) NOT NULL PRIMARY KEY
+,   col_float32_small  BINARY_FLOAT
+,   col_float32_large  BINARY_FLOAT
+,   col_float64_small  BINARY_DOUBLE
+,   col_float64_large  BINARY_DOUBLE
+);
+COMMENT ON TABLE pso_data_validator.dvt_float_aggs IS 'Integration test table for float32/float64 column aggregations including float32 sum overflow.';
+INSERT INTO pso_data_validator.dvt_float_aggs
+SELECT
+    ROWNUM,
+    CAST(1000.01 + ROWNUM * 1.13 AS BINARY_FLOAT),
+    CAST(1.0e36 + ROWNUM * 1.13e33 AS BINARY_FLOAT),
+    CAST(1000.01 + ROWNUM * 1.13 AS BINARY_DOUBLE),
+    CAST(1.0e36 + ROWNUM * 1.13e33 AS BINARY_DOUBLE)
+FROM DUAL
+CONNECT BY ROWNUM <= 1000;
+COMMIT;
+

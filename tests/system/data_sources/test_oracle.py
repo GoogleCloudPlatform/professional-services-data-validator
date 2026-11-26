@@ -498,6 +498,29 @@ def test_column_validation_all_null_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_float_aggs_oracle_to_postgres():
+    """Oracle to PostgreSQL dvt_float_aggs column validation.
+
+    Tests float32 and float64 aggregations including values whose sum overflows float32.
+    """
+    cols = "col_float32_small,col_float32_large,col_float64_small,col_float64_large"
+    cols = "col_float32_small,col_float64_small,col_float64_large"
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_float_aggs",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_binary_to_bigquery():
     """Oracle to BigQuery dvt_binary column validation."""
     column_validation_test(
