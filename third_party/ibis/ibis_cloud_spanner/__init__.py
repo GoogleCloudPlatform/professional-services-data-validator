@@ -52,6 +52,23 @@ SPANNER_PRIMARY_KEY_COLUMNS_QUERY = (
     " AND index_type = 'PRIMARY_KEY'"
     " ORDER BY ordinal_position"
 )
+# Tables and views in the default schema. SPANNER_STATE is NULL for views so it is only
+# used to exclude base tables that are still being created. This query is used rather than
+# Database.list_tables() because that excludes views and calls the Admin API to get the
+# database dialect.
+SPANNER_LIST_TABLES_QUERY = (
+    "SELECT table_name FROM information_schema.tables"
+    " WHERE table_schema = ''"
+    " AND ((table_type = 'BASE TABLE' AND spanner_state = 'COMMITTED')"
+    " OR table_type = 'VIEW')"
+    " ORDER BY table_name"
+)
+SPANNER_LIST_BASE_TABLES_QUERY = (
+    "SELECT table_name FROM information_schema.tables"
+    " WHERE table_schema = ''"
+    " AND table_type = 'BASE TABLE' AND spanner_state = 'COMMITTED'"
+    " ORDER BY table_name"
+)
 
 
 class Backend(BaseSQLBackend):
@@ -159,13 +176,20 @@ class Backend(BaseSQLBackend):
             list_db.append((row.name).rsplit("/", 1)[1])
         return list_db
 
-    def list_tables(self, like=None, database=None):
-        if database is None:
-            db_value = self.dataset_id
-        else:
-            db_value = database
-        db = self.instance.database(db_value)
-        tables = [tbl.table_id for tbl in db.list_tables()]
+    def _list_tables_using_query(
+        self, query: str, like: Optional[str] = None, database: Optional[str] = None
+    ) -> list:
+        """Return table names from an information_schema query, optionally filtered by like.
+
+        Args:
+            query: The query to run, it must return table names in the first column.
+            like: Optional regex, only names that match from the start are returned.
+            database: The Spanner database id to query, defaults to the connected database.
+                find-tables passes each name from list_databases() which are database ids.
+        """
+        db = self.instance.database(database or self.dataset_id)
+        with db.snapshot() as snapshot:
+            tables = [row[0] for row in snapshot.execute_sql(query)]
 
         if like:
             tables = [
@@ -175,8 +199,17 @@ class Backend(BaseSQLBackend):
             ]
         return tables
 
+    def list_tables(self, like=None, database=None):
+        """Return a list of tables and views in the default schema."""
+        return self._list_tables_using_query(
+            SPANNER_LIST_TABLES_QUERY, like=like, database=database
+        )
+
     def dvt_list_tables(self, like=None, database=None):
-        return self.list_tables(like=like, database=database)
+        """Return a list of tables in the default schema, views are not included."""
+        return self._list_tables_using_query(
+            SPANNER_LIST_BASE_TABLES_QUERY, like=like, database=database
+        )
 
     def exists_table(self, name, database=None):
 

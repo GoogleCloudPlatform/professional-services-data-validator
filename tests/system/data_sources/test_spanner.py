@@ -1035,7 +1035,6 @@ def test_find_tables():
 )
 def test_find_views_and_tables():
     """Spanner to BigQuery test of find-tables command including views."""
-    pytest.skip("Skipping test_find_views_and_tables due to issue-1888.")
     find_tables_test(include_views=True)
 
 
