@@ -1500,6 +1500,36 @@ def test_result_handler_postgres_with_labels(mock_list, caplog):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres_mixed_case_table(mock_list, caplog):
+    """Test result handler with a mixed case results table name using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.ResultsData"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM pso_data_validator_results.\"ResultsData\" WHERE run_id = '{run_id}'",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the mixed case results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)

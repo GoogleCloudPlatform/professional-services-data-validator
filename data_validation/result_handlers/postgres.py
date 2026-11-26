@@ -63,10 +63,15 @@ def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
         s_buf.seek(0)
 
         columns = ", ".join(['"{}"'.format(k) for k in keys])
+        # Quote the schema and table names the same way as when the results table is created,
+        # otherwise PostgreSQL folds mixed case names to lower case and writes to a different table.
+        preparer = conn.dialect.identifier_preparer
         if table.schema:
-            table_name = "{}.{}".format(table.schema, table.name)
+            table_name = "{}.{}".format(
+                preparer.quote_schema(table.schema), preparer.quote(table.name)
+            )
         else:
-            table_name = table.name
+            table_name = preparer.quote(table.name)
 
         sql = "COPY {} ({}) FROM STDIN WITH CSV".format(table_name, columns)
         cur.copy_expert(sql=sql, file=s_buf)
