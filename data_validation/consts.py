@@ -183,7 +183,7 @@ VALIDATION_DIFFERENCE = "difference"
 VALIDATION_PCT_DIFFERENCE = "pct_difference"
 VALIDATION_PCT_THRESHOLD = "pct_threshold"
 VALIDATION_PCT_SENSITIVITY = (
-    0.0000001  # Validation percentages below this are treated as 0.
+    0.000006  # Validation percentages below this are treated as 0.
 )
 STD_SENSITIVITY = 0.0001  # Sensitivity threshold for standard deviation differences.
 

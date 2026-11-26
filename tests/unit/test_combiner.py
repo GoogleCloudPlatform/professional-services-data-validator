@@ -217,6 +217,141 @@ def test_generate_report_with_high_precision_aggs(
 
 
 @pytest.mark.parametrize(
+    ("source_value", "target_value", "arrow_type", "threshold", "expected_status"),
+    [
+        # Issue 1885 Integers and Decimals are always compared exactly when threshold is < 0.000006
+        (
+            4938271605061728382,
+            4938271605061728390,
+            pyarrow.int64(),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+        (
+            4938271605061728382,
+            4938271605061728390,
+            pyarrow.int64(),
+            0.000007,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        # Issue 1885 floats are lossy, demonstrate that here
+        (
+            10000.01,
+            10000.0102,
+            pyarrow.float32(),
+            0.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            10000.01,
+            10000.0103,
+            pyarrow.float32(),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+    ],
+)
+def test_generate_report_with_numeric_comparison_sensitivity(
+    module_under_test,
+    source_value,
+    target_value,
+    arrow_type,
+    threshold,
+    expected_status,
+):
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "min__col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col",
+                validation_type="Column",
+                aggregation_type="min",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=threshold,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table({"min__col": pyarrow.array([source_value], type=arrow_type)})
+    target = pyarrow.table({"min__col": pyarrow.array([target_value], type=arrow_type)})
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+    if pyarrow.types.is_integer(arrow_type) or pyarrow.types.is_decimal(arrow_type):
+        assert report.loc[0, consts.SOURCE_AGG_VALUE].startswith(str(source_value))
+        assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
+
+
+@pytest.mark.parametrize(
+    ("source_value", "target_value", "arrow_type", "threshold", "expected_status"),
+    [
+        # Issue 1885 avg always is compared against threshold, i.e. (0.000006)
+        (
+            4938271605061728382,
+            4938271358148140000,
+            pyarrow.int64(),
+            0.0,
+            consts.VALIDATION_STATUS_SUCCESS,
+        ),
+        (
+            4938271605061728382,
+            4938271259382710000,
+            pyarrow.int64(),
+            0.0,
+            consts.VALIDATION_STATUS_FAIL,
+        ),
+    ],
+)
+def test_generate_report_with_avg_comparison(
+    module_under_test,
+    source_value,
+    target_value,
+    arrow_type,
+    threshold,
+    expected_status,
+):
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "avg__col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col",
+                validation_type="Column",
+                aggregation_type="avg",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=threshold,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table({"avg__col": pyarrow.array([source_value], type=arrow_type)})
+    target = pyarrow.table({"avg__col": pyarrow.array([target_value], type=arrow_type)})
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+    if pyarrow.types.is_integer(arrow_type) or pyarrow.types.is_decimal(arrow_type):
+        assert report.loc[0, consts.SOURCE_AGG_VALUE].startswith(str(source_value))
+        assert report.loc[0, consts.TARGET_AGG_VALUE].startswith(str(target_value))
+
+
+@pytest.mark.parametrize(
     ("source_array", "target_array", "expected_status"),
     [
         # Oracle -> BigQuery issue-1007 regression, common type needs precision 45.
