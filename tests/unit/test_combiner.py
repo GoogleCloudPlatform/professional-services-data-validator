@@ -1208,6 +1208,179 @@ def test_generate_report_with_no_value_columns(module_under_test):
 
 
 @pytest.mark.parametrize(
+    (
+        "validation_type",
+        "aggregation_type",
+        "is_value_comparison",
+        "source_ids",
+        "source_vals",
+        "target_ids",
+        "target_vals",
+        "arrow_type",
+        "expected_by_key",
+    ),
+    [
+        pytest.param(
+            "Row",
+            None,
+            True,
+            [1, 2, 3],
+            [10, None, None],
+            [1, 2, 4],
+            [10, None, None],
+            pyarrow.int64(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "2"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "3"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "4"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="row_null_missing_source_and_target",
+        ),
+        pytest.param(
+            "Row",
+            None,
+            True,
+            [1, 2],
+            [float("nan"), float("nan")],
+            [1, 3],
+            [float("nan"), float("nan")],
+            pyarrow.float64(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "2"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "3"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="row_ieee_nan_missing_source_and_target",
+        ),
+        pytest.param(
+            "Column",
+            "sum",
+            False,
+            [1, 2],
+            [None, None],
+            [1, 3],
+            [None, None],
+            pyarrow.int64(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "2"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "3"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="grouped_exact_numeric_null_missing",
+        ),
+        pytest.param(
+            "Column",
+            "avg",
+            False,
+            [1, 2, 3],
+            [None, None, float("nan")],
+            [1, 4, 5],
+            [None, None, float("nan")],
+            pyarrow.float64(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "2"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "3"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "4"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "5"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="grouped_threshold_numeric_null_and_nan_missing",
+        ),
+        pytest.param(
+            "Column",
+            "min",
+            False,
+            [1, 2],
+            [None, None],
+            [1, 3],
+            [None, None],
+            pyarrow.string(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_SUCCESS,
+                '{"id": "2"}': consts.VALIDATION_STATUS_FAIL,
+                '{"id": "3"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="grouped_string_null_missing",
+        ),
+        pytest.param(
+            "Row",
+            None,
+            True,
+            [1],
+            [None],
+            [],
+            [],
+            pyarrow.int64(),
+            {
+                '{"id": "1"}': consts.VALIDATION_STATUS_FAIL,
+            },
+            id="row_null_with_empty_target",
+        ),
+    ],
+)
+def test_missing_row_with_null_or_nan_value_fails(
+    module_under_test,
+    validation_type,
+    aggregation_type,
+    is_value_comparison,
+    source_ids,
+    source_vals,
+    target_ids,
+    target_vals,
+    arrow_type,
+    expected_by_key,
+):
+    """Rows missing from one side must fail even when the existing side's value is NULL or NaN."""
+    source = pyarrow.table(
+        {
+            "id": pyarrow.array(source_ids, type=pyarrow.int64()),
+            "val": pyarrow.array(source_vals, type=arrow_type, from_pandas=False),
+        }
+    )
+    target = pyarrow.table(
+        {
+            "id": pyarrow.array(target_ids, type=pyarrow.int64()),
+            "val": pyarrow.array(target_vals, type=arrow_type, from_pandas=False),
+        }
+    )
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "val": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="val",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="val",
+                validation_type=validation_type,
+                aggregation_type=aggregation_type,
+                primary_keys=["id"] if is_value_comparison else [],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        source,
+        target,
+        join_on_fields=("id",),
+        is_value_comparison=is_value_comparison,
+    )
+
+    actual_by_key = dict(
+        zip(report[consts.GROUP_BY_COLUMNS], report[consts.VALIDATION_STATUS])
+    )
+    assert actual_by_key == expected_by_key
+
+
+@pytest.mark.parametrize(
     ("source_array", "target_array", "threshold", "expected_status"),
     [
         (

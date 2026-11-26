@@ -192,13 +192,15 @@ def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
     ).empty_table()
 
 
-def _exact_comparison(src_col, tgt_col, float_nulls_col):
+def _exact_comparison(src_col, tgt_col, float_nulls_col, both_present=None):
     # User is looking for exact comparison, so we return the validation status
     # along with the difference and percentage difference, both null values.
     both_null = pc.and_kleene(
         pc.is_null(src_col, nan_is_null=True),
         pc.is_null(tgt_col, nan_is_null=True),
     )
+    if both_present is not None:
+        both_null = pc.and_kleene(both_present, both_null)
     try:
         equal = pc.equal(src_col, tgt_col)
     except pa.ArrowInvalid:
@@ -225,7 +227,7 @@ def _exact_comparison(src_col, tgt_col, float_nulls_col):
 
 
 def _compare_numeric_aggregate(
-    src_col, tgt_col, validation, threshold, float_nulls_col
+    src_col, tgt_col, validation, threshold, float_nulls_col, both_present=None
 ):
     """Compare numeric aggregate columns and return (status, difference, pct_difference)."""
     # According to PR 195 https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/195
@@ -270,7 +272,9 @@ def _compare_numeric_aggregate(
         and _exact_numeric_types(src_col, tgt_col)
     ):
         # User is looking for exact comparison
-        is_successful, _, _ = _exact_comparison(src_col, tgt_col, float_nulls_col)
+        is_successful, _, _ = _exact_comparison(
+            src_col, tgt_col, float_nulls_col, both_present=both_present
+        )
     else:
         # We need to use threshold for success and failure
         # Some aggregates can be null if all the values are null so handle null==null;
@@ -278,6 +282,8 @@ def _compare_numeric_aggregate(
             pc.is_null(src_col, nan_is_null=True),
             pc.is_null(tgt_col, nan_is_null=True),
         )
+        if both_present is not None:
+            both_null = pc.and_kleene(both_present, both_null)
         values_below_threshold = pc.fill_null(
             pc.less_equal(pc.abs(pct_difference), threshold), False
         )
@@ -371,6 +377,14 @@ def _join_source_and_target(
 
         join_keys.append(is_null_col)
 
+    source_renamed = source_renamed.append_column(
+        "__dvt_source_present",
+        pa.repeat(pa.scalar(True, type=pa.bool_()), source_renamed.num_rows),
+    )
+    target_renamed = target_renamed.append_column(
+        "__dvt_target_present",
+        pa.repeat(pa.scalar(True, type=pa.bool_()), target_renamed.num_rows),
+    )
     return source_renamed.join(target_renamed, keys=join_keys, join_type="full outer")
 
 
@@ -424,6 +438,10 @@ def join_and_unpivot(
     # Column of null values, created once and reused
     string_nulls_col = pa.nulls(num_rows, type=pa.string())
     float_nulls_col = pa.nulls(num_rows, type=pa.float64())
+    both_present = pc.and_kleene(
+        pc.fill_null(aligned["__dvt_source_present"], False),
+        pc.fill_null(aligned["__dvt_target_present"], False),
+    )
 
     # validation result needs to contain primary key/group by values for status - if present
     if join_on_fields:
@@ -493,13 +511,18 @@ def join_and_unpivot(
             # Native type equality check (works on int64, decimal, string, timestamp, etc.)
             src_col, tgt_col = _naive_timestamp_as_utc(src_col, tgt_col)
             is_successful, difference, pct_difference = _exact_comparison(
-                src_col, tgt_col, float_nulls_col
+                src_col, tgt_col, float_nulls_col, both_present=both_present
             )
         elif _is_numeric_type(src_col) and _is_numeric_type(
             tgt_col
         ):  # aggregated values, compare % difference against threshold
             is_successful, difference, pct_difference = _compare_numeric_aggregate(
-                src_col, tgt_col, validation, threshold, float_nulls_col
+                src_col,
+                tgt_col,
+                validation,
+                threshold,
+                float_nulls_col,
+                both_present=both_present,
             )
         elif _is_string_type(src_col) and _is_string_type(tgt_col):
             # column aggregates should generally be numeric. Where we allow aggregates like
@@ -507,7 +530,7 @@ def join_and_unpivot(
             # to null and just provide success/fail. We also have to handle null == null as
             # success.
             is_successful, difference, pct_difference = _exact_comparison(
-                src_col, tgt_col, float_nulls_col
+                src_col, tgt_col, float_nulls_col, both_present=both_present
             )
         else:
             raise ValueError(f"Aggregate value {col} must be numeric or string")
