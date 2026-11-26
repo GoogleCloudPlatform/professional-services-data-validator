@@ -28,6 +28,7 @@ _DTYPE_TO_IBIS_TYPE = {
     TypeCode.BYTES: dt.binary,
     TypeCode.NUMERIC: dt.Decimal(38, 9),
     TypeCode.JSON: dt.json,
+    TypeCode.UUID: dt.uuid,
 }
 
 

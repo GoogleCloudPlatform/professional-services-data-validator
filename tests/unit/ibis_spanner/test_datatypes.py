@@ -38,6 +38,7 @@ from third_party.ibis.ibis_cloud_spanner.datatypes import (
         (TypeCode.BYTES, dt.binary),
         (TypeCode.NUMERIC, dt.Decimal(38, 9)),
         (TypeCode.JSON, dt.json),
+        (TypeCode.UUID, dt.uuid),
     ],
 )
 def test_dtype_from_spanner_field(type_code, expected_dtype):
@@ -53,6 +54,7 @@ def test_dtype_from_spanner_field(type_code, expected_dtype):
         (TypeCode.INT64, dt.Array(dt.int64)),
         (TypeCode.STRING, dt.Array(dt.string)),
         (TypeCode.NUMERIC, dt.Array(dt.Decimal(38, 9))),
+        (TypeCode.UUID, dt.Array(dt.uuid)),
     ],
 )
 def test_dtype_from_spanner_field_array(element_type_code, expected_dtype):
@@ -72,7 +74,6 @@ def test_dtype_from_spanner_field_array(element_type_code, expected_dtype):
             "PROTO",
             "ENUM",
             "INTERVAL",
-            "UUID",
             "TYPE_CODE_UNSPECIFIED",
         )
         if hasattr(TypeCode, name)
@@ -197,3 +198,46 @@ def test_backend_get_schema_using_query_with_float32():
 
     assert schema["id"] == dt.int64
     assert schema["col_float32"] == dt.float32
+
+
+def test_backend_get_schema_with_uuid():
+    """UUID columns map to Ibis UUID, keeping NOT NULL (issue-1881)."""
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+    database = backend.instance.database.return_value
+    database.table.return_value.schema = [
+        StructType.Field(name="id", type_=Type(code=TypeCode.UUID)),
+        StructType.Field(name="col_uuid", type_=Type(code=TypeCode.UUID)),
+    ]
+    mock_snapshot = database.snapshot.return_value.__enter__.return_value
+    mock_snapshot.execute_sql.return_value = iter([["id"]])
+
+    schema = backend.get_schema("dvt_uuid_id")
+
+    assert schema["id"] == dt.UUID(nullable=False)
+    assert schema["col_uuid"] == dt.uuid
+    assert schema["col_uuid"].nullable
+
+
+def test_backend_get_schema_using_query_with_uuid():
+    """Custom query schemas map UUID columns to Ibis UUID (issue-1881)."""
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+
+    mock_result = mock.MagicMock()
+    mock_result.__iter__.return_value = iter([[1, None]])
+    mock_result.fields = [
+        StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
+        StructType.Field(name="col_uuid", type_=Type(code=TypeCode.UUID)),
+    ]
+    mock_snapshot = (
+        backend.instance.database.return_value.snapshot.return_value.__enter__.return_value
+    )
+    mock_snapshot.execute_sql.return_value = mock_result
+
+    schema = backend._get_schema_using_query("SELECT id, col_uuid FROM dvt_uuid_id")
+
+    assert schema["id"] == dt.int64
+    assert schema["col_uuid"] == dt.uuid

@@ -480,7 +480,6 @@ def test_column_validation_pangrams_to_bigquery():
 )
 def test_column_validation_uuid_to_bigquery():
     """Test column validation with UUID column and primary key to BigQuery"""
-    pytest.skip("Skipping test_column_validation_uuid_to_bigquery due to issue-1881.")
     column_validation_test(
         tables="pso_data_validator.dvt_uuid_id",
         count_cols="*",
@@ -773,10 +772,21 @@ def test_varchar_pk_row_validation_to_bigquery():
 )
 def test_row_validation_uuid_hash_to_bigquery():
     """Test row validation with UUID column and primary key to BigQuery"""
-    pytest.skip("Skipping test_row_validation_uuid_hash_to_bigquery due to issue-1881.")
     row_validation_test(
         tables="pso_data_validator.dvt_uuid_id",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_comp_to_bigquery():
+    """Test row validation using --comparison-fields with UUID columns to BigQuery"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        comp_fields="*",
     )
 
 

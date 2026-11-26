@@ -80,6 +80,7 @@ SPANNER_TABLE = ibis.table(
         "ts": "timestamp('UTC')",
         "s": "string",
         "i": "int32",
+        "u": "uuid",
     },
     name="t",
 )
@@ -366,6 +367,16 @@ def test_spanner_cast_non_utc_timestamp_raises():
             SpannerCompiler,
             SPANNER_TABLE.d.cast("timestamp('Europe/London')").name("x"),
         )
+
+
+def test_spanner_uuid_string_cast():
+    """Spanner UUID columns are normalised to lower case strings (issue-1881)."""
+    sql = _compile(
+        SpannerCompiler,
+        SPANNER_TABLE.u.force_cast(consts.CONFIG_CAST_UUID_STRING).name("x"),
+    )
+
+    _assert_fragments(sql, ["lower(CAST(t0.`u` AS STRING))"], ["CASE"])
 
 
 def test_postgres_decimal_string_cast_compiles_to_char():
