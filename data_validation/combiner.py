@@ -195,7 +195,10 @@ def _empty_report_table(run_metadata: "RunMetadata") -> pa.Table:
 def _exact_comparison(src_col, tgt_col, float_nulls_col):
     # User is looking for exact comparison, so we return the validation status
     # along with the difference and percentage difference, both null values.
-    both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
+    both_null = pc.and_kleene(
+        pc.is_null(src_col, nan_is_null=True),
+        pc.is_null(tgt_col, nan_is_null=True),
+    )
     try:
         equal = pc.equal(src_col, tgt_col)
     except pa.ArrowInvalid:
@@ -471,7 +474,10 @@ def join_and_unpivot(
             else:
                 # We need to use threshold for success and failure
                 # Some aggregates can be null if all the values are null so handle null==null;
-                both_null = pc.and_kleene(pc.is_null(src_col), pc.is_null(tgt_col))
+                both_null = pc.and_kleene(
+                    pc.is_null(src_col, nan_is_null=True),
+                    pc.is_null(tgt_col, nan_is_null=True),
+                )
                 values_below_threshold = pc.fill_null(
                     pc.less_equal(pc.abs(pct_difference), threshold), False
                 )

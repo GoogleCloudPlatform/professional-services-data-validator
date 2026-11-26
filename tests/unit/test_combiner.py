@@ -2394,6 +2394,84 @@ def test_generate_report_with_nan_agg_value(
     _assert_frame_equal(report, expected)
 
 
+@pytest.mark.parametrize("float_type", [pyarrow.float64(), pyarrow.float32()])
+@pytest.mark.parametrize(
+    ("source_value", "target_value", "expected_status"),
+    [
+        (_NAN, _NAN, consts.VALIDATION_STATUS_SUCCESS),
+        (_NAN, None, consts.VALIDATION_STATUS_SUCCESS),
+        (None, _NAN, consts.VALIDATION_STATUS_SUCCESS),
+        (_NAN, 1.0, consts.VALIDATION_STATUS_FAIL),
+        (1.0, _NAN, consts.VALIDATION_STATUS_FAIL),
+    ],
+)
+def test_generate_report_with_ieee_nan_column_validation(
+    module_under_test, float_type, source_value, target_value, expected_status
+):
+    """IEEE NaN in Arrow float columns (not Arrow null) must match NaN in column validations."""
+    run_metadata = metadata.RunMetadata(
+        validations={
+            "sum__col": metadata.ValidationMetadata(
+                source_table_name="test_source",
+                source_table_schema="source_dataset",
+                source_column_name="col",
+                target_table_name="test_target",
+                target_table_schema="target_dataset",
+                target_column_name="col",
+                validation_type="Column",
+                aggregation_type="sum",
+                primary_keys=[],
+                num_random_rows=None,
+                threshold=0.0,
+            ),
+        },
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    source = pyarrow.table({"sum__col": pyarrow.array([source_value], type=float_type)})
+    target = pyarrow.table({"sum__col": pyarrow.array([target_value], type=float_type)})
+
+    report = module_under_test.generate_report(run_metadata, source, target)
+
+    assert report.loc[0, consts.VALIDATION_STATUS] == expected_status
+
+
+@pytest.mark.parametrize("float_type", [pyarrow.float64(), pyarrow.float32()])
+def test_generate_report_with_ieee_nan_row_validation(module_under_test, float_type):
+    """IEEE NaN in Arrow float columns must match NaN in row comparison-fields validations."""
+    source = pyarrow.table(
+        {
+            "id": [1, 2, 3, 4],
+            "col_f": pyarrow.array([_NAN, _NAN, 1.0, _NAN], type=float_type),
+        }
+    )
+    target = pyarrow.table(
+        {
+            "id": [1, 2, 3, 4],
+            "col_f": pyarrow.array([_NAN, 1.0, _NAN, None], type=float_type),
+        }
+    )
+    report = module_under_test.generate_report(
+        _row_validation_run_metadata(["col_f"]),
+        source,
+        target,
+        join_on_fields=("id",),
+        is_value_comparison=True,
+    )
+    by_id = {
+        json.loads(row[consts.GROUP_BY_COLUMNS])["id"]: row[consts.VALIDATION_STATUS]
+        for _, row in report.iterrows()
+    }
+    assert by_id == {
+        "1": consts.VALIDATION_STATUS_SUCCESS,
+        "2": consts.VALIDATION_STATUS_FAIL,
+        "3": consts.VALIDATION_STATUS_FAIL,
+        "4": consts.VALIDATION_STATUS_SUCCESS,
+    }
+
+
 @pytest.mark.parametrize(
     ("run_metadata", "result_df", "source_df", "target_df", "expected"),
     (
