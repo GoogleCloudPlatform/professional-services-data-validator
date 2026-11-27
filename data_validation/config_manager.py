@@ -710,6 +710,10 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_float32(self, source_type: str, target_type: str) -> bool:
+        """Returns whether either source or target column is float32."""
+        return any(_ in ["float32", "!float32"] for _ in [source_type, target_type])
+
     def _is_db2_blob(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Db2 (LUW and z/OS) BLOB data type."""
         return self._is_raw_data_type(
@@ -939,7 +943,6 @@ class ConfigManager(object):
         """Append calculated field for length() or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth = 0
         cast_type = None
-        final_cast_type = None
         if any(_ in ["json", "!json"] for _ in [column_type, target_column_type]):
             # JSON data which needs casting to string before we apply a length function.
             pre_calculated_config = self.build_and_append_pre_agg_calc_config(
@@ -988,10 +991,10 @@ class ConfigManager(object):
                 depth = 1
 
             calc_func = consts.CALC_FIELD_EPOCH_SECONDS
-            if agg_type == consts.CONFIG_TYPE_SUM:
-                # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
-                # See issue 1391 for details.
-                final_cast_type = "string"
+
+        elif self._is_float32(column_type, target_column_type):
+            calc_func = consts.CONFIG_CAST
+            cast_type = "float64"
 
         elif column_type == "int32" or column_type == "!int32":
             calc_func = consts.CONFIG_CAST
@@ -1019,45 +1022,25 @@ class ConfigManager(object):
             ),
             consts.CONFIG_TYPE: agg_type,
         }
-        if final_cast_type:
-            # Adding to dict this way to avoid adding a lot of empty cast attributes.
-            aggregate_config[consts.CONFIG_CAST] = final_cast_type
 
         return aggregate_config
 
-    def _decimal_column_too_big_for_pandas(
+    def _is_high_precision_decimal(
         self,
         source_column_ibis_type: dt.DataType,
         target_column_ibis_type: dt.DataType,
-        margin: int = 0,
     ) -> bool:
-        """Identifies numeric columns that will cause problems in a Pandas Dataframe.
-
-        i.e. are of greater precision than a 64bit int/real can hold.
-
-        margin: Allows us to lower the precision threshold. This is helpful when summing column
-                values that are okay by themselves but cumulativaly could overflow a 64bit value.
-        """
+        """Identifies Decimal columns with greater precision than a 64-bit int/float (> 18 digits)."""
         return bool(
-            (
-                (isinstance(source_column_ibis_type, dt.Int64) and margin > 0)
-                or (
-                    isinstance(source_column_ibis_type, dt.Decimal)
-                    and (
-                        source_column_ibis_type.precision is None
-                        or source_column_ibis_type.precision > (18 - margin)
-                    )
-                )
-            )
+            isinstance(source_column_ibis_type, dt.Decimal)
             and (
-                (isinstance(target_column_ibis_type, dt.Int64) and margin > 0)
-                or (
-                    isinstance(target_column_ibis_type, dt.Decimal)
-                    and (
-                        target_column_ibis_type.precision is None
-                        or target_column_ibis_type.precision > (18 - margin)
-                    )
-                )
+                source_column_ibis_type.precision is None
+                or source_column_ibis_type.precision > 18
+            )
+            and isinstance(target_column_ibis_type, dt.Decimal)
+            and (
+                target_column_ibis_type.precision is None
+                or target_column_ibis_type.precision > 18
             )
         )
 
@@ -1072,7 +1055,7 @@ class ConfigManager(object):
             # stores UUIDs (GUID) in binary columns.
             return consts.CONFIG_CAST_UUID_STRING
         elif (
-            self._decimal_column_too_big_for_pandas(
+            self._is_high_precision_decimal(
                 source_column_ibis_type, target_column_ibis_type
             )
             or isinstance(source_column_ibis_type, dt.Binary)
@@ -1131,6 +1114,15 @@ class ConfigManager(object):
                     # Convert to length for any min/max/sum on binary columns.
                     return True
             elif cast_to_bigint and column_type in ["int32", "!int32"]:
+                return True
+            elif self._is_float32(column_type, target_column_type) and agg_type in (
+                consts.CONFIG_TYPE_AVG,
+                consts.CONFIG_TYPE_STD,
+                consts.CONFIG_TYPE_SUM,
+            ):
+                # Engines return float32 sums in float32 and drivers render them differently,
+                # e.g. Oracle BINARY_FLOAT 370368.3125 vs PostgreSQL REAL 370368.3, so cast to
+                # float64 first.
                 return True
             elif column_type in [
                 "timestamp",
@@ -1256,20 +1248,6 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
-                if self._decimal_column_too_big_for_pandas(
-                    source_column_ibis_type,
-                    target_column_ibis_type,
-                    margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),
-                ):
-                    if agg_type in (consts.CONFIG_TYPE_STD, consts.CONFIG_TYPE_AVG):
-                        # std and avg change the shape of the column result and we
-                        # can't know how to format them reliably, float64 is our best bet.
-                        # This may be lossy and generate false success validations.
-                        aggregate_config[consts.CONFIG_CAST] = "float64"
-                    else:
-                        # Other agg types should retain the shape of the results and can be
-                        # reliably formated as strings when the Pandas native types will overflow.
-                        aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 

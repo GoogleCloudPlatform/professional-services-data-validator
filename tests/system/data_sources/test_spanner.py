@@ -604,12 +604,18 @@ def test_row_validation_comp_fields_core_types():
 )
 def test_row_validation_comp_fields_core_types_to_bigquery():
     """Spanner to BigQuery dvt_core_types row validation with --comparison-fields"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
     # TODO Include col_datetime when issue-1061 is complete.
     # Excluded col_datetime because Spanner stores it as a timezone-aware TIMESTAMP
     # (interpreted in America/Los_Angeles) while BigQuery stores naive DATETIME
     # (see issue-1061).
     cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_datetime")]
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_datetime")
+        ]
     )
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",

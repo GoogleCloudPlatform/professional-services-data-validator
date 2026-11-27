@@ -63,7 +63,7 @@ def teradata_cast_string_to_bool(compiled_arg, from_, to):
         "CASE  "
         f"WHEN {compiled_arg} IN ('0','N') THEN 0 "
         f"WHEN {compiled_arg} IN ('1','Y') THEN 1 "
-        "ELSE TO_NUMBER(NULL) END"
+        "ELSE CAST(NULL AS INTEGER) END"
     )
 
 
@@ -72,7 +72,7 @@ def _teradata_cast_number_to_bool(compiled_arg, from_, to):
         "CASE  "
         f"WHEN {compiled_arg} IN (0) THEN 0 "
         f"WHEN {compiled_arg} IN (1) THEN 1 "
-        "ELSE TO_NUMBER(NULL) END"
+        "ELSE CAST(NULL AS INTEGER) END"
     )
 
 

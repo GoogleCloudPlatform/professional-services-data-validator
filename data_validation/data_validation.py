@@ -450,7 +450,7 @@ class DataValidation(object):
                 executor.submit(
                     util.timed_call,
                     "Source query",
-                    self.config_manager.source_client.execute,
+                    self.config_manager.source_client.to_pyarrow,
                     source_query,
                 )
             )
@@ -458,20 +458,20 @@ class DataValidation(object):
                 executor.submit(
                     util.timed_call,
                     "Target query",
-                    self.config_manager.target_client.execute,
+                    self.config_manager.target_client.to_pyarrow,
                     target_query,
                 )
             )
-            source_df = futures[0].result()
-            target_df = futures[1].result()
+            source_tbl = futures[0].result()
+            target_tbl = futures[1].result()
 
         try:
             result_df = util.timed_call(
                 "Generate report",
                 combiner.generate_report,
                 self.run_metadata,
-                source_df,
-                target_df,
+                source_tbl,
+                target_tbl,
                 join_on_fields=join_on_fields,
                 is_value_comparison=is_value_comparison,
                 verbose=self.verbose,
@@ -479,11 +479,11 @@ class DataValidation(object):
         except Exception as e:
             if self.verbose:
                 logging.error("-- ** Logging Source DF ** --")
-                logging.error(source_df.dtypes)
-                logging.error(source_df)
+                logging.error(source_tbl.schema)
+                logging.error(source_tbl)
                 logging.error("-- ** Logging Target DF ** --")
-                logging.error(target_df.dtypes)
-                logging.error(target_df)
+                logging.error(target_tbl.schema)
+                logging.error(target_tbl)
             raise e
 
         return result_df

@@ -182,3 +182,17 @@ def test_execute_epoch_seconds_new(
 ):
     result = module_under_test.execute_epoch_seconds_new(None, test_input)
     assert list(result) == list(expected)
+
+
+def test_sum_decimal_dtype_preserves_scale(module_under_test):
+    t = ibis.table(
+        [
+            ("d0", "decimal(38, 0)"),
+            ("d1", "decimal(10, 1)"),
+            ("d5", "decimal(20, 5)"),
+        ],
+        name="t",
+    )
+    assert t.d0.sum().type() == ibis.dtype("decimal(38, 0)")
+    assert t.d1.sum().type() == ibis.dtype("decimal(38, 1)")
+    assert t.d5.sum().type() == ibis.dtype("decimal(38, 5)")

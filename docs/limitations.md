@@ -2,6 +2,9 @@
 
 ## General
 
+
+- When comparing aggregates (sum, min, max), if the user does not specify a percentage threshold and the comparison can be exact (e.g. int vs int or decimal), we assume the user means exact comparison. So, if one engine returns 9000000700 and another engine returns 9000000699, the actual difference is 1, the percentage difference is .00000001%. This comparison will be marked as a failure because we compare exactly. However, if the engines return 9000000700.0 and 9000000699.0 - because floats are lossy the percentage difference is less than our threshold [.0000001](../data_validation/consts.py#L185), it will be marked as a success.
+- The aggregate standard deviation is a special case as there are different ways to calculate this aggregate. If the standard deviations are less than [0.0001](../data_validation/consts.py#L188) different, they will be considered the same and the validation will be successful.
 - Floating-point data types, e.g. Float and Double, are inexact by nature. Validations that involve conversion of floating-point data to string, e.g. `--hash` and `--concat`, can be problematic.
 - Row validations using `--comparison-fields` require at least one comparison column that is not a primary key. When all table columns are used as primary keys, you must use `--concat` or `--hash` to validate the rows.
 - Random row sampling uses IN lists to ensure the same data is pulled from the source and target systems. Higher random sample batch sizes increase the overhead on the query parser/planner for these systems. It is recommended to keep sample sizes below 10,000 rows.
@@ -43,6 +46,7 @@
 
 - Only GoogleSQL dialect databases are supported. Connecting to a PostgreSQL dialect database fails with an error. See [issue-1877](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1877) for details.
 - Spanner does not support the `ROW_NUMBER()` window function. At the current time this prevents Spanner from being the source table in a `generate-table-partitions` command. A simple workaround is to flip the source and target connections. See [issue-1059](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1059) for details.
+- Spanner `TIMESTAMP` values have nanosecond precision but DVT compares them with microsecond precision, digits below a microsecond are ignored.
 
 ## SQL Server
 
@@ -55,7 +59,7 @@
 
 ## Sybase ASE
 
-- Requires the `sqlalchemy_sybase` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
+- Requires the `sqlalchemy_sybase` package to be installed as an extra dependency plus an OS level ODBC driver manager and client. Due to [Issue 1914](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1914), you may have to use a pyodbc version less than 5.4
 - Sybase ASE does not have a SHA-256 hash function, therefore row validations much use `--comparison-fields` or `--concat` only.
 - Sybase ASE does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
 - The `text` data type is not currently supported because many Sybase ASE SQL functions do not support the data type.

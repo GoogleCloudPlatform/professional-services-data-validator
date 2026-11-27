@@ -35,6 +35,7 @@ import ibis.expr.rules as rlz
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
+from ibis.common.annotations import attribute
 from ibis.backends.base import BaseBackend
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
@@ -42,6 +43,7 @@ from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
 import third_party.ibis.ibis_pandas
+import third_party.ibis.ibis_pyarrow  # noqa: F401
 from third_party.ibis.ibis_addon.api import check_ifnull_default_literal
 
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
@@ -493,3 +495,39 @@ if SybaseExprTranslator:
     )
     SybaseExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
     SybaseExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
+
+
+# -------------------------------------------------------------------------
+# Monkey patch for Ibis Sum aggregate type inference
+#
+# Standard upstream Ibis implementation:
+#   - ops.Sum.dtype (ibis/expr/operations/reductions.py):
+#       Hardcodes scale=max(dtype.scale, 2) while capping precision=max(dtype.precision, 38),
+#       stealing 2 integer digits from scale-0 decimals such as NUMBER(38, 0).
+#
+# PyArrow execution patches live in third_party/ibis/ibis_pyarrow/execution.py.
+# -------------------------------------------------------------------------
+
+
+def _sum_dtype(self):
+    dtype = self.arg.dtype
+    if dtype.is_boolean():
+        return dt.int64
+    elif dtype.is_integer():
+        return dt.int64
+    elif dtype.is_unsigned_integer():
+        return dt.uint64
+    elif dtype.is_floating():
+        return dt.float64
+    elif dtype.is_decimal():
+        return dt.Decimal(
+            precision=(
+                max(dtype.precision, 38) if dtype.precision is not None else None
+            ),
+            scale=dtype.scale,
+        )
+    else:
+        raise TypeError(f"Cannot compute sum of {dtype} values")
+
+
+ops.Sum.__attributes__["dtype"] = attribute(_sum_dtype)

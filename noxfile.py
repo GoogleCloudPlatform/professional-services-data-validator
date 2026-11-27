@@ -77,11 +77,16 @@ def _setup_session_requirements(session, extra_packages=[]):
         # removed pkg_resources which breaks pyarrow 14.x build.
         # We install build dependencies manually and disable build isolation.
         # We pin cython<3 because pyarrow 14.x is incompatible with Cython 3.
+        # PYARROW_WITH_ACERO builds pyarrow.acero, which pa.Table.join() in the combiner needs.
         # Hopefully this section can be removed once we upgrade past Ibis 7.1.x.
         session.install(
             "setuptools<70", "setuptools_scm<8", "wheel", "cython<3", "numpy==1.23.2"
         )
-        session.install("--no-build-isolation", "pyarrow==14.0.2")
+        session.install(
+            "--no-build-isolation",
+            "pyarrow==14.0.2",
+            env={"PYARROW_WITH_ACERO": "1"},
+        )
 
     if session.venv_backend == "uv":
         # uv's cache is safe to use, and lets multiple sessions in the same
@@ -465,7 +470,10 @@ def integration_impala(session):
 @nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_sybase(session):
     """Run Sybase integration tests."""
-    _setup_session_requirements(session, extra_packages=["pyodbc", "sqlalchemy_sybase"])
+    # See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1914
+    _setup_session_requirements(
+        session, extra_packages=["pyodbc<5.4", "sqlalchemy_sybase"]
+    )
 
     expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
     for env_var in expected_env_vars:

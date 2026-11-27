@@ -15,6 +15,7 @@
 import copy
 import pytest
 from unittest import mock
+import ibis
 import ibis.expr.datatypes as dt
 
 from data_validation import consts
@@ -374,6 +375,39 @@ def test_build_config_aggregates_no_match(module_under_test):
     assert not aggregate_configs
 
 
+def test_build_config_aggregates_float32_cast_to_float64(module_under_test):
+    """sum/avg/std on float32 (either side) are cast to float64 first, min/max are not."""
+    config_manager = module_under_test.ConfigManager(
+        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    source = ibis.table([("f32", "float32"), ("f64", "float64")], name="s")
+    target = ibis.table([("f32", "float64"), ("f64", "float32")], name="t")
+    with mock.patch.object(
+        config_manager, "get_source_ibis_table", return_value=source
+    ), mock.patch.object(config_manager, "get_target_ibis_table", return_value=target):
+        for agg_type in ("sum", "avg", "std"):
+            aggregate_configs = config_manager.build_config_column_aggregates(
+                agg_type, ["f32", "f64"], False, []
+            )
+            assert [_[consts.CONFIG_SOURCE_COLUMN] for _ in aggregate_configs] == [
+                "cast_float64__f32",
+                "cast_float64__f64",
+            ]
+        for agg_type in ("min", "max"):
+            aggregate_configs = config_manager.build_config_column_aggregates(
+                agg_type, ["f32", "f64"], False, []
+            )
+            assert [_[consts.CONFIG_SOURCE_COLUMN] for _ in aggregate_configs] == [
+                "f32",
+                "f64",
+            ]
+    calculated_fields = config_manager.calculated_fields
+    assert [
+        (_[consts.CONFIG_FIELD_ALIAS], _[consts.CONFIG_DEFAULT_CAST])
+        for _ in calculated_fields
+    ] == [("cast_float64__f32", "float64"), ("cast_float64__f64", "float64")]
+
+
 def test_build_config_count_aggregate(module_under_test):
     config_manager = module_under_test.ConfigManager(
         copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
@@ -498,54 +532,49 @@ def test__get_comparison_max_col_length(module_under_test):
     ), f"Column name should contain ID 902: {new_identifier}"
 
 
-def test__decimal_column_too_big_for_pandas(module_under_test):
+def test__is_high_precision_decimal(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    # Both smaller is ok for Pandas.
+    # Both <= 18 digits (or integer types).
     c1 = dt.Decimal(1, 0)
     c2 = dt.Decimal(1, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
+    c1 = dt.Decimal(18, 0)
+    c2 = dt.Decimal(18, 0)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int32()
     c2 = dt.Int32()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int64()
     c2 = dt.Int64()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
 
-    # Either smaller means the actual data must be ok for Pandas.
+    # Either <= 18 digits (or integer) means not both high-precision decimals.
     c1 = dt.Decimal(20, 0)
     c2 = dt.Decimal(1, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(1, 0)
     c2 = dt.Decimal(20, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Int64()
     c2 = dt.Decimal(20, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert not config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(20, 0)
     c2 = dt.Int64()
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
-    # Both unsuitable for Pandas.
+    assert not config_manager._is_high_precision_decimal(c1, c2)
+
+    # Both > 18 digits (or unconstrained precision).
     c1 = dt.Decimal(20, 0)
     c2 = dt.Decimal(20, 0)
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    assert config_manager._is_high_precision_decimal(c1, c2)
     c1 = dt.Decimal(38, 10)
     c2 = dt.Decimal(38, 10)
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
-
-
-def test__decimal_column_too_big_for_pandas_margin(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    # Both smaller means the actual data must be ok for Pandas.
-    c1 = dt.Decimal(16, 0)
-    c2 = dt.Decimal(16, 0)
-    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
-    # Same inputs but with margin to spot precision might be an issue for Pandas.
-    assert config_manager._decimal_column_too_big_for_pandas(c1, c2, margin=5)
+    assert config_manager._is_high_precision_decimal(c1, c2)
+    c1 = dt.Decimal(None, None)
+    c2 = dt.Decimal(38, 0)
+    assert config_manager._is_high_precision_decimal(c1, c2)
 
 
 def test_build_dependent_aliases(module_under_test):

@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import functools
+from unittest import mock
 
+import ibis
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.dialects import oracle
@@ -45,3 +47,22 @@ def test_strftime_day_of_month_space_padded():
     sql = _strftime_sql(get_module_under_test(), "%Y-%m-%e")
     assert "lpad(ltrim(to_char(ts, 'DD'), '0'), 2, ' ')" in sql
     assert "replace(" not in sql
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
+@pytest.mark.parametrize(
+    ("from_type", "to_type", "expected_sql"),
+    [
+        # Oracle FLOAT is a NUMBER subtype, so float64 must be BINARY_DOUBLE to stay IEEE.
+        ("float32", "float64", "CAST(c AS BINARY_DOUBLE)"),
+        ("decimal(10, 2)", "float64", "CAST(c AS BINARY_DOUBLE)"),
+        ("decimal(10, 2)", "float32", "CAST(c AS BINARY_FLOAT)"),
+    ],
+)
+def test_cast_to_binary_float_types(from_type, to_type, expected_sql):
+    registry = get_module_under_test()
+    arg = ibis.table([("c", from_type)], name="t").c
+    op = arg.cast(to_type).op()
+    translator = mock.Mock(translate=mock.Mock(return_value=sa.column("c")))
+    sql = str(registry._cast(translator, op).compile(dialect=oracle.dialect()))
+    assert sql == expected_sql

@@ -1117,3 +1117,21 @@ COMMENT ON TABLE pso_data_validator."DvtCaseCamel" IS 'Integration test table us
 INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
 (1,1,1.1,'Hello DVT',DATE'1970-01-01'),
 (2,2,2.2,'Hello DVT',DATE'1970-01-02');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_float_aggs;
+CREATE TABLE pso_data_validator.dvt_float_aggs
+(   id                 int NOT NULL PRIMARY KEY
+,   col_float32_small  real
+,   col_float32_large  real
+,   col_float64_small  double precision
+,   col_float64_large  double precision
+);
+COMMENT ON TABLE pso_data_validator.dvt_float_aggs IS 'Integration test table for float32/float64 column aggregations including float32 sum overflow.';
+INSERT INTO pso_data_validator.dvt_float_aggs
+SELECT
+    x,
+    CAST(1000.01 + x * 1.13 AS real),
+    CAST(1.0e36 + x * 1.13e33 AS real),
+    CAST(1000.01 + x * 1.13 AS double precision),
+    CAST(1.0e36 + x * 1.13e33 AS double precision)
+FROM generate_series(1, 1000) AS x;
