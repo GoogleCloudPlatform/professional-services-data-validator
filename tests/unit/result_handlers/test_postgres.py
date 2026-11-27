@@ -1,0 +1,135 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
+from unittest import mock
+
+import numpy
+import pandas
+import pytest
+import sqlalchemy
+from sqlalchemy.dialects import postgresql
+
+from data_validation import consts
+
+
+@pytest.fixture
+def module_under_test():
+    from data_validation.result_handlers import postgres
+
+    return postgres
+
+
+def test_concurrent_missing_results_table_is_created_once(module_under_test):
+    state_lock = threading.Lock()
+    first_lookup_barrier = threading.Barrier(2)
+    table_created = False
+    lookup_count_by_client = {}
+    created_tables = []
+
+    def get_ibis_table(client, schema_name, table_name):
+        with state_lock:
+            lookup_number = lookup_count_by_client.get(id(client), 0)
+            lookup_count_by_client[id(client)] = lookup_number + 1
+            exists = table_created
+
+        if lookup_number == 0:
+            first_lookup_barrier.wait(timeout=5)
+            raise sqlalchemy.exc.NoSuchTableError(table_name)
+        if not exists:
+            raise sqlalchemy.exc.NoSuchTableError(table_name)
+        return mock.sentinel.table
+
+    def create_table(table_name, schema):
+        nonlocal table_created
+        with state_lock:
+            if table_created:
+                raise AssertionError("Results table was created more than once")
+            table_created = True
+            created_tables.append((table_name, schema))
+
+    clients = [mock.Mock(), mock.Mock()]
+    for client in clients:
+        client.create_table.side_effect = create_table
+
+    handlers = [
+        module_under_test.PostgresResultHandler(client, table_id="results")
+        for client in clients
+    ]
+    result_df = mock.Mock(empty=True)
+
+    with mock.patch.object(
+        module_under_test.clients, "get_ibis_table", side_effect=get_ibis_table
+    ):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            list(
+                executor.map(
+                    lambda handler: handler._insert_postgres(result_df), handlers
+                )
+            )
+
+    assert len(created_tables) == 1
+    assert created_tables[0] == ("results", module_under_test.RESULTS_TABLE_SCHEMA)
+    assert all(lookup_count_by_client[id(client)] == 2 for client in clients)
+
+
+@pytest.mark.parametrize(
+    "labels,expected",
+    [
+        ([], "{}"),
+        ([("a", "1"), ("b", "2")], '{"a=1","b=2"}'),
+        ([numpy.array(["a", "1"])], '{"a=1"}'),
+        ([("env", "it's")], '{"env=it\'s"}'),
+        ([("env", 'it"s')], r'{"env=it\"s"}'),
+        ([("path", "c:\\dir")], r'{"path=c:\\dir"}'),
+        ([("a", "{x,y}")], '{"a={x,y}"}'),
+        ([("a", " x ")], '{"a= x "}'),
+        (["unexpected"], '{"unexpected"}'),
+    ],
+)
+def test_dataframe_to_sql_labels_array_literal(module_under_test, labels, expected):
+    """Test labels are converted to PostgreSQL array literals with each element quoted and escaped."""
+    handler = module_under_test.PostgresResultHandler(mock.Mock())
+    result_df = pandas.DataFrame({consts.CONFIG_LABELS: [labels]})
+    with mock.patch.object(pandas.DataFrame, "to_sql") as mock_to_sql:
+        handler._dataframe_to_sql("schema_name", "table_name", result_df)
+    mock_to_sql.assert_called_once()
+    assert result_df[consts.CONFIG_LABELS][0] == expected
+
+
+@pytest.mark.parametrize(
+    "schema_name,table_name,expected",
+    [
+        ("dvt_results", "results", "dvt_results.results"),
+        ("dvt_results", "Results", 'dvt_results."Results"'),
+        ("dvt_results", "RESULTS", 'dvt_results."RESULTS"'),
+        ("MySchema", "Results", '"MySchema"."Results"'),
+        (None, "results", "results"),
+        (None, "Results", '"Results"'),
+    ],
+)
+def test_psql_insert_copy_table_name(
+    module_under_test, schema_name, table_name, expected
+):
+    """Test the COPY statement quotes the schema and table names when required."""
+    table = SimpleNamespace(schema=schema_name, name=table_name)
+    conn = mock.MagicMock(dialect=postgresql.dialect())
+    module_under_test._psql_insert_copy(table, conn, ["run_id"], [["abc"]])
+    cursor = conn.connection.cursor.return_value.__enter__.return_value
+    assert (
+        cursor.copy_expert.call_args.kwargs["sql"]
+        == f'COPY {expected} ("run_id") FROM STDIN WITH CSV'
+    )

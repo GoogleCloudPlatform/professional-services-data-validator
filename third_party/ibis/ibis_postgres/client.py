@@ -19,7 +19,6 @@ import ibis.expr.schema as sch
 import sqlalchemy as sa
 from ibis.backends.postgres import Backend as PostgresBackend
 from ibis.backends.postgres.datatypes import SqlglotPostgresType
-import re
 
 
 def do_connect(
@@ -75,11 +74,7 @@ def _metadata(self, query: str) -> sch.Schema:
     # This function is called when ibis has to figure out the datatypes of columns in a custom query validation OR
     # when ibis encounters a column with a datatype not supported in https://ibis-project.org/reference/datatypes
     # In the latter case, this just returns None for that column, resulting in a NotImplementedError elsewhere.
-    query = (
-        f"({query})"
-        if re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
-        else query
-    )
+    # The query argument is either a table name or a query already wrapped in brackets by _get_schema_using_query().
     with self.begin() as con:
         cur = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 0")
         # Table OID below is cast to bigint because OID is based on
@@ -99,6 +94,16 @@ def _metadata(self, query: str) -> sch.Schema:
                     LEFT JOIN pg_attribute t1 USING (attrelid, attnum) ORDER BY col_ord"""
         )
     yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+
+
+def _get_schema_using_query(self, query: str) -> sch.Schema:
+    """Return an Ibis Schema for a PostgreSQL custom query.
+
+    Wraps `query` in parentheses here, where the input is known to be a SQL
+    query rather than a table name, so queries starting with WITH, VALUES, or
+    comments can be inspected as subqueries by `_metadata()`.
+    """
+    return sch.Schema.from_tuples(self._metadata(f"({query})"))
 
 
 def _get_type(typestr: str) -> dt.DataType:
@@ -123,17 +128,19 @@ def list_schemas(self, like=None):
 def _list_primary_key_columns(self, database: str, table: str) -> list:
     """Return a list of primary key column names."""
     # From https://wiki.postgresql.org/wiki/Retrieve_primary_key_columns
+    # The schema and table names are quoted with format('%I') so that mixed case
+    # names are not folded to lower case when cast to regclass.
     list_pk_col_sql = """
         SELECT a.attname
         FROM   pg_index i
         JOIN   pg_attribute a ON a.attrelid = i.indrelid
                              AND a.attnum = ANY(i.indkey)
-        WHERE  i.indrelid = CAST(:raw_name AS regclass)
+        WHERE  i.indrelid = CAST(format('%I.%I', :schema_name, :table_name) AS regclass)
         AND    i.indisprimary
         """
     with self.begin() as con:
         result = con.execute(
-            sa.text(list_pk_col_sql).bindparams(raw_name=f"{database}.{table}")
+            sa.text(list_pk_col_sql).bindparams(schema_name=database, table_name=table)
         )
         return [_[0] for _ in result.cursor.fetchall()]
 
@@ -195,6 +202,7 @@ def _is_char_type_padded(self, char_type: Tuple) -> bool:
 
 
 PostgresBackend._metadata = _metadata
+PostgresBackend._get_schema_using_query = _get_schema_using_query
 PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns

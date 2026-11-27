@@ -15,6 +15,7 @@
 """Output validation report to PostgreSQL table"""
 
 import logging
+from threading import Lock
 from typing import Iterable, Optional, TYPE_CHECKING
 
 import numpy
@@ -31,6 +32,9 @@ from data_validation.result_handlers.base_backend import (
 if TYPE_CHECKING:
     from pandas import DataFrame
     from ibis.backends.base import BaseBackend
+
+
+_TABLE_INITIALIZATION_LOCK = Lock()
 
 
 def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
@@ -59,10 +63,15 @@ def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
         s_buf.seek(0)
 
         columns = ", ".join(['"{}"'.format(k) for k in keys])
+        # Quote the schema and table names the same way as when the results table is created,
+        # otherwise PostgreSQL folds mixed case names to lower case and writes to a different table.
+        preparer = conn.dialect.identifier_preparer
         if table.schema:
-            table_name = "{}.{}".format(table.schema, table.name)
+            table_name = "{}.{}".format(
+                preparer.quote_schema(table.schema), preparer.quote(table.name)
+            )
         else:
-            table_name = table.name
+            table_name = preparer.quote(table.name)
 
         sql = "COPY {} ({}) FROM STDIN WITH CSV".format(table_name, columns)
         cur.copy_expert(sql=sql, file=s_buf)
@@ -123,10 +132,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
         def label_to_string(label) -> str:
             if isinstance(label, (list, tuple, numpy.ndarray)) and len(label) == 2:
                 # This is the expected format
-                return f"'{label[0]}={label[1]}'"
-            else:
-                # Anything else
-                return f"'{label}'"
+                label = f"{label[0]}={label[1]}"
+            # Double quote each array element and escape any backslashes and double quotes, see:
+            # https://www.postgresql.org/docs/current/arrays.html#ARRAYS-IO
+            escaped_label = str(label).replace("\\", "\\\\").replace('"', '\\"')
+            return f'"{escaped_label}"'
 
         def labels_to_array_literal(labels):
             """Convert Pandas labels array into a PostgreSQL array literal."""
@@ -161,7 +171,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
             _ = clients.get_ibis_table(self._client, schema_name, table_name)
             # Do nothing, the table exists.
         except sqlalchemy.exc.NoSuchTableError:
-            self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
+            with _TABLE_INITIALIZATION_LOCK:
+                try:
+                    clients.get_ibis_table(self._client, schema_name, table_name)
+                except sqlalchemy.exc.NoSuchTableError:
+                    self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
 
         if not result_df.empty:
             self._dataframe_to_sql(schema_name, table_name, result_df)

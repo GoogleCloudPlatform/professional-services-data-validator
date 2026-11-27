@@ -246,6 +246,22 @@ def test_configure_arg_parser_list_connections():
     assert args.connect_cmd == "list"
 
 
+def test_configure_arg_parser_test_connection():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(["connections", "test", "-c", "my_conn"])
+
+    assert args.command == "connections"
+    assert args.connect_cmd == "test"
+    assert args.connection_name == "my_conn"
+
+
+def test_configure_arg_parser_test_connection_needs_name(capsys):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["connections", "test"])
+    assert "--connection-name" in capsys.readouterr().err
+
+
 def test_get_connection_config_from_args():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
@@ -1095,6 +1111,19 @@ def test_get_query_from_file(test_input: str):
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 
+def test_get_query_from_file_unreadable(tmp_path, caplog):
+    """An unreadable query file should be logged with its path and reason."""
+    missing_file = str(tmp_path / "missing.sql")
+    with pytest.raises(ValueError):
+        cli_tools.get_query_from_file(missing_file)
+    messages = [
+        record.getMessage() for record in caplog.records if record.levelname == "ERROR"
+    ]
+    assert len(messages) == 1
+    assert missing_file in messages[0]
+    assert "No such file or directory" in messages[0]
+
+
 @pytest.mark.parametrize(
     "test_input,expect_exception",
     [
@@ -1188,6 +1217,34 @@ def test_arg_parser_validate_custom_query_column_help(capsys):
         _ = parser.parse_args(["validate", "custom-query", "column", "--help"])
     captured = capsys.readouterr()
     assert "--grouped-columns" in captured.out
+
+
+def test_configs_run_concurrency():
+    parser = cli_tools.configure_arg_parser()
+    args = ["configs", "run", "--config-dir", "configs"]
+    assert parser.parse_args(args).concurrency == 1
+    assert parser.parse_args(args + ["--concurrency", "3"]).concurrency == 3
+    assert parser.parse_args(args + ["--concurrency", "128"]).concurrency == 128
+
+
+@pytest.mark.parametrize("concurrency", ["0", "-1", "many"])
+def test_configs_run_invalid_concurrency(concurrency):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            ["configs", "run", "--config-dir", "configs", "--concurrency", concurrency]
+        )
+
+
+@pytest.mark.parametrize("concurrency", ["129", "640"])
+def test_configs_run_concurrency_over_limit(concurrency, capsys):
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit) as exc_info:
+        parser.parse_args(
+            ["configs", "run", "--config-dir", "configs", "--concurrency", concurrency]
+        )
+    assert exc_info.value.code == 2
+    assert "concurrency must be between 1 and 128" in capsys.readouterr().err
 
 
 def test_arg_parser_generate_table_partitions_help(capsys):

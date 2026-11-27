@@ -47,6 +47,79 @@ def test_dtype_from_spanner_field(type_code, expected_dtype):
     assert isinstance(dtype, dt.DataType)
 
 
+@pytest.mark.parametrize(
+    ("element_type_code", "expected_dtype"),
+    [
+        (TypeCode.INT64, dt.Array(dt.int64)),
+        (TypeCode.STRING, dt.Array(dt.string)),
+        (TypeCode.NUMERIC, dt.Array(dt.Decimal(38, 9))),
+    ],
+)
+def test_dtype_from_spanner_field_array(element_type_code, expected_dtype):
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=element_type_code))
+
+    dtype = dtype_from_spanner_field(field)
+
+    assert dtype == expected_dtype
+
+
+@pytest.mark.parametrize(
+    "type_code",
+    [
+        getattr(TypeCode, name)
+        for name in (
+            "STRUCT",
+            "PROTO",
+            "ENUM",
+            "INTERVAL",
+            "UUID",
+            "TYPE_CODE_UNSPECIFIED",
+        )
+        if hasattr(TypeCode, name)
+    ],
+)
+def test_dtype_from_spanner_field_unsupported(type_code):
+    with pytest.raises(
+        TypeError, match=f"^Unsupported Spanner data type: {type_code.name}$"
+    ):
+        dtype_from_spanner_field(Type(code=type_code))
+
+
+def test_dtype_from_spanner_field_array_of_unsupported():
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=TypeCode.STRUCT))
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: STRUCT$"):
+        dtype_from_spanner_field(field)
+
+
+@pytest.mark.filterwarnings("ignore:Unrecognized TypeCode enum value")
+def test_dtype_from_spanner_field_unknown_type_code():
+    """A type code newer than the installed google-cloud-spanner arrives as a raw int."""
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: 999$"):
+        dtype_from_spanner_field(Type(code=999))
+
+
+@pytest.mark.filterwarnings("ignore:Unrecognized TypeCode enum value")
+def test_dtype_from_spanner_field_array_of_unknown_type_code():
+    field = Type(code=TypeCode.ARRAY, array_element_type=Type(code=999))
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: 999$"):
+        dtype_from_spanner_field(field)
+
+
+def test_backend_get_schema_with_unsupported_type():
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+    backend.instance.database.return_value.table.return_value.schema = [
+        StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
+        StructType.Field(name="col_struct", type_=Type(code=TypeCode.STRUCT)),
+    ]
+
+    with pytest.raises(TypeError, match="^Unsupported Spanner data type: STRUCT$"):
+        backend.get_schema("dvt_core_types")
+
+
 def test_schema_from_spanner_with_float32():
     fields = [
         StructType.Field(name="id", type_=Type(code=TypeCode.INT64)),
@@ -74,6 +147,32 @@ def test_backend_get_schema_with_float32():
 
     assert schema["id"] == dt.int64
     assert schema["col_float32"] == dt.float32
+
+
+def test_backend_get_schema_marks_not_null_columns():
+    backend = Backend()
+    backend.dataset = "pso_data_validator"
+    backend.instance = mock.MagicMock()
+    database = backend.instance.database.return_value
+    database.table.return_value.schema = [
+        StructType.Field(name="col_nn", type_=Type(code=TypeCode.INT64)),
+        StructType.Field(name="col_nullable", type_=Type(code=TypeCode.STRING)),
+    ]
+    mock_snapshot = database.snapshot.return_value.__enter__.return_value
+    mock_snapshot.execute_sql.return_value = iter([["col_nn"]])
+
+    schema = backend.get_schema("dvt_null_not_null")
+
+    assert schema["col_nn"] == dt.Int64(nullable=False)
+    assert not schema["col_nn"].nullable
+    assert schema["col_nullable"].nullable
+    assert list(schema.names) == ["col_nn", "col_nullable"]
+    sql = mock_snapshot.execute_sql.call_args.args[0]
+    assert "is_nullable = 'NO'" in sql
+    assert "LOWER(table_name) = LOWER(@table_name)" in sql
+    assert mock_snapshot.execute_sql.call_args.kwargs["params"] == {
+        "table_name": "dvt_null_not_null"
+    }
 
 
 def test_backend_get_schema_using_query_with_float32():

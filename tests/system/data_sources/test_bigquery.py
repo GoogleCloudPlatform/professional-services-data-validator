@@ -36,6 +36,7 @@ from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from data_validation.result_handlers.bigquery import BQRH_WRITE_MESSAGE
 from tests.system.data_sources.common_functions import (
+    connections_add_test,
     generate_and_run_table_partitions_test,
     partition_table_test,
     partition_query_test,
@@ -51,7 +52,6 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
-os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
 BQ_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     consts.PROJECT_ID: PROJECT_ID,
@@ -428,6 +428,12 @@ TEST_JSON_VALIDATION_CONFIG = {
 }
 
 
+@pytest.fixture(autouse=True)
+def use_local_conn_home(monkeypatch, tmp_path):
+    """Store connections in a local temp directory, unless a test sets its own."""
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path))
+
+
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
@@ -493,9 +499,12 @@ def test_numeric_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_cli_store_yaml_then_run_gcs(mock_conn):
+def test_cli_store_yaml_then_run_gcs(mock_conn, monkeypatch):
     """Test storing and retrieving validation YAMLs in GCS."""
-    # Store BQ Connection
+    # Store BQ Connection in GCS
+    monkeypatch.setenv(
+        consts.ENV_DIRECTORY_VAR, f"gs://{TEST_BUCKET}/integration_tests/"
+    )
     _store_bq_conn()
 
     # Build validation and store to file
@@ -690,10 +699,6 @@ def test_bq_datetime_sum_avg_bitxor_column_agg_yaml():
 
 def _test_cli_yaml_local_runner(cli_args, num_yaml_lines):
     """Test storing column validation YAML."""
-    # Unset GCS env var so that YAML is saved locally
-    gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
-    os.environ[consts.ENV_DIRECTORY_VAR] = ""
-
     # Store BQ Connection
     _store_bq_conn()
 
@@ -707,8 +712,6 @@ def _test_cli_yaml_local_runner(cli_args, num_yaml_lines):
         assert len(yaml_file.readlines()) == num_yaml_lines
 
     os.remove(yaml_file_path)
-    # Re-set GCS env var
-    os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
 
 
 def test_timestamp_aggs():
@@ -1554,3 +1557,31 @@ def test_bq_result_handler(mock_conn, bigquery_client, bigquery_dataset_id, capl
 def test_raw_query_dvt_row_types(mock_conn, capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--project-id",
+        PROJECT_ID,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_BIGQUERY, conn_args, tmp_path, monkeypatch
+    )
+
+
+def test_connections_add_fail(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command with a project that does not exist."""
+    conn_args = [
+        "--project-id",
+        "dvt-project-does-not-exist",
+        "--billing-project-id",
+        "dvt-project-does-not-exist",
+    ]
+    with pytest.raises(exceptions.DataClientConnectionFailure):
+        connections_add_test(
+            caplog, consts.SOURCE_TYPE_BIGQUERY, conn_args, tmp_path, monkeypatch
+        )

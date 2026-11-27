@@ -833,6 +833,20 @@ def test_row_validation_core_types_auto_pks():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_camel_case_auto_pks():
+    """Test auto population of -pks from PostgreSQL defined constraint on a table with camel case identifiers."""
+    row_validation_test(
+        tables="pso_data_validator.DvtCaseCamel",
+        tc="mock-conn",
+        hash="*",
+        primary_keys=None,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_comp_fields_pg_types():
     """PostgreSQL to PostgreSQL dvt_pg_types row validation --comp-fields"""
     row_validation_test(
@@ -1005,7 +1019,7 @@ def test_column_validation_pangrams_to_bigquery():
     This is testing comparisons across a wider set of characters than standard test data.
     """
     column_validation_test(
-        tc="mock-conn",
+        tc="bq-conn",
         tables="pso_data_validator.dvt_pangrams",
         sum_cols="words",
         min_cols="words",
@@ -1044,6 +1058,21 @@ def test_row_validation_pangrams_to_bigquery():
 def test_custom_query_validation_core_types():
     """PostgreSQL to PostgreSQL dvt_core_types custom-query validation"""
     custom_query_validation_test(tc="mock-conn", count_cols="*")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_cte():
+    """PostgreSQL to PostgreSQL custom-query validation with a single line WITH query"""
+    query = "with cte as (select * from pso_data_validator.dvt_core_types) select * from cte"
+    custom_query_validation_test(
+        tc="mock-conn",
+        source_query=query,
+        target_query=query,
+        count_cols="*",
+    )
 
 
 @mock.patch(
@@ -1458,12 +1487,42 @@ def test_result_handler_postgres_with_labels(mock_list, caplog):
     run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
-    # Labels columns should NOT be empty.
+    # Labels column should contain the label values exactly as provided.
     rows = raw_query_rows(
-        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{a=1,b=2}}'",
         conn="mock-conn",
     )
     # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres_mixed_case_table(mock_list, caplog):
+    """Test result handler with a mixed case results table name using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.ResultsData"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM pso_data_validator_results.\"ResultsData\" WHERE run_id = '{run_id}'",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the mixed case results table.
     assert len(df) == rows[0][0]
 
 

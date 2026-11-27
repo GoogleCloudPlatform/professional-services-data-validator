@@ -623,7 +623,7 @@ def test_column_validation_pangrams_to_bigquery():
     This is testing comparisons across a wider set of characters than standard test data.
     """
     column_validation_test(
-        tc="mock-conn",
+        tc="bq-conn",
         tables="pso_data_validator.dvt_pangrams",
         sum_cols="words",
         min_cols="words",
