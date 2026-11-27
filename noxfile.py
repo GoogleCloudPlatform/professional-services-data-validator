@@ -345,7 +345,10 @@ def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["ibm-db-sa", "ibm-db>=3.2.8"])
+    # TODO: Remove the ibm-db-sa pin once DVT supports the 0.5.0 type reflection changes.
+    _setup_session_requirements(
+        session, extra_packages=["ibm-db-sa<0.5.0", "ibm-db>=3.2.8"]
+    )
 
     expected_env_vars = [
         "PROJECT_ID",
