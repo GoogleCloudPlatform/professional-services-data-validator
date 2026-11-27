@@ -67,7 +67,8 @@ def test_build_result_handler_default(module_under_test):
     assert handler.status_list == filter_status
 
 
-def test_build_result_handler_bigquery_legacy(module_under_test):
+@mock.patch("data_validation.clients.get_google_bigquery_client")
+def test_build_result_handler_bigquery_legacy(mock_get_client, module_under_test):
     config = BQ_CONFIG
     filter_status = ["fail"]
     handler = module_under_test.build_result_handler(

@@ -404,7 +404,8 @@ def test_get_yaml_validation_block(module_under_test):
     assert list(yaml_config.keys()) == expected_validation_keys
 
 
-def test_get_result_handler(module_under_test):
+@mock.patch("data_validation.clients.get_google_bigquery_client")
+def test_get_result_handler(mock_get_client, module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
