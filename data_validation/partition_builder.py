@@ -192,18 +192,19 @@ class PartitionBuilder:
             if isinstance(target_count, pandas.DataFrame):
                 target_count = target_count.values[0][0]
 
+            if self.args.rows_per_partition is not None:
+                number_of_part = max(
+                    1,
+                    (int(source_count) + self.args.rows_per_partition - 1)
+                    // self.args.rows_per_partition,
+                )
+                cli_tools.check_no_yaml_files(number_of_part, self.args.parts_per_file)
+
             if abs(source_count - target_count) > source_count * 0.1:
                 logging.warning(
                     "Source and Target table row counts vary by more than 10%,"
                     "partitioning may result in partitions with very different sizes"
                 )
-
-            # Decide on number of partitions after checking number requested is not > number of rows in source
-            number_of_part = (
-                self.args.partition_num
-                if self.args.partition_num < source_count
-                else source_count
-            )
 
             # First we number each row in the source table. Using row_number instead of ntile since it is
             # available on all platforms (Teradata does not support NTILE). For our purposes, it is likely
@@ -230,44 +231,55 @@ class PartitionBuilder:
             # Rownum table is just the primary key columns in the source table along with
             # an additional column with the row number associated with each row.
 
-            # This rather complicated expression below is a filter (where) clause condition that filters the row numbers
-            # that correspond to the first element of the partition. The number of a partition is
-            # ceiling(row number * # of partitions / total number of rows). The first element of the partition is where
-            # the remainder, i.e. row number * # of partitions % total number of rows is > 0 and <= number of partitions.
-            # The remainder function does not work well with Teradata, hence writing that out explicitly.
-            cond = (
-                rownum_table
-                if source_count == number_of_part
-                else (
-                    (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part
-                        - (
-                            rownum_table[consts.DVT_POS_COL]
-                            * number_of_part
-                            / source_count
-                        ).floor()
-                        * source_count
+            if self.args.rows_per_partition is None:
+                # The first element of a partition is where the remainder of
+                # row number * number of partitions / total rows is > 0 and <= number of partitions.
+                # The remainder function does not work well with Teradata, hence writing that out explicitly.
+                number_of_part = min(self.args.partition_num, source_count)
+                cond = (
+                    rownum_table
+                    if source_count == number_of_part
+                    else (
+                        (
+                            rownum_table[consts.DVT_POS_COL] * number_of_part
+                            - (
+                                rownum_table[consts.DVT_POS_COL]
+                                * number_of_part
+                                / source_count
+                            ).floor()
+                            * source_count
+                        )
+                        <= number_of_part
                     )
-                    <= number_of_part
-                )
-                & (
-                    (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part
-                        - (
-                            rownum_table[consts.DVT_POS_COL]
-                            * number_of_part
-                            / source_count
-                        ).floor()
-                        * source_count
+                    & (
+                        (
+                            rownum_table[consts.DVT_POS_COL] * number_of_part
+                            - (
+                                rownum_table[consts.DVT_POS_COL]
+                                * number_of_part
+                                / source_count
+                            ).floor()
+                            * source_count
+                        )
+                        > 0
                     )
-                    > 0
                 )
-            )
+            else:
+                row_number_from_zero = rownum_table[consts.DVT_POS_COL] - 1
+                cond = (
+                    row_number_from_zero
+                    - (row_number_from_zero / self.args.rows_per_partition).floor()
+                    * self.args.rows_per_partition
+                ) == 0
             first_keys_table = rownum_table[cond].order_by(source_pks)
 
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
+            if first_elements.shape[0] <= 1:
+                master_filter_list.append([["1 = 1"], ["1 = 1"]])
+                continue
+
             # The objective is to generate the SQL expression string that is saved in the yaml file as a
             # filters property. This SQL expression is used as a filter during validation to ensure
             # that the yaml file is only validating the specific partition. This string is backend specific as

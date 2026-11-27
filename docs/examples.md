@@ -54,7 +54,7 @@ data-validation generate-table-partitions \
   --config-dir partitions_dir \
   --partition-num 200
 ````
-Above command creates multiple partitions based on the primary key. Number of generated configuration files is decided by `--partition-num`
+Above command creates approximately equally sized partitions based on the primary key. The number of generated partitions is decided by `--partition-num`. Alternatively, use `--rows-per-partition 10000` to target 10,000 source rows per partition and help manage row-validation memory usage. Actual partition sizes and memory usage may vary. These options are mutually exclusive.
 
 #### Run COUNT validations for all columns
 ````shell script

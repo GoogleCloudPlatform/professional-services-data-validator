@@ -1254,6 +1254,10 @@ def test_arg_parser_generate_table_partitions_help(capsys):
         _ = parser.parse_args(["generate-table-partitions", "--help"])
     captured = capsys.readouterr()
     assert "--partition-num" in captured.out
+    assert "--rows-per-partition" in captured.out
+    assert "Target number of source rows per partition" in " ".join(
+        captured.out.split()
+    )
 
 
 @pytest.mark.parametrize(

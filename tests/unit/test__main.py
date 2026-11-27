@@ -209,6 +209,30 @@ def test_configure_arg_parser(mock_args):
     assert file_path == "example_test.yaml"
 
 
+@pytest.mark.parametrize("partition_num", [None, 9])
+def test_partition_file_limit_preflight(partition_num):
+    args = argparse.Namespace(
+        log_level="INFO",
+        command="generate-table-partitions",
+        partition_num=partition_num,
+        rows_per_partition=4 if partition_num is None else None,
+        parts_per_file=5,
+    )
+    with mock.patch.object(
+        main.cli_tools, "get_parsed_args", return_value=args
+    ), mock.patch.object(
+        main.cli_tools, "check_no_yaml_files"
+    ) as check_file_limit, mock.patch.object(
+        main, "partition_and_store_config_files"
+    ) as partition_configs:
+        main.main()
+    if partition_num is None:
+        check_file_limit.assert_not_called()
+    else:
+        check_file_limit.assert_called_once_with(partition_num, args.parts_per_file)
+    partition_configs.assert_called_once_with(args)
+
+
 @mock.patch("data_validation.validation_runner.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",

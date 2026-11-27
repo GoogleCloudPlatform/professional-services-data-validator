@@ -56,7 +56,7 @@ The `generate-table-partitions` command splits a single large table validation (
 *   **Naming Convention**: Files inside the subdirectory are sequentially numbered: `0000.yaml`, `0001.yaml`, `0002.yaml` up to `9999.yaml`.
 *   **Parts Per File**: The `--parts-per-file` (or `-ppf`) option (default: 1) controls how many partition validation blocks are packed into a single YAML file.
 *   **Overwrite Protection**: Unlike standard validations, `generate-table-partitions` **does not** enforce an empty directory. It will write or overwrite files in the target directory directly.
-*   **File Limit**: DVT limits the number of generated files to 10,000 per run. If `partition-num / parts-per-file` exceeds 10,000, it raises a parser error.
+*   **File Limit**: DVT limits the number of generated files to 10,000 per run. If the generated partition count divided by `--parts-per-file` exceeds 10,000, the command errors. `--partition-num` is checked before connecting to the tables; `--rows-per-partition` is checked after the source row count is retrieved.
 
 ---
 
