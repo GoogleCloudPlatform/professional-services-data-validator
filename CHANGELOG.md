@@ -2,6 +2,28 @@
 
 ## Untagged
 
+## [8.11.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.2...v8.11.0) (2026-11-27)
+
+
+### Features
+
+* Add bounded concurrency to config-directory runs ([#1850](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1850)) ([85375b1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/85375b1b913043884c38643c2a78ad3e748f7954))
+* Add connections test command ([#1895](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1895)) ([7d485df](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7d485df30b9e91bb5d260f9c0b7218342caa475c))
+
+
+### Bug Fixes
+
+* Add primary key auto detection for Spanner ([#1904](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1904)) ([64fe540](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/64fe5403d9898f768c20cc3ad0b57a97978b3427))
+* Allow PostgreSQL custom queries that start with WITH, VALUES or a comment ([#1913](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1913)) ([bef77de](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bef77dedcd698256848f80d73d017729882e01cb))
+* Auto detect primary keys on PostgreSQL tables with mixed case names ([#1906](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1906)) ([a895f74](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a895f741f56209c6b4631ef6e83c9dce1c93b9ae))
+* Detect NOT NULL columns in Spanner schema validation ([#1896](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1896)) ([70a8a9f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/70a8a9f3d05a5a8b23819b234752a8502aa4dc80))
+* log the path and reason when a query file can't be read ([#1902](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1902)) ([7ed184b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7ed184b51abb2714e866a131c22c3eb53108b587))
+* Quote and escape labels written to the PostgreSQL results table ([#1900](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1900)) ([ca0908a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ca0908a8ba7b5a7cb46a0d08e0332b3278a97cf0))
+* Raise a clear error for unsupported Spanner data types and map ARRAY columns ([#1907](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1907)) ([ba82c43](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ba82c4395aeb7aa0a6183735fecc4343f7c6be27))
+* Raise a clear error when partitioning a table with fewer than two rows ([#1893](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1893)) ([9c86f00](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9c86f001c98236eec40b5ca13e49cf76340231db))
+* Spanner column aggregations on DATE and TIMESTAMP columns ([#1876](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1876)) ([#1882](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1882)) ([936d140](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/936d1401c879ef9cba5f14aa702b3417a91fb310))
+* Write results to PostgreSQL results tables with mixed case names ([#1916](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1916)) ([29b263d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/29b263dc7b8f9048e3e7b8b196e18761650c2e86))
+
 ## [8.10.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.10.1...v8.10.2) (2026-11-11)
 
 
