@@ -355,9 +355,11 @@ def test__get_table_map_from_obj_list_mixed_case(
 )
 @mock.patch("data_validation.find_tables.get_mapped_table_configs")
 @mock.patch("data_validation.clients.get_data_client")
-@mock.patch("data_validation.state_manager.StateManager.get_connection_config")
+# The whole class is patched because StateManager() creates the connections directory,
+# a unit test should not touch the real file system.
+@mock.patch("data_validation.state_manager.StateManager")
 def test_find_tables_using_string_matching_parsing(
-    mock_get_conn_config,
+    mock_state_manager,
     mock_get_client,
     mock_get_configs,
     module_under_test,
@@ -376,15 +378,22 @@ def test_find_tables_using_string_matching_parsing(
     mock_args.include_views = include_views
     mock_args.score_cutoff = score_cutoff
 
-    mock_get_conn_config.return_value = {}
-    mock_get_client.return_value = mock.MagicMock()
+    mock_state_manager.return_value.get_connection_config.side_effect = lambda name: {
+        "name": name
+    }
+    source_client, target_client = mock.MagicMock(), mock.MagicMock()
+    mock_get_client.side_effect = [source_client, target_client]
     mock_get_configs.return_value = RESULT_TABLE_CONFIGS
 
     result = module_under_test.find_tables_using_string_matching(mock_args)
 
+    assert mock_get_client.call_args_list == [
+        mock.call({"name": "source"}),
+        mock.call({"name": "target"}),
+    ]
     mock_get_configs.assert_called_once_with(
-        mock.ANY,
-        mock.ANY,
+        source_client,
+        target_client,
         allowed_schemas=expected_schemas,
         include_views=include_views,
         score_cutoff=expected_cutoff,

@@ -22,6 +22,8 @@ import pytest
 from data_validation import clients, consts, exceptions
 from third_party.ibis.ibis_cloud_spanner import (
     SPANNER_DIALECT_QUERY,
+    SPANNER_LIST_BASE_TABLES_QUERY,
+    SPANNER_LIST_TABLES_QUERY,
     SPANNER_PRIMARY_KEY_COLUMNS_QUERY,
 )
 
@@ -132,3 +134,64 @@ def test_list_primary_key_columns_uses_connected_database(mock_client_class, dat
     mock_instance.database.assert_not_called()
     assert ibis_client.database_name.database_id == SPANNER_CONN_CONFIG["database_id"]
     mock_snapshot.execute_sql.assert_called_once()
+
+
+def test_list_tables_queries():
+    """Only list_tables() includes views, both exclude tables still being created."""
+    assert "table_type = 'VIEW'" in SPANNER_LIST_TABLES_QUERY
+    assert "VIEW" not in SPANNER_LIST_BASE_TABLES_QUERY
+    for query in [SPANNER_LIST_TABLES_QUERY, SPANNER_LIST_BASE_TABLES_QUERY]:
+        assert "table_schema = ''" in query
+        assert "table_type = 'BASE TABLE' AND spanner_state = 'COMMITTED'" in query
+
+
+@pytest.mark.parametrize(
+    "method,expected_query",
+    [
+        ("list_tables", SPANNER_LIST_TABLES_QUERY),
+        ("dvt_list_tables", SPANNER_LIST_BASE_TABLES_QUERY),
+    ],
+)
+@pytest.mark.parametrize(
+    "database,expected_database",
+    [
+        (None, SPANNER_CONN_CONFIG["database_id"]),
+        # find-tables passes database ids from list_databases() or --allowed-schemas.
+        ("other-database", "other-database"),
+    ],
+)
+@mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
+def test_list_tables(
+    mock_client_class, method, expected_query, database, expected_database
+):
+    """Table lists come from an information_schema data query, not the Admin API."""
+    mock_snapshot = _mock_spanner_client(mock_client_class, [["GOOGLE_STANDARD_SQL"]])
+    ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
+    mock_instance = mock_client_class.return_value.instance.return_value
+    mock_instance.database.reset_mock()
+    mock_snapshot.execute_sql.reset_mock()
+    mock_snapshot.execute_sql.return_value = iter(
+        [["dvt_core_types"], ["dvt_core_types_vw"]]
+    )
+
+    assert getattr(ibis_client, method)(database=database) == [
+        "dvt_core_types",
+        "dvt_core_types_vw",
+    ]
+    mock_instance.database.assert_called_once_with(expected_database)
+    mock_snapshot.execute_sql.assert_called_once_with(expected_query)
+    # Database.list_tables() calls the Admin API and excludes views.
+    mock_instance.database.return_value.list_tables.assert_not_called()
+
+
+@pytest.mark.parametrize("method", ["list_tables", "dvt_list_tables"])
+@mock.patch("third_party.ibis.ibis_cloud_spanner.spanner.Client")
+def test_list_tables_like(mock_client_class, method):
+    """The like regex is applied to the names returned by the query."""
+    mock_snapshot = _mock_spanner_client(mock_client_class, [["GOOGLE_STANDARD_SQL"]])
+    ibis_client = clients.get_data_client(SPANNER_CONN_CONFIG)
+    mock_snapshot.execute_sql.return_value = iter(
+        [["dvt_core_types"], ["dvt_core_types_vw"], ["other_table"]]
+    )
+
+    assert getattr(ibis_client, method)(like="dvt_.*_vw") == ["dvt_core_types_vw"]
